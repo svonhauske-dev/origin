@@ -327,7 +327,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
       )}
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Which days</label>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: spacing.xs }}>
           {DAYS.map((d, i) => { const on = form.days.includes(i); return (
             <button key={i} onClick={() => toggleDay(i)} style={{ width: 36, height: 36, borderRadius: radius.full, fontSize: typography.label, cursor: "pointer", fontWeight: typography.semibold, background: on ? colors.accent : "transparent", color: on ? colors.textPrimary : colors.textSecondary, border: `1px solid ${on ? colors.accent : colors.borderStrong}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
           ); })}
