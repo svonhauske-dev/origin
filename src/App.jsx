@@ -422,7 +422,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       await dbUpdateSupp({ ...form, id: editingId }, token);
       setSupps(s => s.map(x => x.id === editingId ? { ...form, id: editingId } : x));
     } else {
-      const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: form.days }, token);
+      const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: form.days, user_id: user.id }, token);
       if (rows?.[0]) setSupps(s => [...s, rows[0]]);
     }
     closeForm();
