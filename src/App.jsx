@@ -2,14 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPA_URL = "https://yahimlivfieuknagusxp.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaGltbGl2ZmlldWtuYWd1c3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYwNDIsImV4cCI6MjA5MzM2MjA0Mn0._5_t5k1NCAHAFHEz0clqD8fSxsNCMzlqBoRPSmD7wxs";
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY;
-const ANTHROPIC_HEADERS = {
-  "Content-Type": "application/json",
-  "x-api-key": ANTHROPIC_KEY,
-  "anthropic-version": "2023-06-01",
-  "anthropic-dangerous-direct-browser-access": "true",
-};
-
 // ── Supabase helpers ──────────────────────────────────────────────────────────
 
 async function supa(method, path, body, token) {
@@ -143,42 +135,6 @@ const STATUS_COLOR = { optimal: "#4ade80", low: "#60a5fa", high: "#f87171" };
 const STATUS_BG    = { optimal: "rgba(74,222,128,0.08)", low: "rgba(96,165,250,0.08)", high: "rgba(248,113,113,0.08)" };
 const TODAY        = startOfDay(new Date());
 const P            = "16px";
-
-// ── PDF → base64 helper ───────────────────────────────────────────────────────
-
-async function pdfToBase64(file) {
-  const ab = await file.arrayBuffer();
-  const bytes = new Uint8Array(ab);
-  const chunks = [];
-  for (let i = 0; i < bytes.length; i += 8192)
-    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 8192)));
-  return btoa(chunks.join(""));
-}
-
-async function callAnthropic(system, b64) {
-  console.log("API key:", import.meta.env.VITE_ANTHROPIC_KEY ? "found" : "missing");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: ANTHROPIC_HEADERS,
-    body: JSON.stringify({
-      model: "claude-sonnet-4-5-20251001",
-      max_tokens: 2000,
-      system,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
-          { type: "text", text: "Extract the data. Return raw JSON only, no markdown, no backticks." },
-        ],
-      }],
-    }),
-  });
-  console.log("Anthropic response status:", res.status, await res.clone().text());
-  if (!res.ok) throw new Error(`Anthropic error ${res.status}`);
-  const data = await res.json();
-  const txt = data.content.filter(c => c.type === "text").map(c => c.text).join("").trim();
-  return JSON.parse(txt.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "").trim());
-}
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 
@@ -320,30 +276,8 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
 function LabModal({ open, onClose, onSave, labs, labDate }) {
   const [entries, setEntries]   = useState(labs || {});
   const [date, setDate]         = useState(labDate || new Date().toISOString().split("T")[0]);
-  const [parsing, setParsing]   = useState(false);
-  const [parseMsg, setParseMsg] = useState("");
-  const fileRef = useRef(null);
 
   useEffect(() => { setEntries(labs || {}); setDate(labDate || new Date().toISOString().split("T")[0]); }, [labs, labDate]);
-
-  const handlePDF = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setParsing(true); setParseMsg("Reading PDF…");
-    try {
-      const b64 = await pdfToBase64(file);
-      setParseMsg("Sending to AI…");
-      const parsed = await callAnthropic(
-        "You are a medical lab result parser. Extract numeric values from lab PDFs. Return ONLY raw JSON, no markdown, no backticks. Keys: tsh, ft3, ft4, dhea, testosterone, glucose, insulin, vitd, crp, ferritin, date. Numeric strings only. Date as YYYY-MM-DD.",
-        b64
-      );
-      const ne = { ...entries };
-      LAB_MARKERS.forEach(m => { if (parsed[m.id] != null && parsed[m.id] !== "") ne[m.id] = String(parsed[m.id]); });
-      setEntries(ne);
-      if (parsed.date) setDate(parsed.date);
-      setParseMsg(`✓ ${Object.keys(parsed).filter(k => k !== "date" && parsed[k]).length} values extracted`);
-    } catch (err) { setParseMsg("Failed: " + err.message); }
-    setParsing(false);
-  };
 
   if (!open) return null;
   return (
@@ -355,14 +289,6 @@ function LabModal({ open, onClose, onSave, labs, labDate }) {
         </div>
         <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: 10, padding: "10px 12px", marginBottom: 16, fontSize: 12, color: "#34d399", lineHeight: 1.5 }}>
           Ranges shown are functional optimal targets, not standard lab reference ranges.
-        </div>
-        <input ref={fileRef} type="file" accept="application/pdf" style={{ display: "none" }} onChange={handlePDF} />
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>Upload lab PDF</label>
-          <button onClick={() => fileRef.current?.click()} disabled={parsing} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px dashed rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.04)", color: parsing ? "#4a5568" : "#4ade80", fontSize: 14, fontWeight: 600, cursor: parsing ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {parsing ? "Extracting values…" : "Upload PDF to auto-fill"}
-          </button>
-          {parseMsg && <div style={{ fontSize: 12, color: parseMsg.startsWith("✓") ? "#4ade80" : "#fb923c", marginTop: 7, textAlign: "center" }}>{parseMsg}</div>}
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Date drawn</label>
@@ -483,10 +409,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [notifStatus, setNotifStatus]   = useState(notifOK() ? Notification.permission : "unsupported");
   const [streak, setStreak]             = useState(0);
   const [flashGreen, setFlashGreen]     = useState(false);
-  const [importing, setImporting]       = useState(false);
-  const [importMsg, setImportMsg]       = useState("");
   const saveTimer    = useRef(null);
-  const importPdfRef = useRef(null);
 
   const dk       = dateKey(viewDate);
   const isToday  = dateKey(viewDate) === dateKey(TODAY);
@@ -524,7 +447,7 @@ function ProtocolApp({ user, token, onSignOut }) {
     saveTimer.current = setTimeout(() => {
       const pt = pillTimes[dk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk)));
-      dbUpsertLog({ log_date: dk, pill_time: pt || null, checked: dayChecked }, token);
+      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token);
     }, 800);
   }, [checked, pillTimes, dk, loading]);
 
@@ -608,28 +531,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       if (rows?.[0]) setLabHistory(h => [rows[0], ...h]);
     }
     setEditingLabIdx(null); setLabOpen(false);
-  };
-
-  // PDF supplement import
-  const handleImportPDF = async (e) => {
-    const file = e.target.files?.[0]; e.target.value = ""; if (!file) return;
-    setImporting(true); setImportMsg("");
-    try {
-      const b64 = await pdfToBase64(file);
-      const parsed = await callAnthropic(
-        `You are a supplement protocol parser. Extract all medications and supplements from this document. Return ONLY a raw JSON array, no markdown, no backticks. Each item: name (string), dose (string), notes (string), slots (array from: rx, fasted, pre_breakfast, breakfast, pre_lunch, lunch, pre_dinner, dinner, after_dinner, injectable), days (array of 0-6, use [0,1,2,3,4,5,6] for daily). Map timing: empty stomach/fasted→fasted, with breakfast→breakfast, before breakfast→pre_breakfast, with lunch→lunch, before lunch→pre_lunch, with dinner→dinner, before dinner→pre_dinner, after dinner/before bed→after_dinner, injection/subcutaneous→injectable, Rx/thyroid/first thing→rx.`,
-        b64
-      );
-      if (!Array.isArray(parsed) || !parsed.length) { setImportMsg("No supplements found in PDF."); setImporting(false); return; }
-      const added = [];
-      for (const item of parsed) {
-        const rows = await dbAddSupp({ name: item.name || "", dose: item.dose || "", notes: item.notes || "", slots: Array.isArray(item.slots) ? item.slots : [], days: Array.isArray(item.days) ? item.days : [0, 1, 2, 3, 4, 5, 6] }, token);
-        if (rows?.[0]) added.push(rows[0]);
-      }
-      setSupps(s => [...s, ...added]);
-      setImportMsg(`✓ ${added.length} supplement${added.length !== 1 ? "s" : ""} imported`);
-    } catch (err) { setImportMsg("Failed: " + err.message); }
-    setImporting(false);
   };
 
   // Lab insights
@@ -728,13 +629,10 @@ function ProtocolApp({ user, token, onSignOut }) {
             </div>
           </div>
 
-          {/* Add / Import row */}
-          <input ref={importPdfRef} type="file" accept="application/pdf" style={{ display: "none" }} onChange={handleImportPDF} />
-          <div style={{ display: "flex", gap: 8, marginBottom: P }}>
-            <button onClick={openAdd} style={{ flex: 1, padding: "13px", borderRadius: 14, cursor: "pointer", border: "1px dashed rgba(74,222,128,0.22)", background: "rgba(74,222,128,0.03)", fontSize: 14, fontWeight: 600, color: "#4ade80" }}>+ Add supplement</button>
-            <button onClick={() => importPdfRef.current?.click()} disabled={importing} style={{ padding: "13px 16px", borderRadius: 14, cursor: importing ? "default" : "pointer", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontSize: 14, fontWeight: 600, color: importing ? "#4a5568" : "#8b90a0", whiteSpace: "nowrap" }}>{importing ? "Importing…" : "Import PDF"}</button>
+          {/* Add row */}
+          <div style={{ marginBottom: P }}>
+            <button onClick={openAdd} style={{ width: "100%", padding: "13px", borderRadius: 14, cursor: "pointer", border: "1px dashed rgba(74,222,128,0.22)", background: "rgba(74,222,128,0.03)", fontSize: 14, fontWeight: 600, color: "#4ade80" }}>+ Add supplement</button>
           </div>
-          {importMsg && <div style={{ fontSize: 13, color: importMsg.startsWith("✓") ? "#4ade80" : "#f87171", marginBottom: P, textAlign: "center" }}>{importMsg}</div>}
 
           {/* Slot list */}
           <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", padding: P, marginBottom: P }}>
@@ -743,10 +641,7 @@ function ProtocolApp({ user, token, onSignOut }) {
                 <div style={{ fontSize: 28, marginBottom: 12 }}>💊</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 6 }}>Your protocol is empty</div>
                 <div style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.7, marginBottom: 20 }}>Add your medications and supplements above.<br />The schedule anchors to when you take your first Rx each morning.</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={openAdd} style={{ flex: 1, padding: "11px 0", borderRadius: 12, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 14, fontWeight: 700 }}>Add first supplement</button>
-                  <button onClick={() => importPdfRef.current?.click()} disabled={importing} style={{ flex: 1, padding: "11px 0", borderRadius: 12, cursor: importing ? "default" : "pointer", background: "transparent", color: importing ? "#4a5568" : "#8b90a0", border: "1px solid rgba(255,255,255,0.1)", fontSize: 14, fontWeight: 600 }}>{importing ? "Importing…" : "Import from PDF"}</button>
-                </div>
+                <button onClick={openAdd} style={{ padding: "11px 24px", borderRadius: 12, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 14, fontWeight: 700 }}>Add first supplement</button>
               </div>
             ) : SLOTS.map(slot => {
               const slotSupps = getSuppsForSlot(slot.id); if (!slotSupps.length) return null;
@@ -787,7 +682,7 @@ function ProtocolApp({ user, token, onSignOut }) {
             <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", padding: P, textAlign: "center", paddingTop: "2.5rem", paddingBottom: "2.5rem" }}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>🧬</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 6 }}>No lab results yet</div>
-              <div style={{ fontSize: 13, color: "#4a5568", marginBottom: 16 }}>Upload a PDF or enter values manually</div>
+              <div style={{ fontSize: 13, color: "#4a5568", marginBottom: 16 }}>Enter your lab values to track trends over time</div>
               <button onClick={() => { setEditingLabIdx(null); setLabOpen(true); }} style={{ padding: "11px 24px", borderRadius: 12, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 14, fontWeight: 700 }}>Log first results</button>
             </div>
           )}
