@@ -87,22 +87,80 @@ const SLOTS = [
 ];
 
 const DEFAULT_CONFIG = {
-  fasted: 30, breakfast: 60, lunch: 300, dinner: 540, after_dinner: 660, pre_meal_window: 30,
+  pre_meal_window: 30, fasted: 30, breakfast: 60, lunch: 300, dinner: 540, after_dinner: 660,
+  window_start: 300, window_length: 480,
+  fixed_times: {
+    fasted: "07:30", breakfast: "08:00", pre_lunch: "11:30", lunch: "12:00",
+    pre_dinner: "17:30", dinner: "18:00", after_dinner: "20:00", injectable: null,
+  },
 };
 
-function deriveOffsets(cfg) {
+function deriveOffsets(mode, cfg) {
+  if (mode === "fixed") return null;
+  if (mode === "fasting") {
+    const winStart = cfg.window_start ?? 300;
+    const winLen   = cfg.window_length ?? 480;
+    const midpoint = winStart + winLen / 2;
+    const winEnd   = winStart + winLen;
+    const pmw      = cfg.pre_meal_window ?? 30;
+    return {
+      fasted: null, pre_breakfast: null, breakfast: winStart,
+      pre_lunch: midpoint - pmw, lunch: midpoint,
+      pre_dinner: winEnd - pmw - 60, dinner: winEnd - 60,
+      after_dinner: winEnd + 30, injectable: null,
+    };
+  }
+  const pmw         = cfg.pre_meal_window ?? 30;
+  const fastedVal   = mode === "wakeup" ? null : (cfg.fasted ?? null);
+  const pre_bfast   = (cfg.breakfast ?? 60) - pmw;
   return {
-    fasted:        cfg.fasted,
-    pre_breakfast: cfg.breakfast != null ? cfg.breakfast - cfg.pre_meal_window : null,
-    breakfast:     cfg.breakfast,
-    pre_lunch:     cfg.lunch != null    ? cfg.lunch    - cfg.pre_meal_window : null,
-    lunch:         cfg.lunch,
-    pre_dinner:    cfg.dinner != null   ? cfg.dinner   - cfg.pre_meal_window : null,
-    dinner:        cfg.dinner,
-    after_dinner:  cfg.after_dinner,
+    fasted:        fastedVal,
+    pre_breakfast: (!fastedVal || pre_bfast > fastedVal) ? pre_bfast : null,
+    breakfast:     cfg.breakfast ?? 60,
+    pre_lunch:     (cfg.lunch ?? 300) - pmw,
+    lunch:         cfg.lunch ?? 300,
+    pre_dinner:    (cfg.dinner ?? 540) - pmw,
+    dinner:        cfg.dinner ?? 540,
+    after_dinner:  cfg.after_dinner ?? 660,
     injectable:    null,
   };
 }
+
+const MODES = [
+  { id: "medication", title: "Medication Anchor",     desc: "Cascades from when you take your meds" },
+  { id: "fasting",    title: "Intermittent Fasting",  desc: "Builds around your eating window" },
+  { id: "wakeup",     title: "Wake Up Anchor",        desc: "Cascades from when you wake up" },
+  { id: "fixed",      title: "Fixed Times",           desc: "Same schedule every day" },
+];
+
+const ANCHOR_NOTES = {
+  medication: "Anchor = when you take your medication each morning",
+  fasting:    "Anchor = when your eating window opens",
+  wakeup:     "Anchor = when you wake up each morning",
+};
+
+const FIXED_SLOTS = [
+  { key: "fasted",       label: "Fasted" },
+  { key: "breakfast",    label: "Breakfast" },
+  { key: "pre_lunch",    label: "Before Lunch" },
+  { key: "lunch",        label: "Lunch" },
+  { key: "pre_dinner",   label: "Before Dinner" },
+  { key: "dinner",       label: "Dinner" },
+  { key: "after_dinner", label: "Evening" },
+  { key: "injectable",   label: "Injectables" },
+];
+
+const START_LABELS = {
+  medication: "I took my medication",
+  fasting:    "My eating window opened",
+  wakeup:     "I woke up",
+};
+
+const START_SUBTITLES = {
+  medication: "logs your anchor med · sets your daily schedule",
+  fasting:    "activates your eating window",
+  wakeup:     "sets your daily schedule",
+};
 
 const CORE_SLOTS = ["rx", "fasted", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
 
@@ -127,7 +185,7 @@ function scheduleNotifications(pt, supps, vd, dk, offsets) {
   const base = parseHHMM(pt), now = new Date();
   SLOTS.forEach(slot => {
     if (slot.id === "injectable") return;
-    const offset = slot.id === "rx" ? 0 : (offsets[slot.id] ?? null);
+    const offset = slot.id === "rx" ? 0 : (offsets?.[slot.id] ?? null);
     if (offset === null) return;
     const t = addMins(base, offset), diff = t - now; if (diff < 0) return;
     const sl = supps.filter(s => s.slots.includes(slot.id) && s.days.includes(vd));
@@ -158,7 +216,6 @@ function SignIn({ onSignIn }) {
     else setMsg(mode === "signin" ? "Invalid email or password." : "Could not create account — try again.");
   };
 
-  // fontSize: 16 enforced — prevents iOS zoom on focus
   const si = { ...inputStyle, textAlign: "center", fontSize: 16 };
 
   return (
@@ -243,28 +300,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
   );
 }
 
-// ── ScheduleModal ─────────────────────────────────────────────────────────────
-
-const SCHEDULE_TYPES = [
-  { id: "medication_anchored", label: "Medication Anchored", subtitle: "Everything cascades from when you take your first med" },
-  { id: "meal_anchored",       label: "Meal Times",          subtitle: "Set your typical meal times" },
-  { id: "fixed",               label: "Fixed Times",         subtitle: "Set exact times for each slot" },
-];
-
-const TEMPLATES = [
-  { label: "Thyroid Protocol", config: { fasted: 30,   breakfast: 60,  lunch: 300, dinner: 540, after_dinner: 660, pre_meal_window: 30 } },
-  { label: "16:8 Fasting",     config: { fasted: null, breakfast: 240, lunch: 480, dinner: 720, after_dinner: 840, pre_meal_window: 30 } },
-  { label: "18:6 Fasting",     config: { fasted: null, breakfast: 300, lunch: 540, dinner: 780, after_dinner: 900, pre_meal_window: 30 } },
-  { label: "3 Meals",          config: { fasted: null, breakfast: 60,  lunch: 300, dinner: 540, after_dinner: 660, pre_meal_window: 30 } },
-];
-
-const MEAL_ROWS = [
-  { key: "fasted",       label: "Fasted window", nullable: true },
-  { key: "breakfast",    label: "Breakfast" },
-  { key: "lunch",        label: "Lunch" },
-  { key: "dinner",       label: "Dinner" },
-  { key: "after_dinner", label: "Evening" },
-];
+// ── Schedule helpers ──────────────────────────────────────────────────────────
 
 function toHrMin(totalMins) {
   if (!totalMins && totalMins !== 0) return { h: 0, m: 0 };
@@ -272,37 +308,53 @@ function toHrMin(totalMins) {
 }
 function fromHrMin(h, m) { return (parseInt(h) || 0) * 60 + (parseInt(m) || 0); }
 
-// Shared style for small number inputs — fontSize 16 prevents iOS zoom
 const numInputStyle = { ...inputStyle, width: 52, textAlign: "right", padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: 16 };
 
-function ScheduleModal({ scheduleType, setScheduleType, scheduleConfig, setScheduleConfig, onSave, onClose }) {
-  const [localType, setLocalType]               = useState(scheduleType);
-  const [localConfig, setLocalConfig]           = useState({ ...scheduleConfig });
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
+// ── ScheduleModal ─────────────────────────────────────────────────────────────
 
-  const applyTemplate = (tmpl) => { setLocalConfig({ ...tmpl.config }); setSelectedTemplate(tmpl.label); };
+function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setScheduleConfig, onSave, onClose }) {
+  const [localMode,   setLocalMode]   = useState(scheduleMode);
+  const [localConfig, setLocalConfig] = useState({
+    ...DEFAULT_CONFIG,
+    ...scheduleConfig,
+    fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(scheduleConfig.fixed_times || {}) },
+  });
 
-  const updateConfig = (key, value) => {
-    setLocalConfig(c => ({ ...c, [key]: value }));
-    setSelectedTemplate("custom");
-  };
+  const updateConfig = (key, value) => setLocalConfig(c => ({ ...c, [key]: value }));
+  const updateFixed  = (key, value) => setLocalConfig(c => ({
+    ...c, fixed_times: { ...c.fixed_times, [key]: value || null },
+  }));
 
   const handleSave = () => {
-    setScheduleType(localType);
+    setScheduleMode(localMode);
     setScheduleConfig(localConfig);
-    onSave(localType, localConfig);
+    onSave(localMode, localConfig);
   };
 
-  const derived = deriveOffsets(localConfig);
   const previewBase = parseHHMM("07:00");
-  const previewRows = [
-    { label: "Anchor Medication", offset: 0 },
-    ...Object.entries(derived)
-      .filter(([, v]) => v !== null && v !== undefined)
-      .map(([sid, offset]) => ({ label: SLOTS.find(s => s.id === sid)?.label ?? sid, offset })),
-  ].sort((a, b) => a.offset - b.offset);
+  const derived     = localMode !== "fixed" ? deriveOffsets(localMode, localConfig) : null;
 
-  const chipOn = (name) => selectedTemplate === name;
+  const previewRows = localMode === "fixed"
+    ? FIXED_SLOTS
+        .filter(fs => localConfig.fixed_times?.[fs.key])
+        .map(fs => ({ label: fs.label, timeStr: localConfig.fixed_times[fs.key] }))
+        .sort((a, b) => a.timeStr.localeCompare(b.timeStr))
+    : [
+        { label: MODES.find(m => m.id === localMode)?.title ?? "Anchor", offset: 0 },
+        ...Object.entries(derived || {})
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([sid, offset]) => ({ label: SLOTS.find(s => s.id === sid)?.label ?? sid, offset })),
+      ].sort((a, b) => a.offset - b.offset);
+
+  const mealRows = [
+    { key: "fasted",       label: "Fasted window",    nullable: localMode === "wakeup" },
+    { key: "breakfast",    label: "Breakfast" },
+    { key: "lunch",        label: "Lunch" },
+    { key: "dinner",       label: "Dinner" },
+    { key: "after_dinner", label: "Evening" },
+  ];
+
+  const isOffsetMode = localMode === "medication" || localMode === "wakeup";
 
   return (
     <div>
@@ -312,102 +364,146 @@ function ScheduleModal({ scheduleType, setScheduleType, scheduleConfig, setSched
         <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: radius.full, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, cursor: "pointer", fontSize: typography.caption, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}>✕</button>
       </div>
 
-      {/* Schedule type */}
+      {/* 2×2 mode grid */}
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Schedule type</label>
-        <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
-          {SCHEDULE_TYPES.map(t => {
-            const on = localType === t.id;
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: spacing.xs }}>
+          {MODES.map(m => {
+            const on = localMode === m.id;
             return (
-              <button key={t.id} onClick={() => setLocalType(t.id)} style={{ textAlign: "left", padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.md, cursor: "pointer", background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, display: "flex", flexDirection: "column", gap: 2 }}>
-                <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? colors.accent : colors.textPrimary }}>{t.label}</span>
-                <span style={{ fontSize: typography.label, color: colors.textMuted }}>{t.subtitle}</span>
+              <button key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.md, cursor: "pointer", background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, display: "flex", flexDirection: "column", gap: 4, minHeight: 64 }}>
+                <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? colors.accent : colors.textPrimary }}>{m.title}</span>
+                <span style={{ fontSize: typography.label, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Templates */}
-      <div style={{ marginBottom: spacing.lg }}>
-        <label style={labelStyle}>Templates</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-          {TEMPLATES.map(tmpl => {
-            const on = chipOn(tmpl.label);
-            return (
-              <button key={tmpl.label} onClick={() => applyTemplate(tmpl)} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: on ? colors.accentDim : "transparent", color: on ? colors.accent : colors.textSecondary, border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, fontWeight: on ? typography.semibold : typography.medium }}>
-                {tmpl.label}
-              </button>
-            );
-          })}
-          {(() => { const on = chipOn("custom"); return (
-            <button onClick={() => { if (!on) { setSelectedTemplate("custom"); } else { setSelectedTemplate(null); } }} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: on ? colors.accentDim : "transparent", color: on ? colors.accent : colors.textSecondary, border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, fontWeight: on ? typography.semibold : typography.medium }}>
-              Custom
-            </button>
-          ); })()}
+      {/* Anchor note */}
+      {localMode !== "fixed" && (
+        <div style={{ marginBottom: spacing.md, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, background: colors.accentDim, border: `1px solid ${colors.accentBorder}`, fontSize: typography.label, color: colors.accent }}>
+          {ANCHOR_NOTES[localMode]}
         </div>
-      </div>
+      )}
 
-      {/* Meal schedule editor */}
-      <div style={{ marginBottom: spacing.md }}>
-        <label style={labelStyle}>Meal schedule</label>
-        <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
-          {MEAL_ROWS.map(({ key, label, nullable }) => {
-            const total = localConfig[key];
-            const isEmpty = total === null || total === undefined;
-            const { h, m } = toHrMin(isEmpty ? 0 : total);
-            return (
+      {/* Medication / Wakeup: offset editor */}
+      {isOffsetMode && (
+        <>
+          <div style={{ marginBottom: spacing.md }}>
+            <label style={labelStyle}>Meal schedule</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+              {mealRows.map(({ key, label, nullable }) => {
+                const total   = localConfig[key];
+                const isEmpty = total === null || total === undefined;
+                const { h, m } = toHrMin(isEmpty ? 0 : total);
+                return (
+                  <div key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
+                    <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{label}</span>
+                    <input
+                      type="number" min="0" max="23"
+                      value={isEmpty ? "" : h}
+                      onChange={e => updateConfig(key, e.target.value === "" ? (nullable ? null : 0) : fromHrMin(e.target.value, isEmpty ? 0 : m))}
+                      placeholder="0"
+                      style={numInputStyle}
+                    />
+                    <span style={{ fontSize: typography.label, color: colors.textMuted }}>hr</span>
+                    <input
+                      type="number" min="0" max="59"
+                      value={isEmpty ? "" : m}
+                      onChange={e => updateConfig(key, e.target.value === "" ? (nullable ? null : 0) : fromHrMin(isEmpty ? 0 : h, e.target.value))}
+                      placeholder="0"
+                      style={numInputStyle}
+                    />
+                    <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>after anchor</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ marginBottom: spacing.lg }}>
+            <label style={labelStyle}>Pre-meal window</label>
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
+              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Take pre-meal supplements</span>
+              <input
+                type="number" min="0" max="120"
+                value={localConfig.pre_meal_window ?? 30}
+                onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
+                style={numInputStyle}
+              />
+              <span style={{ fontSize: typography.label, color: colors.textMuted }}>min before eating</span>
+            </div>
+            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xs, paddingLeft: spacing.xs }}>applies to all meals</div>
+          </div>
+        </>
+      )}
+
+      {/* Fasting: window editor */}
+      {localMode === "fasting" && (
+        <div style={{ marginBottom: spacing.lg }}>
+          <label style={labelStyle}>Eating window</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+            {[
+              { key: "window_start",  label: "Window opens after", suffix: "after anchor" },
+              { key: "window_length", label: "Window lasts",        suffix: "total" },
+            ].map(({ key, label, suffix }) => {
+              const def = key === "window_start" ? 300 : 480;
+              const { h, m } = toHrMin(localConfig[key] ?? def);
+              return (
+                <div key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
+                  <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{label}</span>
+                  <input type="number" min="0" max="23" value={h} onChange={e => updateConfig(key, fromHrMin(e.target.value, m))} style={numInputStyle} />
+                  <span style={{ fontSize: typography.label, color: colors.textMuted }}>hr</span>
+                  <input type="number" min="0" max="59" value={m} onChange={e => updateConfig(key, fromHrMin(h, e.target.value))} style={numInputStyle} />
+                  <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>{suffix}</span>
+                </div>
+              );
+            })}
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
+              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal window</span>
+              <input type="number" min="0" max="120" value={localConfig.pre_meal_window ?? 30} onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)} style={numInputStyle} />
+              <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>min before</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fixed: time pickers */}
+      {localMode === "fixed" && (
+        <div style={{ marginBottom: spacing.lg }}>
+          <label style={labelStyle}>Fixed times</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+            {FIXED_SLOTS.map(({ key, label }) => (
               <div key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
                 <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{label}</span>
                 <input
-                  type="number" min="0" max="23"
-                  value={isEmpty ? "" : h}
-                  onChange={e => updateConfig(key, e.target.value === "" ? (nullable ? null : 0) : fromHrMin(e.target.value, isEmpty ? 0 : m))}
-                  placeholder="0"
-                  style={numInputStyle}
+                  type="time"
+                  value={localConfig.fixed_times?.[key] || ""}
+                  onChange={e => updateFixed(key, e.target.value)}
+                  style={{ background: colors.bgInput, color: colors.textPrimary, border: `1px solid ${colors.borderStrong}`, borderRadius: radius.sm, fontSize: 16, padding: `${spacing.xs}px ${spacing.sm}px`, outline: "none" }}
                 />
-                <span style={{ fontSize: typography.label, color: colors.textMuted }}>hr</span>
-                <input
-                  type="number" min="0" max="59"
-                  value={isEmpty ? "" : m}
-                  onChange={e => updateConfig(key, e.target.value === "" ? (nullable ? null : 0) : fromHrMin(isEmpty ? 0 : h, e.target.value))}
-                  placeholder="0"
-                  style={numInputStyle}
-                />
-                <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>after anchor</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* Pre-meal window */}
-      <div style={{ marginBottom: spacing.lg }}>
-        <label style={labelStyle}>Pre-meal window</label>
-        <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
-          <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Take pre-meal supplements</span>
-          <input
-            type="number" min="0" max="120"
-            value={localConfig.pre_meal_window ?? 30}
-            onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
-            style={numInputStyle}
-          />
-          <span style={{ fontSize: typography.label, color: colors.textMuted }}>min before eating</span>
-        </div>
-        <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xs, paddingLeft: spacing.xs }}>applies to all meals</div>
-      </div>
+      )}
 
       {/* Live preview */}
       <div style={{ marginBottom: spacing.lg }}>
-        <label style={labelStyle}>Preview (based on 7:00am anchor)</label>
+        <label style={labelStyle}>{localMode === "fixed" ? "Schedule preview" : "Preview (7:00 am anchor)"}</label>
         <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderSubtle}`, background: colors.bgCard, padding: spacing.md, display: "flex", flexDirection: "column", gap: spacing.xs }}>
-          {previewRows.map((row, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
-              <span style={{ fontSize: typography.caption, fontVariantNumeric: "tabular-nums", color: colors.accent, fontWeight: typography.semibold, minWidth: 42 }}>{fmtTime(addMins(previewBase, row.offset))}</span>
-              <span style={{ fontSize: typography.caption, color: colors.textMuted }}>—</span>
-              <span style={{ fontSize: typography.caption, color: colors.textSecondary }}>{row.label}</span>
-            </div>
-          ))}
+          {previewRows.length === 0
+            ? <span style={{ fontSize: typography.caption, color: colors.textMuted }}>No times configured yet</span>
+            : previewRows.map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
+                  <span style={{ fontSize: typography.caption, fontVariantNumeric: "tabular-nums", color: colors.accent, fontWeight: typography.semibold, minWidth: 42 }}>
+                    {row.timeStr ?? fmtTime(addMins(previewBase, row.offset))}
+                  </span>
+                  <span style={{ fontSize: typography.caption, color: colors.textMuted }}>—</span>
+                  <span style={{ fontSize: typography.caption, color: colors.textSecondary }}>{row.label}</span>
+                </div>
+              ))
+          }
         </div>
       </div>
 
@@ -425,8 +521,8 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
 
   const SC = {
     done:   { border: colors.borderSubtle,     bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
-    missed: { border: "rgba(249,115,22,0.35)", bg: "rgba(249,115,22,0.05)", hbg: "rgba(249,115,22,0.07)", badge: { label: "missed", bg: "rgba(124,45,18,0.5)",  color: "#fed7aa" } },
-    now:    { border: "rgba(61,154,143,0.45)",  bg: "rgba(61,154,143,0.04)", hbg: "rgba(61,154,143,0.07)",  badge: { label: "now",    bg: "rgba(61,154,143,0.18)", color: colors.accent } },
+    missed: { border: "rgba(249,115,22,0.35)", bg: "rgba(249,115,22,0.05)", hbg: "rgba(249,115,22,0.07)", badge: { label: "missed", bg: "rgba(124,45,18,0.5)",   color: "#fed7aa" } },
+    now:    { border: "rgba(61,154,143,0.45)", bg: "rgba(61,154,143,0.04)", hbg: "rgba(61,154,143,0.07)",  badge: { label: "now",    bg: "rgba(61,154,143,0.18)", color: colors.accent } },
     future: { border: colors.borderSubtle,     bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
   };
   const sc = SC[status];
@@ -493,31 +589,36 @@ export default function App() {
 // ── ProtocolApp ───────────────────────────────────────────────────────────────
 
 function ProtocolApp({ user, token, onSignOut }) {
-  const [supps, setSupps]                 = useState([]);
-  const [pillTimes, setPillTimes]         = useState({});
-  const [checked, setChecked]             = useState({});
-  const [loading, setLoading]             = useState(true);
-  const [viewDate, setViewDate]           = useState(TODAY);
-  const [editPillTime, setEditPillTime]   = useState(false);
-  const [tmpTime, setTmpTime]             = useState("");
-  const [formOpen, setFormOpen]           = useState(false);
-  const [editingId, setEditingId]         = useState(null);
-  const [form, setForm]                   = useState({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6] });
-  const [notifStatus, setNotifStatus]     = useState(notifOK() ? Notification.permission : "unsupported");
-  const [streak, setStreak]               = useState(0);
-  const [flashGreen, setFlashGreen]       = useState(false);
-  const [showSchedule, setShowSchedule]   = useState(false);
-  const [scheduleType, setScheduleType]   = useState("medication_anchored");
-  const [scheduleConfig, setScheduleConfig] = useState({ ...DEFAULT_CONFIG });
+  const [supps, setSupps]                   = useState([]);
+  const [pillTimes, setPillTimes]           = useState({});
+  const [checked, setChecked]               = useState({});
+  const [loading, setLoading]               = useState(true);
+  const [viewDate, setViewDate]             = useState(TODAY);
+  const [editPillTime, setEditPillTime]     = useState(false);
+  const [tmpTime, setTmpTime]               = useState("");
+  const [formOpen, setFormOpen]             = useState(false);
+  const [editingId, setEditingId]           = useState(null);
+  const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6] });
+  const [notifStatus, setNotifStatus]       = useState(notifOK() ? Notification.permission : "unsupported");
+  const [streak, setStreak]                 = useState(0);
+  const [flashGreen, setFlashGreen]         = useState(false);
+  const [showSchedule, setShowSchedule]     = useState(false);
+  const [scheduleMode, setScheduleMode]     = useState("medication");
+  const [scheduleConfig, setScheduleConfig] = useState({
+    ...DEFAULT_CONFIG,
+    fixed_times: { ...DEFAULT_CONFIG.fixed_times },
+  });
   const saveTimer = useRef(null);
 
-  const slotOffsets = deriveOffsets(scheduleConfig);
+  const slotOffsets = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
 
   const dk       = dateKey(viewDate);
   const isToday  = dateKey(viewDate) === dateKey(TODAY);
   const isFuture = startOfDay(viewDate) > TODAY;
   const pillTime = pillTimes[dk] || null;
   const viewDay  = viewDate.getDay();
+  // fixed mode: schedule always active, no anchor time needed
+  const effectivePillTime = scheduleMode === "fixed" ? (pillTime || "00:00") : pillTime;
 
   // Initial load
   useEffect(() => {
@@ -531,8 +632,15 @@ function ProtocolApp({ user, token, onSignOut }) {
       setSupps(s || []);
       if (log?.pill_time) setPillTimes(pt => ({ ...pt, [dk]: log.pill_time.slice(0, 5) }));
       if (log?.checked)   setChecked(log.checked);
-      if (sched?.offsets)       setScheduleConfig(sched.offsets);
-      if (sched?.schedule_type) setScheduleType(sched.schedule_type);
+      if (sched?.schedule_type) setScheduleMode(sched.schedule_type);
+      if (sched?.offsets) {
+        const saved = sched.offsets;
+        setScheduleConfig({
+          ...DEFAULT_CONFIG,
+          ...saved,
+          fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(saved.fixed_times || {}) },
+        });
+      }
       setLoading(false);
     })();
   }, [token]);
@@ -562,21 +670,29 @@ function ProtocolApp({ user, token, onSignOut }) {
   useEffect(() => {
     let s = 0; const d = new Date(TODAY);
     for (let i = 0; i < 30; i++) {
-      const ddk = dateKey(d), pt = pillTimes[ddk]; if (!pt) break;
-      const day = d.getDay();
+      const ddk = dateKey(d);
+      const pt  = pillTimes[ddk];
+      if (!pt && scheduleMode !== "fixed") break;
+      const day     = d.getDay();
       const allDone = CORE_SLOTS.every(sid => supps.filter(x => x.slots.includes(sid) && x.days.includes(day)).every(x => !!checked[`${ddk}_${sid}_${x.id}`]));
-      if (!allDone) break; s++; d.setDate(d.getDate() - 1);
+      if (!allDone) break;
+      s++; d.setDate(d.getDate() - 1);
     }
     setStreak(s);
-  }, [checked, pillTimes, supps]);
+  }, [checked, pillTimes, supps, scheduleMode]);
 
   const goDay         = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); };
   const setPillForDay = (t) => setPillTimes(pt => ({ ...pt, [dk]: t }));
 
   const getSlotTime = (sid) => {
-    if (!pillTime || sid === "injectable") return null;
+    if (sid === "injectable") return null;
+    if (scheduleMode === "fixed") {
+      const ft = scheduleConfig.fixed_times?.[sid];
+      return ft ? parseHHMM(ft) : null;
+    }
+    if (!pillTime) return null;
     if (sid === "rx") return parseHHMM(pillTime);
-    const offset = slotOffsets[sid];
+    const offset = slotOffsets?.[sid];
     if (offset === null || offset === undefined) return null;
     return addMins(parseHHMM(pillTime), offset);
   };
@@ -590,8 +706,10 @@ function ProtocolApp({ user, token, onSignOut }) {
     if (isFuture) return;
     const t = fmtTime(new Date());
     setPillForDay(t);
-    const rxSupps = supps.filter(s => s.slots.includes("rx") && s.days.includes(viewDay));
-    setChecked(c => { const n = { ...c }; rxSupps.forEach(s => { n[`${dk}_rx_${s.id}`] = true; }); return n; });
+    if (scheduleMode !== "wakeup") {
+      const rxSupps = supps.filter(s => s.slots.includes("rx") && s.days.includes(viewDay));
+      setChecked(c => { const n = { ...c }; rxSupps.forEach(s => { n[`${dk}_rx_${s.id}`] = true; }); return n; });
+    }
     scheduleNotifications(t, supps, viewDay, dk, slotOffsets);
     setFlashGreen(true); setTimeout(() => setFlashGreen(false), 600);
   };
@@ -633,8 +751,8 @@ function ProtocolApp({ user, token, onSignOut }) {
     closeForm();
   };
 
-  const saveSchedule = async (type, config) => {
-    await dbSaveSchedule({ user_id: user.id, schedule_type: type, offsets: config }, token);
+  const saveSchedule = async (mode, config) => {
+    await dbSaveSchedule({ user_id: user.id, schedule_type: mode, offsets: config }, token);
     setShowSchedule(false);
   };
 
@@ -661,14 +779,21 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Hero card */}
       <div style={heroCard}>
-        <div style={{ display: "flex", alignItems: "center", gap: spacing.md, marginBottom: pillTime ? spacing.md : 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing.md, marginBottom: (pillTime || scheduleMode === "fixed") ? spacing.md : 0 }}>
           <div style={{ flex: 1 }}>
-            {!pillTime ? (
+            {scheduleMode === "fixed" ? (
+              <div>
+                <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacing, textTransform: "uppercase", marginBottom: spacing.xxs }}>Fixed schedule</div>
+                <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{DAYS[viewDay]}</div>
+                {pct === 100 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
+                {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
+              </div>
+            ) : !pillTime ? (
               <div>
                 <button onClick={startDay} style={{ ...primaryButtonStyle, minHeight: spacing.xxl, background: isFuture ? colors.bgCardHover : colors.accent, color: isFuture ? colors.textMuted : colors.textPrimary, cursor: isFuture ? "default" : "pointer" }}>
-                  {isFuture ? "Future day" : "Start my day"}
+                  {isFuture ? "Future day" : (START_LABELS[scheduleMode] || "Start my day")}
                 </button>
-                {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>logs your anchor med · sets your daily schedule</div>}
+                {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>{START_SUBTITLES[scheduleMode] || "sets your daily schedule"}</div>}
               </div>
             ) : (
               <div>
@@ -725,11 +850,13 @@ function ProtocolApp({ user, token, onSignOut }) {
           </div>
         ) : SLOTS.map(slot => {
           const slotSupps = getSuppsForSlot(slot.id); if (!slotSupps.length) return null;
-          const hasOffset = slot.id === "rx"
-            ? !!pillTime
-            : slot.id !== "injectable" && slotOffsets[slot.id] !== null && slotOffsets[slot.id] !== undefined;
+          const hasOffset = scheduleMode === "fixed"
+            ? slot.id !== "injectable" && !!scheduleConfig.fixed_times?.[slot.id]
+            : slot.id === "rx"
+              ? !!pillTime
+              : slot.id !== "injectable" && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
           const timeLabel = slot.id === "injectable" ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
-          return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={pillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
+          return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
         })}
       </div>
 
@@ -739,8 +866,8 @@ function ProtocolApp({ user, token, onSignOut }) {
       </Modal>
       <Modal open={showSchedule} onClose={() => setShowSchedule(false)}>
         <ScheduleModal
-          scheduleType={scheduleType}
-          setScheduleType={setScheduleType}
+          scheduleMode={scheduleMode}
+          setScheduleMode={setScheduleMode}
           scheduleConfig={scheduleConfig}
           setScheduleConfig={setScheduleConfig}
           onSave={saveSchedule}
