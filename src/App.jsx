@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPA_URL = "https://yahimlivfieuknagusxp.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaGltbGl2ZmlldWtuYWd1c3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYwNDIsImV4cCI6MjA5MzM2MjA0Mn0._5_t5k1NCAHAFHEz0clqD8fSxsNCMzlqBoRPSmD7wxs";
-const ANTHROPIC_KEY = "YOUR_ANTHROPIC_KEY_HERE";
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY;
 const ANTHROPIC_HEADERS = {
   "Content-Type": "application/json",
   "x-api-key": ANTHROPIC_KEY,
