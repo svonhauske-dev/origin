@@ -27,10 +27,9 @@ async function signUp(email, password) {
     headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
     body: JSON.stringify({ email, password })
   });
-  if (res.ok) {
-    const d = await res.json();
-    if (d.access_token) { localStorage.setItem("sb_token", d.access_token); return d.user; }
-  }
+  const d = await res.json();
+  console.log("signup response:", JSON.stringify(d));
+  if (res.ok && d.access_token) { localStorage.setItem("sb_token", d.access_token); return d.user; }
   return null;
 }
 
