@@ -72,16 +72,16 @@ const dbUpsertLog  = (log, t) => supa("POST",   "/rest/v1/daily_logs?on_conflict
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const SLOTS = [
-  { id: "rx",            label: "Start my day",            sublabel: "Rx only · empty stomach",       icon: "★", color: colors.slotRx },
-  { id: "fasted",        label: "Empty stomach",           sublabel: "30 min post-Rx · before eating", icon: "○", color: colors.slotFasted },
-  { id: "pre_breakfast", label: "30 min before breakfast", sublabel: "Weight Loss Pack · enzymes",     icon: "◎", color: colors.slotPreBreakfast },
-  { id: "breakfast",     label: "With breakfast",          sublabel: "Fat-soluble · need food",        icon: "●", color: colors.slotBreakfast },
-  { id: "pre_lunch",     label: "30 min before lunch",     sublabel: "T3 2nd dose · empty stomach",   icon: "◎", color: colors.slotPreLunch },
-  { id: "lunch",         label: "With lunch",              sublabel: "Thyroid complex 2nd dose",       icon: "●", color: colors.slotLunch },
-  { id: "pre_dinner",    label: "Before dinner",           sublabel: "Enzymes only",                   icon: "◎", color: colors.slotPreDinner },
-  { id: "dinner",        label: "With dinner",             sublabel: "2nd doses · fat-soluble",        icon: "●", color: colors.slotDinner },
-  { id: "after_dinner",  label: "After dinner",            sublabel: "Wind-down · before bed",         icon: "◑", color: colors.slotAfterDinner },
-  { id: "injectable",    label: "Injectables",             sublabel: "Protocol · subcutaneous",        icon: "⊕", color: colors.slotInjectable },
+  { id: "rx",            label: "Anchor Medication",  sublabel: "Empty stomach · first thing",  icon: "★", color: colors.slotRx },
+  { id: "fasted",        label: "Fasted",             sublabel: "Before eating",                icon: "○", color: colors.slotFasted },
+  { id: "pre_breakfast", label: "Before Breakfast",   sublabel: "30 min before eating",         icon: "◎", color: colors.slotPreBreakfast },
+  { id: "breakfast",     label: "With Breakfast",     sublabel: "With food",                    icon: "●", color: colors.slotBreakfast },
+  { id: "pre_lunch",     label: "Before Lunch",       sublabel: "30 min before eating",         icon: "◎", color: colors.slotPreLunch },
+  { id: "lunch",         label: "With Lunch",         sublabel: "With food",                    icon: "●", color: colors.slotLunch },
+  { id: "pre_dinner",    label: "Before Dinner",      sublabel: "30 min before eating",         icon: "◎", color: colors.slotPreDinner },
+  { id: "dinner",        label: "With Dinner",        sublabel: "With food",                    icon: "●", color: colors.slotDinner },
+  { id: "after_dinner",  label: "After Dinner",       sublabel: "Before bed",                   icon: "◑", color: colors.slotAfterDinner },
+  { id: "injectable",    label: "Injectables",        sublabel: "Subcutaneous",                 icon: "⊕", color: colors.slotInjectable },
 ];
 
 const SLOT_OFFSETS = {
@@ -100,7 +100,6 @@ const addMins      = (d, m) => new Date(d.getTime() + m * 60000);
 const parseHHMM    = (s) => { const [h, m] = s.split(":"); const d = new Date(); d.setHours(+h, +m, 0, 0); return d; };
 const dateKey      = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const startOfDay   = (d) => { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; };
-const getMonthYear = () => new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 const notifOK      = () => "Notification" in window;
 
 const TODAY = startOfDay(new Date());
@@ -150,7 +149,7 @@ function SignIn({ onSignIn }) {
       <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: spacing.md }}>💊</div>
         <div style={{ fontSize: typography.hero, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: "-0.02em", marginBottom: spacing.xs }}>Protocol Tracker</div>
-        <div style={{ fontSize: typography.caption, color: colors.textMuted, marginBottom: spacing.xl, lineHeight: 1.7 }}>Your supplement schedule,<br />anchored to your morning Rx.</div>
+        <div style={{ fontSize: typography.caption, color: colors.textMuted, marginBottom: spacing.xl, lineHeight: 1.7 }}>Your supplement schedule,<br />built around your life.</div>
         <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" type="email" style={si} />
         <input value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" type="password" style={{ ...si, marginTop: spacing.xs }} />
         <button onClick={handleSubmit} disabled={loading} style={{ ...primaryButtonStyle, marginTop: spacing.md, cursor: loading ? "default" : "pointer" }}>
@@ -442,7 +441,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <button onClick={() => goDay(-1)} style={navArrow}>‹</button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
-          <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>PROTOCOL · {getMonthYear().toUpperCase()}</div>
+          <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>MY PROTOCOL</div>
           <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
           {!isToday && <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxs }}>tap to return to today</div>}
         </div>
@@ -458,11 +457,11 @@ function ProtocolApp({ user, token, onSignOut }) {
                 <button onClick={startDay} style={{ ...primaryButtonStyle, minHeight: spacing.xxl, background: isFuture ? colors.bgCardHover : colors.accent, color: isFuture ? colors.textMuted : colors.textPrimary, cursor: isFuture ? "default" : "pointer" }}>
                   {isFuture ? "Future day" : "Start my day"}
                 </button>
-                {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>logs your Rx meds · sets full schedule</div>}
+                {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>logs your anchor med · sets your daily schedule</div>}
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacing, textTransform: "uppercase", marginBottom: spacing.xxs }}>Protocol started</div>
+                <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacing, textTransform: "uppercase", marginBottom: spacing.xxs }}>Started at</div>
                 {editPillTime ? (
                   <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
                     <input type="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ fontSize: typography.body, padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.sm, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, color: colors.textPrimary }} />
@@ -511,7 +510,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
             <div style={{ fontSize: typography.hero, marginBottom: spacing.md }}>💊</div>
             <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
-            <div style={{ fontSize: typography.caption, color: colors.textMuted, lineHeight: 1.7, marginBottom: spacing.lg }}>Add your medications and supplements above.<br />The schedule anchors to when you take your first Rx each morning.</div>
+            <div style={{ fontSize: typography.caption, color: colors.textMuted, lineHeight: 1.7, marginBottom: spacing.lg }}>Add your medications and supplements. Your schedule builds from when you take your first med each morning.</div>
             <button onClick={openAdd} style={{ ...primaryButtonStyle, minHeight: touch.min }}>Add first supplement</button>
           </div>
         ) : SLOTS.map(slot => {
