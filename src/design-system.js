@@ -8,6 +8,9 @@ export const colors = {
 
   // Backgrounds
   bgBase:        "#080b14",
+  bgGradientMid: "#0a0f1e",       // gradient middle stop
+  bgGradientEnd: "#060a12",       // gradient end stop
+  bgBackdrop:    "rgba(0,0,0,0.78)", // modal/overlay backdrop
   bgCard:        "rgba(255,255,255,0.03)",
   bgCardHover:   "rgba(255,255,255,0.05)",
   bgInner:       "#0d0f1a",
@@ -20,24 +23,22 @@ export const colors = {
   textMuted:     "#4a5568",
   textDone:      "#4a5568",
 
+  // Text (extended)
+  textDisabled: "rgba(255,255,255,0.45)",
+  textFaint:    "rgba(255,255,255,0.25)", // very faint text (date sublabel)
+
   // Borders
   borderStrong:  "rgba(255,255,255,0.12)",
   borderBase:    "rgba(255,255,255,0.08)",
   borderSubtle:  "rgba(255,255,255,0.05)",
 
   // Semantic
-  success:    "#4ade80",
-  successDim: "rgba(74,222,128,0.12)",
-  danger:     "#f87171",
-  dangerDim:  "rgba(248,113,113,0.08)",
-  info:       "#60a5fa",
-  infoDim:    "rgba(96,165,250,0.08)",
-  warn:       "#fb923c",
-  warnDim:    "rgba(251,146,60,0.08)",
-  warnBorder: "rgba(251,146,60,0.18)",
-
-  // Text
-  textDisabled: "rgba(255,255,255,0.45)",
+  danger:       "#f87171",
+  dangerDim:    "rgba(248,113,113,0.08)",
+  dangerBorder: "rgba(248,113,113,0.25)", // delete button border
+  warn:         "#fb923c",
+  warnDim:      "rgba(251,146,60,0.08)",
+  warnBorder:   "rgba(251,146,60,0.18)",
 
   // Surfaces
   cardSubtle: "rgba(255,255,255,0.02)",
@@ -68,6 +69,7 @@ export const colors = {
 };
 
 export const spacing = {
+  xxxs: 2,   // tighter than xxs, for 2px margins
   xxs:  4,
   xs:   8,
   sm:   12,
@@ -75,7 +77,6 @@ export const spacing = {
   lg:   24,
   xl:   32,
   xxl:  48,
-  px: (n) => `${n}px`,
 };
 
 export const radius = {
@@ -89,12 +90,12 @@ export const radius = {
 
 export const typography = {
   // Sizes
-  label:   11,
-  caption: 13,
-  body:    15,
-  title:   17,
-  heading: 22,
-  hero:    28,
+  caption2: 10,  // smaller than label, for very compact sublabels
+  label:    11,
+  caption:  13,
+  body:     15,
+  title:    17,
+  hero:     28,
 
   // Weights
   regular:  400,
@@ -103,11 +104,19 @@ export const typography = {
   bold:     700,
 
   // Letter spacing
-  labelSpacing: "0.08em",
+  labelSpacingTight: "0.04em", // compact labels
+  labelSpacing:      "0.08em",
+  labelSpacingWide:  "0.1em",  // header eyebrows
 };
 
 export const touch = {
   min: 44,
+};
+
+export const layout = {
+  closeButton:      32, // close button (✕) width/height
+  modeButtonHeight: 64, // schedule mode grid button height
+  segHeight:        40, // segmented control height (intentionally below touch.min)
 };
 
 // ── Reusable style objects ──────────────────────────────────────────────────────

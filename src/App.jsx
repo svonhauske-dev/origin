@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  colors, spacing, radius, typography, touch,
+  colors, spacing, radius, typography, touch, layout,
   cardStyle, inputStyle, labelStyle, primaryButtonStyle, ghostButtonStyle, badgeStyle,
 } from "./design-system";
 
@@ -227,7 +227,7 @@ function SignIn({ onSignIn }) {
   const si = { ...inputStyle, textAlign: "center", fontSize: 16 };
 
   return (
-    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", background: `linear-gradient(160deg,${colors.bgBase} 0%,#0a0f1e 50%,#060a12 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }}>
+    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", background: `linear-gradient(160deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }}>
       <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: spacing.md }}>💊</div>
         <div style={{ fontSize: typography.hero, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: "-0.02em", marginBottom: spacing.xs }}>Protocol Tracker</div>
@@ -250,7 +250,7 @@ function SignIn({ onSignIn }) {
 
 function Loader({ text }) {
   return (
-    <div style={{ background: `linear-gradient(160deg,${colors.bgBase} 0%,#0a0f1e 50%,#060a12 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: `linear-gradient(160deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ fontSize: typography.caption, color: colors.textMuted }}>{text}</div>
     </div>
   );
@@ -278,7 +278,7 @@ function Modal({ open, onClose, children }) {
 
   if (!open) return null;
   return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.78)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }} onClick={onClose}>
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: colors.bgBackdrop, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: colors.bgModal, borderRadius: radius.xl, padding: spacing.lg, maxHeight: "86vh", overflowY: "auto", boxSizing: "border-box", border: `1px solid ${colors.borderBase}` }}>
         {children}
       </div>
@@ -295,7 +295,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg }}>
         <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{editingId ? "Edit supplement" : "New supplement"}</span>
-        <button onClick={onCancel} style={{ width: 32, height: 32, borderRadius: radius.full, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, cursor: "pointer", fontSize: typography.caption, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}>✕</button>
+        <button onClick={onCancel} style={{ width: layout.closeButton, height: layout.closeButton, borderRadius: radius.full, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, cursor: "pointer", fontSize: typography.caption, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}>✕</button>
       </div>
       {[["Name", "name", "e.g. Magnesium Glycinate"], ["Dose", "dose", "e.g. 2 caps (300 mg)"], ["Notes", "notes", "e.g. Thorne · with food"]].map(([lbl, key, ph]) => (
         <div key={key} style={{ marginBottom: spacing.md }}>
@@ -381,7 +381,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
           ); })}
         </div>
       </div>
-      {editingId && <button onClick={onDelete} style={{ width: "100%", padding: `${spacing.sm}px ${spacing.md}px`, minHeight: touch.min, borderRadius: radius.lg, cursor: "pointer", background: "transparent", color: colors.danger, border: `1px solid rgba(248,113,113,0.25)`, fontSize: typography.body, fontWeight: typography.medium, marginBottom: spacing.xs }}>Delete supplement</button>}
+      {editingId && <button onClick={onDelete} style={{ width: "100%", padding: `${spacing.sm}px ${spacing.md}px`, minHeight: touch.min, borderRadius: radius.lg, cursor: "pointer", background: "transparent", color: colors.danger, border: `1px solid ${colors.dangerBorder}`, fontSize: typography.body, fontWeight: typography.medium, marginBottom: spacing.xs }}>Delete supplement</button>}
       <button onClick={onSubmit} style={primaryButtonStyle}>{editingId ? "Save changes" : "Add supplement"}</button>
     </div>
   );
@@ -450,7 +450,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
     fontSize: typography.caption, background: on ? colors.accentDim : "transparent",
     color: on ? colors.accent : colors.textSecondary,
     border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`,
-    fontWeight: on ? typography.semibold : typography.regular, minHeight: 40,
+    fontWeight: on ? typography.semibold : typography.regular, minHeight: layout.segHeight,
   });
 
   return (
@@ -458,7 +458,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg }}>
         <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>Daily Schedule</span>
-        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: radius.full, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, cursor: "pointer", fontSize: typography.caption, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}>✕</button>
+        <button onClick={onClose} style={{ width: layout.closeButton, height: layout.closeButton, borderRadius: radius.full, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, cursor: "pointer", fontSize: typography.caption, display: "flex", alignItems: "center", justifyContent: "center", color: colors.textSecondary }}>✕</button>
       </div>
 
       {/* 2×2 mode grid */}
@@ -468,7 +468,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
           {MODES.map(m => {
             const on = localMode === m.id;
             return (
-              <button key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.md, cursor: "pointer", background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, display: "flex", flexDirection: "column", gap: 4, minHeight: 64 }}>
+              <button key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.md, cursor: "pointer", background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight }}>
                 <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? colors.accent : colors.textPrimary }}>{m.title}</span>
                 <span style={{ fontSize: typography.label, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</span>
               </button>
@@ -506,7 +506,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
               <label style={labelStyle}>Start time</label>
               <input type="time" value={localTime} onChange={e => setLocalTime(e.target.value)}
                 style={{ fontSize: 16, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.md,
-                  border: `1px solid ${colors.borderStrong}`, background: colors.bgInner,
+                  border: `1px solid ${colors.borderStrong}`, background: colors.bgInput,
                   color: colors.textPrimary, width: "100%", boxSizing: "border-box", outline: "none" }} />
             </div>
           )}
@@ -941,22 +941,22 @@ function ProtocolApp({ user, token, onSignOut }) {
   if (loading) return <Loader text="Loading your protocol…" />;
 
   return (
-    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", color: colors.textPrimary, maxWidth: 480, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: `linear-gradient(160deg,${colors.bgBase} 0%,#0a0f1e 50%,#060a12 100%)`, minHeight: "100vh" }}>
+    <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", color: colors.textPrimary, maxWidth: 480, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: `linear-gradient(160deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`, minHeight: "100vh" }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <button onClick={() => goDay(-1)} style={navArrow}>‹</button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
-          <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>MY PROTOCOL</div>
+          <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs }}>MY PROTOCOL</div>
           <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2, minHeight: 14, letterSpacing: "0.04em" }}>{isToday ? shortDate : "tap to return to today"}</div>
+          <div style={{ fontSize: typography.caption2, color: colors.textFaint, marginTop: 2, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
         </div>
         <button onClick={() => goDay(1)} style={navArrow}>›</button>
       </div>
 
       {/* Add row */}
       <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
-        <button onClick={openAdd} style={{ flex: 1, padding: `${spacing.sm}px`, borderRadius: radius.lg, cursor: "pointer", border: `1px dashed ${colors.accentBorder}`, background: colors.statusNowBg, fontSize: typography.caption, fontWeight: typography.semibold, color: colors.accent, height: touch.min, minHeight: touch.min, maxHeight: touch.min, letterSpacing: "-0.01em", WebkitTapHighlightColor: "transparent" }}>+ Add Supplement</button>
+        <button onClick={openAdd} style={{ flex: 1, padding: `${spacing.sm}px`, borderRadius: radius.lg, cursor: "pointer", border: `1px dashed ${colors.accentBorder}`, background: colors.accentDim, fontSize: typography.caption, fontWeight: typography.semibold, color: colors.accent, height: touch.min, minHeight: touch.min, maxHeight: touch.min, letterSpacing: "-0.01em", WebkitTapHighlightColor: "transparent" }}>+ Add Supplement</button>
         <button onClick={() => setShowSchedule(true)} style={{ flex: 1, padding: `${spacing.sm}px`, borderRadius: radius.lg, cursor: "pointer", border: `1px solid ${colors.borderBase}`, background: colors.bgCard, fontSize: typography.caption, fontWeight: typography.semibold, color: colors.textDisabled, height: touch.min, minHeight: touch.min, maxHeight: touch.min, letterSpacing: "-0.01em", WebkitTapHighlightColor: "transparent" }}>Edit Schedule</button>
       </div>
 
@@ -978,7 +978,7 @@ function ProtocolApp({ user, token, onSignOut }) {
                 </div>
                 {editPillTime && pillTime ? (
                   <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
-                    <input type="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ fontSize: 16, padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.sm, border: `1px solid ${colors.borderStrong}`, background: colors.bgCardHover, color: colors.textPrimary }} />
+                    <input type="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ fontSize: 16, padding: `${spacing.sm}px ${spacing.md}px`, borderRadius: radius.sm, border: `1px solid ${colors.borderStrong}`, background: colors.bgInput, color: colors.textPrimary }} />
                     <button onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }} style={{ ...ghostButtonStyle, width: "auto", borderRadius: radius.sm }}>Save</button>
                   </div>
                 ) : (
