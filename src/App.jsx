@@ -21,18 +21,24 @@ async function getSession() {
   return null;
 }
 
-async function signInWithMagicLink(email) {
-  const res = await fetch(`${SUPA_URL}/auth/v1/otp`, {
-    method: "POST", headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
-    body: JSON.stringify({ email, create_user: true })
+async function signUp(email, password) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
+    body: JSON.stringify({ email, password })
   });
-  return res.ok;
+  if (res.ok) {
+    const d = await res.json();
+    if (d.access_token) { localStorage.setItem("sb_token", d.access_token); return d.user; }
+  }
+  return null;
 }
 
-async function verifyOtp(email, token) {
-  const res = await fetch(`${SUPA_URL}/auth/v1/verify`, {
-    method: "POST", headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
-    body: JSON.stringify({ email, token, type: "email" })
+async function signInPassword(email, password) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
+    body: JSON.stringify({ email, password })
   });
   if (res.ok) {
     const d = await res.json();
@@ -130,27 +136,20 @@ const labelStyle = { fontSize:11, color:"#8b90a0", marginBottom:6, display:"bloc
 
 function SignIn({ onSignIn }) {
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState("email");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState("signin");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
-  const handleSend = async () => {
-    if (!email.trim()) return;
+  const handleSubmit = async () => {
+    if (!email.trim() || !password.trim()) return;
     setLoading(true); setMsg("");
-    const ok = await signInWithMagicLink(email.trim());
-    setLoading(false);
-    if (ok) { setStep("otp"); setMsg("Check your email for a 6-digit code."); }
-    else setMsg("Something went wrong — check your email and try again.");
-  };
-
-  const handleVerify = async () => {
-    if (!otp.trim()) return;
-    setLoading(true); setMsg("");
-    const user = await verifyOtp(email.trim(), otp.trim());
+    const user = mode === "signin"
+      ? await signInPassword(email.trim(), password)
+      : await signUp(email.trim(), password);
     setLoading(false);
     if (user) onSignIn(user);
-    else setMsg("Invalid or expired code — try again.");
+    else setMsg(mode === "signin" ? "Invalid email or password." : "Could not create account — try again.");
   };
 
   const si = { ...inputStyle, textAlign:"center", fontSize:18 };
@@ -161,21 +160,15 @@ function SignIn({ onSignIn }) {
         <div style={{fontSize:40,marginBottom:16}}>💊</div>
         <div style={{fontSize:26,fontWeight:700,color:"#fff",letterSpacing:"-0.02em",marginBottom:8}}>Protocol Tracker</div>
         <div style={{fontSize:14,color:"#4a5568",marginBottom:40,lineHeight:1.7}}>Your supplement schedule,<br/>anchored to your morning Rx.</div>
-        {step === "email" && <>
-          <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSend()} placeholder="your@email.com" type="email" style={si}/>
-          <button onClick={handleSend} disabled={loading} style={{width:"100%",marginTop:12,padding:"15px",background:"#4ade80",color:"#0a0a0f",border:"none",borderRadius:12,fontSize:16,fontWeight:700,cursor:loading?"default":"pointer"}}>
-            {loading ? "Sending…" : "Send magic link"}
-          </button>
-        </>}
-        {step === "otp" && <>
-          <div style={{fontSize:13,color:"#4ade80",marginBottom:14}}>Code sent to {email}</div>
-          <input value={otp} onChange={e=>setOtp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleVerify()} placeholder="6-digit code" type="text" inputMode="numeric" maxLength={6} style={si}/>
-          <button onClick={handleVerify} disabled={loading} style={{width:"100%",marginTop:12,padding:"15px",background:"#4ade80",color:"#0a0a0f",border:"none",borderRadius:12,fontSize:16,fontWeight:700,cursor:loading?"default":"pointer"}}>
-            {loading ? "Verifying…" : "Sign in"}
-          </button>
-          <button onClick={()=>{setStep("email");setMsg("");}} style={{marginTop:10,background:"none",border:"none",color:"#4a5568",fontSize:13,cursor:"pointer"}}>← Back</button>
-        </>}
-        {msg && <div style={{marginTop:14,fontSize:13,color:msg.startsWith("Check")?"#4ade80":"#f87171"}}>{msg}</div>}
+        <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} placeholder="your@email.com" type="email" style={si}/>
+        <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} placeholder="password" type="password" style={{...si,marginTop:10}}/>
+        <button onClick={handleSubmit} disabled={loading} style={{width:"100%",marginTop:12,padding:"15px",background:"#4ade80",color:"#0a0a0f",border:"none",borderRadius:12,fontSize:16,fontWeight:700,cursor:loading?"default":"pointer"}}>
+          {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+        </button>
+        <button onClick={()=>{setMode(m=>m==="signin"?"signup":"signin");setMsg("");}} style={{marginTop:12,background:"none",border:"none",color:"#4a5568",fontSize:13,cursor:"pointer"}}>
+          {mode === "signin" ? "No account? Sign up" : "Have an account? Sign in"}
+        </button>
+        {msg && <div style={{marginTop:14,fontSize:13,color:"#f87171"}}>{msg}</div>}
       </div>
     </div>
   );
