@@ -62,7 +62,7 @@ function signOut() { localStorage.removeItem("sb_token"); }
 
 const dbGetSupps     = (t)       => supa("GET",    "/rest/v1/supplements?select=*&order=created_at.asc", null, t);
 const dbAddSupp      = (s, t)    => supa("POST",   "/rest/v1/supplements", s, t);
-const dbUpdateSupp   = (s, t)    => supa("PATCH",  `/rest/v1/supplements?id=eq.${s.id}`, { name: s.name, dose: s.dose, notes: s.notes, slots: s.slots, days: s.days, category: s.category, updated_at: new Date().toISOString() }, t);
+const dbUpdateSupp   = (s, t)    => supa("PATCH",  `/rest/v1/supplements?id=eq.${s.id}`, { name: s.name, dose: s.dose, notes: s.notes, slots: s.slots, days: s.days, category: s.category, timePreference: s.timePreference, updated_at: new Date().toISOString() }, t);
 const dbDeleteSupp   = (id, t)   => supa("DELETE", `/rest/v1/supplements?id=eq.${id}`, null, t);
 const dbGetLog       = (date, t) => supa("GET",    `/rest/v1/daily_logs?select=*&log_date=eq.${date}`, null, t).then(r => r?.[0] || null);
 const dbUpsertLog    = (log, t)  => supa("POST",   "/rest/v1/daily_logs?on_conflict=user_id,log_date", log, t);
@@ -305,7 +305,13 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
           {CATEGORIES.map(cat => {
             const on = form.category === cat;
             return (
-              <button key={cat} onClick={() => setForm(f => ({ ...f, category: cat }))}
+              <button key={cat} onClick={() => {
+                if (cat === "Injectable") {
+                  setForm(f => ({ ...f, category: cat, slots: ["injectable"], timePreference: f.timePreference || "Anytime" }));
+                } else {
+                  setForm(f => ({ ...f, category: cat, slots: [], timePreference: "Anytime" }));
+                }
+              }}
                 style={{ flex: 1, padding: `${spacing.xs}px`, borderRadius: radius.md, cursor: "pointer",
                   fontSize: typography.caption, background: on ? colors.accent : "transparent",
                   color: on ? colors.textPrimary : colors.textSecondary,
@@ -318,14 +324,49 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
           })}
         </div>
       </div>
-      <div style={{ marginBottom: spacing.lg }}>
-        <label style={labelStyle}>When to take it</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-          {SLOTS.map(slot => { const on = form.slots.includes(slot.id); return (
-            <button key={slot.id} onClick={() => toggleSlot(slot.id)} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: on ? slot.color + "22" : "transparent", color: on ? slot.color : colors.textSecondary, border: `1px solid ${on ? slot.color : colors.borderStrong}`, fontWeight: on ? typography.semibold : typography.regular, minHeight: touch.min, WebkitTapHighlightColor: "transparent" }}>{slot.label}</button>
-          ); })}
+      {form.category === "Injectable" ? (
+        <div style={{ marginBottom: spacing.md }}>
+          <label style={labelStyle}>When to take it</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
+            {["Morning", "Midday", "Evening", "Before Bed", "Anytime"].map(pref => {
+              const on = form.timePreference === pref;
+              return (
+                <button key={pref} onClick={() => setForm(f => ({ ...f, timePreference: pref }))}
+                  style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.full,
+                    cursor: "pointer", fontSize: typography.caption,
+                    background: on ? colors.accentDim : "transparent",
+                    color: on ? colors.accent : colors.textSecondary,
+                    border: `1px solid ${on ? colors.accent : colors.borderStrong}`,
+                    fontWeight: on ? typography.semibold : typography.regular,
+                    minHeight: touch.min, WebkitTapHighlightColor: "transparent" }}>
+                  {pref}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div style={{ marginBottom: spacing.md }}>
+          <label style={labelStyle}>When to take it</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
+            {SLOTS.filter(s => s.id !== "injectable").map(slot => {
+              const on = form.slots.includes(slot.id);
+              return (
+                <button key={slot.id} onClick={() => toggleSlot(slot.id)}
+                  style={{ fontSize: typography.label, padding: `${spacing.xs}px ${spacing.sm}px`,
+                    borderRadius: radius.full, cursor: "pointer",
+                    background: on ? colors.accentDim : "transparent",
+                    color: on ? colors.accent : colors.textSecondary,
+                    border: `1px solid ${on ? colors.accent : colors.borderStrong}`,
+                    fontWeight: on ? typography.semibold : typography.regular,
+                    minHeight: touch.min, WebkitTapHighlightColor: "transparent" }}>
+                  {slot.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Which days</label>
         <div style={{ display: "flex", gap: spacing.xs }}>
@@ -719,11 +760,15 @@ function ProtocolApp({ user, token, onSignOut }) {
         dbGetLog(dk, token),
         dbGetSchedule(token),
       ]);
-      const migrated = (s || []).map(supp =>
-        supp.slots?.includes("fasted")
+      const migrated = (s || []).map(supp => {
+        let out = supp.slots?.includes("fasted")
           ? { ...supp, slots: supp.slots.map(sl => sl === "fasted" ? "pre_breakfast" : sl) }
-          : supp
-      );
+          : supp;
+        if ((out.category === "Injectable" || out.category === "Topical") && !out.timePreference) {
+          out = { ...out, timePreference: "Anytime" };
+        }
+        return out;
+      });
       setSupps(migrated);
       if (log?.pill_time) setPillTimes(pt => ({ ...pt, [dk]: log.pill_time.slice(0, 5) }));
       if (log?.checked)   setChecked(log.checked);
@@ -844,8 +889,8 @@ function ProtocolApp({ user, token, onSignOut }) {
   });
   const pct = coreTotal > 0 ? Math.round((coreDone / coreTotal) * 100) : 0;
 
-  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6], category: "Oral" }); setFormOpen(true); };
-  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral" }); setFormOpen(true); };
+  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6], category: "Oral", timePreference: "Anytime" }); setFormOpen(true); };
+  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", timePreference: supp.timePreference || "Anytime" }); setFormOpen(true); };
   const closeForm = () => { setFormOpen(false); setEditingId(null); };
 
   const submitForm = async () => {
@@ -855,7 +900,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       await dbUpdateSupp({ ...form, category: cat, id: editingId }, token);
       setSupps(s => s.map(x => x.id === editingId ? { ...form, category: cat, id: editingId } : x));
     } else {
-      const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: form.days, category: cat, user_id: user.id }, token);
+      const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: form.days, category: cat, timePreference: form.timePreference || "Anytime", user_id: user.id }, token);
       if (rows?.[0]) setSupps(s => [...s, rows[0]]);
     }
     closeForm();
@@ -1017,6 +1062,9 @@ function ProtocolApp({ user, token, onSignOut }) {
                   <div style={{ fontSize: typography.body, color: done ? colors.textMuted : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
                     {supp.name}
                     <span style={{ fontSize: typography.label, color: colors.textMuted, background: colors.bgCardHover, borderRadius: radius.xs, padding: "1px 5px", letterSpacing: "0.04em", flexShrink: 0 }}>{supp.category}</span>
+                    {supp.category === "Injectable" && supp.timePreference && supp.timePreference !== "Anytime" && (
+                      <span style={{ fontSize: typography.label, color: colors.textMuted, background: colors.bgCardHover, borderRadius: radius.xs, padding: `1px ${spacing.xs}px`, letterSpacing: "0.04em", flexShrink: 0 }}>{supp.timePreference}</span>
+                    )}
                   </div>
                   <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2 }}>
                     {supp.dose}{supp.notes ? " · " + supp.notes : ""}
