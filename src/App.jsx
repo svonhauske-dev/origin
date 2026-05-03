@@ -5,6 +5,7 @@ import {
 } from "./design-system";
 import { Settings } from "lucide-react";
 import Button from "./components/Button";
+import BottomSheet from "./components/BottomSheet";
 import SettingsModal from "./components/SettingsModal";
 
 const SUPA_URL = "https://yahimlivfieuknagusxp.supabase.co";
@@ -261,36 +262,6 @@ function Loader({ text }) {
   );
 }
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
-
-function Modal({ open, onClose, children }) {
-  useEffect(function() {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-    }
-    return function() {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-    };
-  }, [open]);
-
-  if (!open) return null;
-  return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: colors.bgBackdrop, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: colors.bgModal, borderRadius: radius.xl, padding: spacing.lg, maxHeight: "86vh", overflowY: "auto", boxSizing: "border-box", border: `1px solid ${colors.borderBase}` }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 // ── EditForm ──────────────────────────────────────────────────────────────────
 
 function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
@@ -298,10 +269,6 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
   const toggleDay  = (i)   => setForm(f => ({ ...f, days:  f.days.includes(i)   ? f.days.filter(x => x !== i)   : [...f.days, i]   }));
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg }}>
-        <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>{editingId ? "Edit supplement" : "New supplement"}</span>
-        <Button variant="icon" aria-label="Close" onClick={onCancel}>✕</Button>
-      </div>
       {[["Name", "name", "e.g. Magnesium Glycinate"], ["Dose", "dose", "e.g. 2 caps (300 mg)"], ["Notes", "notes", "e.g. Thorne · with food"]].map(([lbl, key, ph]) => (
         <div key={key} style={{ marginBottom: spacing.md }}>
           <label style={labelStyle}>{lbl}</label>
@@ -360,9 +327,9 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
       )}
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Which days</label>
-        <div style={{ display: "flex", gap: spacing.xs }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
           {DAYS.map((d, i) => { const on = form.days.includes(i); return (
-            <button key={i} onClick={() => toggleDay(i)} style={{ width: touch.min, height: touch.min, borderRadius: radius.full, fontSize: typography.caption, cursor: "pointer", fontWeight: typography.semibold, background: on ? colors.accent : "transparent", color: on ? colors.textPrimary : colors.textSecondary, border: `1px solid ${on ? colors.accent : colors.borderStrong}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
+            <button key={i} onClick={() => toggleDay(i)} style={{ width: 36, height: 36, borderRadius: radius.full, fontSize: typography.label, cursor: "pointer", fontWeight: typography.semibold, background: on ? colors.accent : "transparent", color: on ? colors.textPrimary : colors.textSecondary, border: `1px solid ${on ? colors.accent : colors.borderStrong}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
           ); })}
         </div>
       </div>
@@ -451,12 +418,6 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg }}>
-        <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Daily Schedule</span>
-        <Button variant="icon" aria-label="Close" onClick={onClose}>✕</Button>
-      </div>
-
       {/* 2×2 mode grid */}
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Schedule type</label>
@@ -927,7 +888,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel   = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate  = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const heroCard   = { ...cardStyle, padding: spacing.sm, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" };
+  const heroCard   = { ...cardStyle, padding: `${spacing.sm}px ${spacing.md}px`, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" };
 
   // Hero state helpers
   const isConsistent   = anchorBehavior === "consistent";
@@ -941,7 +902,7 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Greeting */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm }}>
-        <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Hello</span>
+        <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Hello</span>
         <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)} style={{ width: touch.min, height: touch.min }}>
           <Settings size={18} />
         </Button>
@@ -1045,11 +1006,12 @@ function ProtocolApp({ user, token, onSignOut }) {
         onEnableNotifications={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }}
         onSignOut={onSignOut}
       />
-      <Modal open={formOpen} onClose={closeForm}>
+      <BottomSheet open={formOpen} onClose={closeForm} title={editingId ? "Edit supplement" : "New supplement"}>
         <EditForm form={form} setForm={setForm} editingId={editingId} onSubmit={submitForm} onCancel={closeForm} onDelete={deleteSupp} />
-      </Modal>
-      <Modal open={showSchedule} onClose={() => setShowSchedule(false)}>
+      </BottomSheet>
+      <BottomSheet open={showSchedule} onClose={() => setShowSchedule(false)} title="Daily Schedule">
         <ScheduleModal
+          key={String(showSchedule)}
           scheduleMode={scheduleMode}
           setScheduleMode={setScheduleMode}
           scheduleConfig={scheduleConfig}
@@ -1059,7 +1021,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           onSave={saveSchedule}
           onClose={() => setShowSchedule(false)}
         />
-      </Modal>
+      </BottomSheet>
     </div>
   );
 }
