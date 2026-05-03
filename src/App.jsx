@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPA_URL = "https://yahimlivfieuknagusxp.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaGltbGl2ZmlldWtuYWd1c3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYwNDIsImV4cCI6MjA5MzM2MjA0Mn0._5_t5k1NCAHAFHEz0clqD8fSxsNCMzlqBoRPSmD7wxs";
+
 // ── Supabase helpers ──────────────────────────────────────────────────────────
 
 async function supa(method, path, body, token) {
@@ -61,6 +62,7 @@ const dbUpdateSupp = (s, t)   => supa("PATCH",  `/rest/v1/supplements?id=eq.${s.
 const dbDeleteSupp = (id, t)  => supa("DELETE", `/rest/v1/supplements?id=eq.${id}`, null, t);
 const dbGetLog     = (date, t)=> supa("GET",    `/rest/v1/daily_logs?select=*&log_date=eq.${date}`, null, t).then(r => r?.[0] || null);
 const dbUpsertLog  = (log, t) => supa("POST",   "/rest/v1/daily_logs?on_conflict=user_id,log_date", log, t);
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -97,8 +99,8 @@ const startOfDay   = (d) => { const r = new Date(d); r.setHours(0, 0, 0, 0); ret
 const getMonthYear = () => new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 const notifOK      = () => "Notification" in window;
 
-const TODAY        = startOfDay(new Date());
-const P            = "16px";
+const TODAY = startOfDay(new Date());
+const P     = "16px";
 
 // ── Notifications ─────────────────────────────────────────────────────────────
 
@@ -121,13 +123,13 @@ function scheduleNotifications(pt, supps, vd, dk) {
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
 const inputStyle = {
-  width: "100%", padding: "12px", borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.1)", fontSize: 16,
+  width: "100%", padding: "12px 16px", borderRadius: 8,
+  border: "1px solid rgba(255,255,255,0.1)", fontSize: 15,
   boxSizing: "border-box", background: "#0d0f1a", color: "#fff",
   display: "block", WebkitAppearance: "none", outline: "none",
 };
 const labelStyle = {
-  fontSize: 11, color: "#8b90a0", marginBottom: 6, display: "block",
+  fontSize: 11, color: "#8b90a0", marginBottom: 8, display: "block",
   fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase",
 };
 
@@ -151,23 +153,23 @@ function SignIn({ onSignIn }) {
     else setMsg(mode === "signin" ? "Invalid email or password." : "Could not create account — try again.");
   };
 
-  const si = { ...inputStyle, textAlign: "center", fontSize: 18 };
+  const si = { ...inputStyle, textAlign: "center", fontSize: 17 };
 
   return (
     <div style={{ fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", background: "linear-gradient(160deg,#080b14 0%,#0a0f1e 50%,#060a12 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: P }}>
       <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>💊</div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", marginBottom: 8 }}>Protocol Tracker</div>
-        <div style={{ fontSize: 14, color: "#4a5568", marginBottom: 40, lineHeight: 1.7 }}>Your supplement schedule,<br />anchored to your morning Rx.</div>
+        <div style={{ fontSize: 28, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", marginBottom: 8 }}>Protocol Tracker</div>
+        <div style={{ fontSize: 13, color: "#4a5568", marginBottom: 32, lineHeight: 1.7 }}>Your supplement schedule,<br />anchored to your morning Rx.</div>
         <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" type="email" style={si} />
-        <input value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" type="password" style={{ ...si, marginTop: 10 }} />
-        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", marginTop: 12, padding: "15px", background: "#4ade80", color: "#0a0a0f", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: loading ? "default" : "pointer" }}>
+        <input value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" type="password" style={{ ...si, marginTop: 8 }} />
+        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", marginTop: 16, padding: "12px 16px", minHeight: 44, background: "#4ade80", color: "#0a0a0f", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: loading ? "default" : "pointer" }}>
           {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
         </button>
-        <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: 12, background: "none", border: "none", color: "#4a5568", fontSize: 13, cursor: "pointer" }}>
+        <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: 16, background: "none", border: "none", color: "#4a5568", fontSize: 13, cursor: "pointer" }}>
           {mode === "signin" ? "No account? Sign up" : "Have an account? Sign in"}
         </button>
-        {msg && <div style={{ marginTop: 14, fontSize: 13, color: "#f87171" }}>{msg}</div>}
+        {msg && <div style={{ marginTop: 16, fontSize: 13, color: "#f87171" }}>{msg}</div>}
       </div>
     </div>
   );
@@ -178,7 +180,7 @@ function SignIn({ onSignIn }) {
 function Loader({ text }) {
   return (
     <div style={{ background: "linear-gradient(160deg,#080b14 0%,#0a0f1e 50%,#060a12 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ fontSize: 14, color: "#4a5568" }}>{text}</div>
+      <div style={{ fontSize: 13, color: "#4a5568" }}>{text}</div>
     </div>
   );
 }
@@ -189,7 +191,7 @@ function Modal({ open, onClose, children }) {
   if (!open) return null;
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.78)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: P }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "#13151f", borderRadius: 24, padding: P, maxHeight: "86vh", overflowY: "auto", boxSizing: "border-box", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 440, background: "#13151f", borderRadius: 24, padding: 24, maxHeight: "86vh", overflowY: "auto", boxSizing: "border-box", border: "1px solid rgba(255,255,255,0.08)" }}>
         {children}
       </div>
     </div>
@@ -203,34 +205,34 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
   const toggleDay  = (i)   => setForm(f => ({ ...f, days:  f.days.includes(i)   ? f.days.filter(x => x !== i)   : [...f.days, i]   }));
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <span style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{editingId ? "Edit supplement" : "New supplement"}</span>
-        <button onClick={onCancel} style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b90a0" }}>✕</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>{editingId ? "Edit supplement" : "New supplement"}</span>
+        <button onClick={onCancel} style={{ width: 32, height: 32, borderRadius: 9999, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b90a0" }}>✕</button>
       </div>
       {[["Name", "name", "e.g. Magnesium Glycinate"], ["Dose", "dose", "e.g. 2 caps (300 mg)"], ["Notes", "notes", "e.g. Thorne · with food"]].map(([lbl, key, ph]) => (
-        <div key={key} style={{ marginBottom: 14 }}>
+        <div key={key} style={{ marginBottom: 16 }}>
           <label style={labelStyle}>{lbl}</label>
           <input style={inputStyle} value={form[key]} placeholder={ph} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
         </div>
       ))}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 24 }}>
         <label style={labelStyle}>When to take it</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {SLOTS.map(slot => { const on = form.slots.includes(slot.id); return (
-            <button key={slot.id} onClick={() => toggleSlot(slot.id)} style={{ fontSize: 12, padding: "7px 13px", borderRadius: 20, cursor: "pointer", background: on ? slot.color + "22" : "transparent", color: on ? slot.color : "#8b90a0", border: `1px solid ${on ? slot.color : "rgba(255,255,255,0.1)"}`, fontWeight: on ? 600 : 400 }}>{slot.label}</button>
+            <button key={slot.id} onClick={() => toggleSlot(slot.id)} style={{ fontSize: 13, padding: "8px 16px", borderRadius: 9999, cursor: "pointer", background: on ? slot.color + "22" : "transparent", color: on ? slot.color : "#8b90a0", border: `1px solid ${on ? slot.color : "rgba(255,255,255,0.1)"}`, fontWeight: on ? 600 : 400 }}>{slot.label}</button>
           ); })}
         </div>
       </div>
       <div style={{ marginBottom: 24 }}>
         <label style={labelStyle}>Which days</label>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           {DAYS.map((d, i) => { const on = form.days.includes(i); return (
-            <button key={i} onClick={() => toggleDay(i)} style={{ width: 38, height: 38, borderRadius: "50%", fontSize: 13, cursor: "pointer", fontWeight: 600, background: on ? "#4ade80" : "transparent", color: on ? "#0a0a0f" : "#8b90a0", border: `1px solid ${on ? "#4ade80" : "rgba(255,255,255,0.1)"}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
+            <button key={i} onClick={() => toggleDay(i)} style={{ width: 44, height: 44, borderRadius: 9999, fontSize: 13, cursor: "pointer", fontWeight: 600, background: on ? "#4ade80" : "transparent", color: on ? "#0a0a0f" : "#8b90a0", border: `1px solid ${on ? "#4ade80" : "rgba(255,255,255,0.1)"}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
           ); })}
         </div>
       </div>
-      {editingId && <button onClick={onDelete} style={{ width: "100%", padding: "13px", borderRadius: 12, cursor: "pointer", background: "transparent", color: "#f87171", border: "1px solid rgba(248,113,113,0.25)", fontSize: 15, fontWeight: 500, marginBottom: 10 }}>Delete supplement</button>}
-      <button onClick={onSubmit} style={{ width: "100%", padding: "15px", borderRadius: 12, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 16, fontWeight: 700 }}>{editingId ? "Save changes" : "Add supplement"}</button>
+      {editingId && <button onClick={onDelete} style={{ width: "100%", padding: "12px 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "transparent", color: "#f87171", border: "1px solid rgba(248,113,113,0.25)", fontSize: 15, fontWeight: 500, marginBottom: 8 }}>Delete supplement</button>}
+      <button onClick={onSubmit} style={{ width: "100%", padding: "12px 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 15, fontWeight: 700 }}>{editingId ? "Save changes" : "Add supplement"}</button>
     </div>
   );
 }
@@ -252,40 +254,40 @@ function SlotCard({ slot, slotSupps, status, timeLabel, pillTime, isFuture, isCh
 
   return (
     <div style={{ marginBottom: 8, borderRadius: 12, border: `1px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: status === "future" && !pillTime ? 0.38 : 1 }}>
-      <div onClick={() => setExpanded(e => !e)} style={{ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
+      <div onClick={() => setExpanded(e => !e)} style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           {allDone
-            ? <div style={{ width: 20, height: 20, borderRadius: 6, background: "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "#0a0a0f", fontSize: 11, fontWeight: 700 }}>✓</span></div>
-            : <span style={{ color: slot.color, fontSize: 12, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
+            ? <div style={{ width: 20, height: 20, borderRadius: 4, background: "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "#0a0a0f", fontSize: 11, fontWeight: 700 }}>✓</span></div>
+            : <span style={{ color: slot.color, fontSize: 13, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
           }
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: allDone ? "#4a5568" : "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: allDone ? "#4a5568" : "#fff", display: "flex", alignItems: "center", gap: 8 }}>
               {slot.label}
-              {sc.badge && <span style={{ fontSize: 11, background: sc.badge.bg, color: sc.badge.color, borderRadius: 6, padding: "1px 6px", fontWeight: 600 }}>{sc.badge.label}</span>}
+              {sc.badge && <span style={{ fontSize: 11, background: sc.badge.bg, color: sc.badge.color, borderRadius: 4, padding: "2px 8px", fontWeight: 600 }}>{sc.badge.label}</span>}
             </div>
-            <div style={{ fontSize: 10, color: "#4a5568", marginTop: 1 }}>{allDone && !expanded ? `${slotSupps.length} supplement${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
+            <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{allDone && !expanded ? `${slotSupps.length} supplement${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: pillTime && SLOT_OFFSETS[slot.id] !== null ? slot.color : "#4a5568", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{timeLabel}</span>
-          <span style={{ fontSize: 14, color: "#4a5568", display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
+          <span style={{ fontSize: 13, color: pillTime && SLOT_OFFSETS[slot.id] !== null ? slot.color : "#4a5568", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{timeLabel}</span>
+          <span style={{ fontSize: 13, color: "#4a5568", display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
         </div>
       </div>
       {expanded && (
-        <div style={{ padding: "2px 12px", borderTop: `1px solid ${sc.border}` }}>
+        <div style={{ padding: "0 16px", borderTop: `1px solid ${sc.border}` }}>
           {slotSupps.map((supp, i) => {
             const done = isChecked(slot.id, supp.id);
             return (
-              <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: i < slotSupps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: 7, flexShrink: 0, border: `1.5px solid ${done ? "#4ade80" : "rgba(255,255,255,0.15)"}`, background: done ? "#4ade80" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
-                  {done && <span style={{ color: "#0a0a0f", fontSize: 12, fontWeight: 700 }}>✓</span>}
+              <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", borderBottom: i < slotSupps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, border: `1.5px solid ${done ? "#4ade80" : "rgba(255,255,255,0.15)"}`, background: done ? "#4ade80" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
+                  {done && <span style={{ color: "#0a0a0f", fontSize: 11, fontWeight: 700 }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, color: done ? "#4a5568" : "#f1f5f9", textDecoration: done ? "line-through" : "none", fontWeight: done ? 400 : 500 }}>{supp.name}</div>
                   <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{supp.dose}</div>
-                  {supp.notes && <div style={{ fontSize: 10, color: "#2d3748", marginTop: 1 }}>{supp.notes}</div>}
+                  {supp.notes && <div style={{ fontSize: 11, color: "#2d3748", marginTop: 4 }}>{supp.notes}</div>}
                 </div>
-                <button onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", color: "#6b7280", flexShrink: 0, minHeight: 32, display: "flex", alignItems: "center" }}>Edit</button>
+                <button onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ fontSize: 11, padding: "8px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", color: "#6b7280", flexShrink: 0, minHeight: 44, display: "flex", alignItems: "center" }}>Edit</button>
               </div>
             );
           })}
@@ -298,7 +300,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, pillTime, isFuture, isCh
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [user, setUser]           = useState(null);
+  const [user, setUser]               = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const token = () => localStorage.getItem("sb_token") || "";
 
@@ -325,7 +327,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [notifStatus, setNotifStatus]   = useState(notifOK() ? Notification.permission : "unsupported");
   const [streak, setStreak]             = useState(0);
   const [flashGreen, setFlashGreen]     = useState(false);
-  const saveTimer    = useRef(null);
+  const saveTimer = useRef(null);
 
   const dk       = dateKey(viewDate);
   const isToday  = dateKey(viewDate) === dateKey(TODAY);
@@ -379,12 +381,12 @@ function ProtocolApp({ user, token, onSignOut }) {
     setStreak(s);
   }, [checked, pillTimes, supps]);
 
-  const goDay          = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); };
-  const setPillForDay  = (t) => setPillTimes(pt => ({ ...pt, [dk]: t }));
-  const getSlotTime    = (sid) => { if (!pillTime || SLOT_OFFSETS[sid] === null) return null; return addMins(parseHHMM(pillTime), SLOT_OFFSETS[sid]); };
-  const slotTimeStr    = (sid) => { const t = getSlotTime(sid); return t ? fmtTime(t) : "--:--"; };
-  const toggleCheck    = (sid, suppId) => { const k = `${dk}_${sid}_${suppId}`; setChecked(c => ({ ...c, [k]: !c[k] })); };
-  const isChecked      = (sid, suppId) => !!checked[`${dk}_${sid}_${suppId}`];
+  const goDay           = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); };
+  const setPillForDay   = (t) => setPillTimes(pt => ({ ...pt, [dk]: t }));
+  const getSlotTime     = (sid) => { if (!pillTime || SLOT_OFFSETS[sid] === null) return null; return addMins(parseHHMM(pillTime), SLOT_OFFSETS[sid]); };
+  const slotTimeStr     = (sid) => { const t = getSlotTime(sid); return t ? fmtTime(t) : "--:--"; };
+  const toggleCheck     = (sid, suppId) => { const k = `${dk}_${sid}_${suppId}`; setChecked(c => ({ ...c, [k]: !c[k] })); };
+  const isChecked       = (sid, suppId) => !!checked[`${dk}_${sid}_${suppId}`];
   const getSuppsForSlot = (sid) => supps.filter(s => s.slots.includes(sid) && s.days.includes(viewDay));
 
   const startDay = () => {
@@ -435,9 +437,9 @@ function ProtocolApp({ user, token, onSignOut }) {
     closeForm();
   };
 
-  const r = 28, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
+  const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const card = { borderRadius: 18, border: "1px solid rgba(255,255,255,0.07)", background: flashGreen ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: P, marginBottom: P, transition: "background 0.4s ease" };
+  const card = { borderRadius: 24, border: "1px solid rgba(255,255,255,0.07)", background: flashGreen ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: P, marginBottom: P, transition: "background 0.4s ease" };
 
   if (loading) return <Loader text="Loading your protocol…" />;
 
@@ -446,85 +448,85 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: P }}>
-        <button onClick={() => goDay(-1)} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 10, flexShrink: 0 }}>‹</button>
+        <button onClick={() => goDay(-1)} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 12, flexShrink: 0 }}>‹</button>
         <div style={{ flex: 1, textAlign: "center", padding: "0 8px" }}>
           <div style={{ fontSize: 11, color: "#4a5568", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>PROTOCOL · {getMonthYear().toUpperCase()}</div>
-          <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? "#fff" : "#4ade80", padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
-          {!isToday && <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>tap to return to today</div>}
+          <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? "#fff" : "#4ade80", padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
+          {!isToday && <div style={{ fontSize: 11, color: "#4a5568", marginTop: 4 }}>tap to return to today</div>}
         </div>
-        <button onClick={() => goDay(1)} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 10, flexShrink: 0 }}>›</button>
+        <button onClick={() => goDay(1)} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 12, flexShrink: 0 }}>›</button>
       </div>
 
       {/* Hero card */}
-          <div style={card}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: pillTime ? 12 : 0 }}>
-              <div style={{ flex: 1 }}>
-                {!pillTime ? (
-                  <div>
-                    <button onClick={startDay} style={{ padding: "15px 20px", background: isFuture ? "rgba(255,255,255,0.05)" : "#4ade80", color: isFuture ? "#4a5568" : "#0a0a0f", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: isFuture ? "default" : "pointer", display: "block", width: "100%", textAlign: "center" }}>
-                      {isFuture ? "Future day" : "Start my day"}
-                    </button>
-                    {!isFuture && <div style={{ fontSize: 12, color: "#4a5568", marginTop: 6, textAlign: "center" }}>logs your Rx meds · sets full schedule</div>}
+      <div style={card}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: pillTime ? 16 : 0 }}>
+          <div style={{ flex: 1 }}>
+            {!pillTime ? (
+              <div>
+                <button onClick={startDay} style={{ width: "100%", padding: "0 16px", minHeight: 48, background: isFuture ? "rgba(255,255,255,0.05)" : "#4ade80", color: isFuture ? "#4a5568" : "#0a0a0f", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: isFuture ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isFuture ? "Future day" : "Start my day"}
+                </button>
+                {!isFuture && <div style={{ fontSize: 13, color: "#4a5568", marginTop: 8, textAlign: "center" }}>logs your Rx meds · sets full schedule</div>}
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 11, color: "#4a5568", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Protocol started</div>
+                {editPillTime ? (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ fontSize: 15, padding: "12px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", color: "#fff" }} />
+                    <button onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }} style={{ fontSize: 13, padding: "0 16px", minHeight: 44, borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#fff" }}>Save</button>
                   </div>
                 ) : (
-                  <div>
-                    <div style={{ fontSize: 11, color: "#4a5568", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>Protocol started</div>
-                    {editPillTime ? (
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <input type="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ fontSize: 16, padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", color: "#fff" }} />
-                        <button onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }} style={{ fontSize: 13, padding: "6px 14px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "#fff" }}>Save</button>
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                        <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: "-0.04em", color: "#4ade80" }}>{pillTime}</span>
-                        <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: 13, color: "#4a5568", background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>
-                      </div>
-                    )}
-                    {pct === 100 && <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 4 }}>Protocol complete ✓</div>}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.04em", color: "#4ade80" }}>{pillTime}</span>
+                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: 13, color: "#4a5568", background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>
                   </div>
                 )}
+                {pct === 100 && <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 8 }}>Protocol complete ✓</div>}
               </div>
-              {/* Progress ring */}
-              <svg width="68" height="68" viewBox="0 0 68 68" style={{ flexShrink: 0 }}>
-                <circle cx="34" cy="34" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                <circle cx="34" cy="34" r={r} fill="none" stroke="#4ade80" strokeWidth="5" strokeDasharray={circ} strokeDashoffset={circ - dash} strokeLinecap="round" transform="rotate(-90 34 34)" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
-                <text x="34" y="34" textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="13" fontWeight="700">{pct}%</text>
-              </svg>
-            </div>
-            {/* Footer row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 10 }}>
-              <div>
-                {notifStatus === "default"      && <button onClick={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }} style={{ fontSize: 12, padding: "5px 11px", borderRadius: 20, cursor: "pointer", border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.06)", color: "#4ade80", fontWeight: 600 }}>Enable reminders</button>}
-                {notifStatus === "granted"      && <span style={{ fontSize: 12, color: "#4ade80", fontWeight: 500 }}>Reminders on</span>}
-                {notifStatus === "denied"       && <span style={{ fontSize: 12, color: "#f87171" }}>Reminders blocked</span>}
-                {notifStatus === "unsupported"  && <span style={{ fontSize: 12, color: "#4a5568" }}>Add to home screen for reminders</span>}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {streak > 0 && <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.18)", borderRadius: 20, padding: "4px 10px" }}><span style={{ fontSize: 13 }}>🔥</span><span style={{ fontSize: 12, fontWeight: 700, color: "#fb923c" }}>{streak} day streak</span></div>}
-                <button onClick={onSignOut} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#4a5568" }}>Sign out</button>
-              </div>
-            </div>
+            )}
           </div>
+          {/* Progress ring — 72×72, r=30 */}
+          <svg width="72" height="72" viewBox="0 0 72 72" style={{ flexShrink: 0 }}>
+            <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
+            <circle cx="36" cy="36" r={r} fill="none" stroke="#4ade80" strokeWidth="5" strokeDasharray={circ} strokeDashoffset={circ - dash} strokeLinecap="round" transform="rotate(-90 36 36)" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
+            <text x="36" y="36" textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="13" fontWeight="700">{pct}%</text>
+          </svg>
+        </div>
+        {/* Footer row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
+          <div>
+            {notifStatus === "default"     && <button onClick={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }} style={{ fontSize: 13, padding: "8px 16px", minHeight: 44, borderRadius: 9999, cursor: "pointer", border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.06)", color: "#4ade80", fontWeight: 600 }}>Enable reminders</button>}
+            {notifStatus === "granted"     && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 500 }}>Reminders on</span>}
+            {notifStatus === "denied"      && <span style={{ fontSize: 13, color: "#f87171" }}>Reminders blocked</span>}
+            {notifStatus === "unsupported" && <span style={{ fontSize: 13, color: "#4a5568" }}>Add to home screen for reminders</span>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {streak > 0 && <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.18)", borderRadius: 9999, padding: "4px 8px" }}><span style={{ fontSize: 13 }}>🔥</span><span style={{ fontSize: 13, fontWeight: 700, color: "#fb923c" }}>{streak} day streak</span></div>}
+            <button onClick={onSignOut} style={{ fontSize: 11, padding: "8px 16px", minHeight: 44, borderRadius: 8, cursor: "pointer", border: "1px solid rgba(255,255,255,0.07)", background: "transparent", color: "#4a5568" }}>Sign out</button>
+          </div>
+        </div>
+      </div>
 
-          {/* Add row */}
-          <div style={{ marginBottom: P }}>
-            <button onClick={openAdd} style={{ width: "100%", padding: "13px", borderRadius: 14, cursor: "pointer", border: "1px dashed rgba(74,222,128,0.22)", background: "rgba(74,222,128,0.03)", fontSize: 14, fontWeight: 600, color: "#4ade80" }}>+ Add supplement</button>
-          </div>
+      {/* Add row */}
+      <div style={{ marginBottom: P }}>
+        <button onClick={openAdd} style={{ width: "100%", padding: "0 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", border: "1px dashed rgba(74,222,128,0.22)", background: "rgba(74,222,128,0.03)", fontSize: 15, fontWeight: 600, color: "#4ade80" }}>+ Add supplement</button>
+      </div>
 
-          {/* Slot list */}
-          <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", padding: P, marginBottom: P }}>
-            {supps.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>💊</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 6 }}>Your protocol is empty</div>
-                <div style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.7, marginBottom: 20 }}>Add your medications and supplements above.<br />The schedule anchors to when you take your first Rx each morning.</div>
-                <button onClick={openAdd} style={{ width: "100%", padding: "11px 0", borderRadius: 12, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 14, fontWeight: 700 }}>Add first supplement</button>
-              </div>
-            ) : SLOTS.map(slot => {
-              const slotSupps = getSuppsForSlot(slot.id); if (!slotSupps.length) return null;
-              return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={SLOT_OFFSETS[slot.id] === null ? "variable" : slotTimeStr(slot.id)} pillTime={pillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
-            })}
+      {/* Slot list */}
+      <div style={{ borderRadius: 24, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", padding: P, marginBottom: P }}>
+        {supps.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "32px 16px" }}>
+            <div style={{ fontSize: 28, marginBottom: 16 }}>💊</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 8 }}>Your protocol is empty</div>
+            <div style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.7, marginBottom: 24 }}>Add your medications and supplements above.<br />The schedule anchors to when you take your first Rx each morning.</div>
+            <button onClick={openAdd} style={{ width: "100%", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 15, fontWeight: 700 }}>Add first supplement</button>
           </div>
+        ) : SLOTS.map(slot => {
+          const slotSupps = getSuppsForSlot(slot.id); if (!slotSupps.length) return null;
+          return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={SLOT_OFFSETS[slot.id] === null ? "variable" : slotTimeStr(slot.id)} pillTime={pillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
+        })}
+      </div>
 
       {/* Modals */}
       <Modal open={formOpen} onClose={closeForm}>
