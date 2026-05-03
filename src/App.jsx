@@ -256,12 +256,28 @@ const OFFSET_SLOTS = [
   { id: "after_dinner",  label: "After Dinner" },
 ];
 
-function ScheduleModal({ scheduleType, setScheduleType, slotOffsets, setSlotOffsets, onSave, onClose }) {
-  const [localType, setLocalType]       = useState(scheduleType);
-  const [localOffsets, setLocalOffsets] = useState({ ...slotOffsets });
-  const [showCustom, setShowCustom]     = useState(false);
+function toHrMin(totalMins) {
+  if (!totalMins && totalMins !== 0) return { h: 0, m: 0 };
+  return { h: Math.floor(totalMins / 60), m: totalMins % 60 };
+}
+function fromHrMin(h, m) { return (parseInt(h) || 0) * 60 + (parseInt(m) || 0); }
 
-  const applyTemplate = (tmpl) => { setLocalOffsets({ ...tmpl.offsets }); setShowCustom(false); };
+function ScheduleModal({ scheduleType, setScheduleType, slotOffsets, setSlotOffsets, onSave, onClose }) {
+  const [localType, setLocalType]             = useState(scheduleType);
+  const [localOffsets, setLocalOffsets]       = useState({ ...slotOffsets });
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showCustom, setShowCustom]           = useState(false);
+
+  const applyTemplate = (tmpl) => {
+    setLocalOffsets({ ...tmpl.offsets });
+    setSelectedTemplate(tmpl.label);
+    setShowCustom(false);
+  };
+
+  const updateOffset = (sid, totalMins) => {
+    setLocalOffsets(o => ({ ...o, [sid]: totalMins }));
+    setSelectedTemplate("custom");
+  };
 
   const handleSave = () => {
     setScheduleType(localType);
@@ -276,7 +292,9 @@ function ScheduleModal({ scheduleType, setScheduleType, slotOffsets, setSlotOffs
   ].filter(r => r.offset !== null && r.offset !== undefined)
    .sort((a, b) => a.offset - b.offset);
 
-  const showEditor = showCustom || localType === "medication_anchored";
+  const showEditor = showCustom || selectedTemplate === "custom" || localType === "medication_anchored";
+
+  const chipActive = (name) => selectedTemplate === name;
 
   return (
     <div>
@@ -306,38 +324,55 @@ function ScheduleModal({ scheduleType, setScheduleType, slotOffsets, setSlotOffs
       <div style={{ marginBottom: spacing.lg }}>
         <label style={labelStyle}>Templates</label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-          {TEMPLATES.map(tmpl => (
-            <button key={tmpl.label} onClick={() => applyTemplate(tmpl)} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: "transparent", color: colors.textSecondary, border: `1px solid ${colors.borderStrong}`, fontWeight: typography.medium }}>
-              {tmpl.label}
+          {TEMPLATES.map(tmpl => {
+            const on = chipActive(tmpl.label);
+            return (
+              <button key={tmpl.label} onClick={() => applyTemplate(tmpl)} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: on ? colors.accentDim : "transparent", color: on ? colors.accent : colors.textSecondary, border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, fontWeight: on ? typography.semibold : typography.medium }}>
+                {tmpl.label}
+              </button>
+            );
+          })}
+          {(() => { const on = chipActive("custom") || showCustom; return (
+            <button onClick={() => { setShowCustom(s => !s); if (!showCustom) setSelectedTemplate("custom"); }} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: on ? colors.accentDim : "transparent", color: on ? colors.accent : colors.textSecondary, border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, fontWeight: on ? typography.semibold : typography.medium }}>
+              Custom
             </button>
-          ))}
-          <button onClick={() => setShowCustom(s => !s)} style={{ fontSize: typography.caption, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.full, cursor: "pointer", background: showCustom ? colors.accentDim : "transparent", color: showCustom ? colors.accent : colors.textSecondary, border: `1px solid ${showCustom ? colors.accentBorder : colors.borderStrong}`, fontWeight: typography.medium }}>
-            Custom
-          </button>
+          ); })()}
         </div>
       </div>
 
       {/* Offset editor */}
       {showEditor && (
         <div style={{ marginBottom: spacing.lg }}>
-          <label style={labelStyle}>Minutes after anchor medication</label>
+          <label style={labelStyle}>Time after anchor medication</label>
           <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
-            {OFFSET_SLOTS.map(s => (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: spacing.sm, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
-                <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{s.label}</span>
-                <span style={{ fontSize: typography.label, color: colors.textMuted }}>min</span>
-                <input
-                  type="number"
-                  value={localOffsets[s.id] === null || localOffsets[s.id] === undefined ? "" : localOffsets[s.id]}
-                  onChange={e => {
-                    const v = e.target.value === "" ? null : Number(e.target.value);
-                    setLocalOffsets(o => ({ ...o, [s.id]: v }));
-                  }}
-                  placeholder="skip"
-                  style={{ ...inputStyle, width: 72, textAlign: "right", padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption }}
-                />
-              </div>
-            ))}
+            {OFFSET_SLOTS.map(s => {
+              const total = localOffsets[s.id];
+              const { h, m } = toHrMin(total === null || total === undefined ? null : total);
+              const isEmpty = total === null || total === undefined;
+              return (
+                <div key={s.id} style={{ display: "flex", alignItems: "center", gap: spacing.sm, padding: `${spacing.xs}px ${spacing.md}px`, borderRadius: radius.md, background: colors.bgCard, border: `1px solid ${colors.borderSubtle}` }}>
+                  <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{s.label}</span>
+                  <input
+                    type="number"
+                    min="0" max="23"
+                    value={isEmpty ? "" : h}
+                    onChange={e => updateOffset(s.id, e.target.value === "" ? null : fromHrMin(e.target.value, isEmpty ? 0 : m))}
+                    placeholder="0"
+                    style={{ ...inputStyle, width: 52, textAlign: "right", padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption }}
+                  />
+                  <span style={{ fontSize: typography.label, color: colors.textMuted }}>hr</span>
+                  <input
+                    type="number"
+                    min="0" max="59"
+                    value={isEmpty ? "" : m}
+                    onChange={e => updateOffset(s.id, e.target.value === "" ? null : fromHrMin(isEmpty ? 0 : h, e.target.value))}
+                    placeholder="0"
+                    style={{ ...inputStyle, width: 52, textAlign: "right", padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption }}
+                  />
+                  <span style={{ fontSize: typography.label, color: colors.textMuted }}>min</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -600,7 +635,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           {!isToday && <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxs }}>tap to return to today</div>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-          <button onClick={() => setShowSchedule(true)} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: `1px solid rgba(255,255,255,0.08)`, cursor: "pointer", color: "rgba(255,255,255,0.45)", borderRadius: 8, fontSize: 16 }}>⚙</button>
+          <button onClick={() => setShowSchedule(true)} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: `1px solid rgba(255,255,255,0.08)`, cursor: "pointer", color: "rgba(255,255,255,0.45)", borderRadius: 8, fontSize: 22 }}>⚙</button>
           <button onClick={() => goDay(1)} style={navArrow}>›</button>
         </div>
       </div>
