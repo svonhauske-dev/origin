@@ -636,7 +636,12 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
                   {done && <span style={{ color: colors.textPrimary, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: typography.body, color: done ? colors.textDone : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium }}>{supp.name}</div>
+                  <div style={{ fontSize: typography.body, color: done ? colors.textDone : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
+                    {supp.name}
+                    {supp.category === "Rx" && (
+                      <span style={{ fontSize: typography.label, background: "rgba(61,154,143,0.12)", color: colors.accent, borderRadius: radius.xs, padding: "1px 5px", fontWeight: typography.semibold, letterSpacing: "0.04em", flexShrink: 0 }}>Rx</span>
+                    )}
+                  </div>
                   <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2 }}>{supp.dose}</div>
                   {supp.notes && <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxs }}>{supp.notes}</div>}
                 </div>
@@ -871,7 +876,12 @@ function ProtocolApp({ user, token, onSignOut }) {
     setShowSchedule(false);
   };
 
-  const injectableSupps = supps.filter(s => s.category === "Injectable" && s.days.includes(viewDay));
+  const bottomSupps = supps.filter(s => (s.category === "Injectable" || s.category === "Topical") && s.days.includes(viewDay));
+  const hasInjectables = bottomSupps.some(s => s.category === "Injectable");
+  const hasTopicals    = bottomSupps.some(s => s.category === "Topical");
+  const bottomSectionLabel = hasInjectables && hasTopicals ? "Injectables & Topicals"
+    : hasInjectables ? "Injectables"
+    : "Topicals";
 
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel   = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
@@ -985,13 +995,13 @@ function ProtocolApp({ user, token, onSignOut }) {
         })}
       </div>
 
-      {/* Injectables section */}
-      {injectableSupps.length > 0 && (
+      {/* Injectables & Topicals section */}
+      {bottomSupps.length > 0 && (
         <div style={{ ...cardStyle, marginTop: 0 }}>
           <div style={{ fontSize: typography.label, color: colors.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: spacing.sm, fontWeight: typography.semibold }}>
-            Injectables
+            {bottomSectionLabel}
           </div>
-          {injectableSupps.map(supp => {
+          {bottomSupps.map(supp => {
             const done = isChecked("injectable", supp.id);
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.sm, padding: `${spacing.sm}px 0`, borderBottom: `1px solid ${colors.borderSubtle}` }}>
@@ -1003,8 +1013,9 @@ function ProtocolApp({ user, token, onSignOut }) {
                   {done && <span style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 700 }}>✓</span>}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: typography.body, color: done ? colors.textMuted : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: typography.medium }}>
+                  <div style={{ fontSize: typography.body, color: done ? colors.textMuted : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
                     {supp.name}
+                    <span style={{ fontSize: typography.label, color: colors.textMuted, background: "rgba(255,255,255,0.05)", borderRadius: radius.xs, padding: "1px 5px", letterSpacing: "0.04em", flexShrink: 0 }}>{supp.category}</span>
                   </div>
                   <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2 }}>
                     {supp.dose}{supp.notes ? " · " + supp.notes : ""}
