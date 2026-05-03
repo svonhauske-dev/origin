@@ -90,7 +90,8 @@ export default function BottomSheet({ open, onClose, title, children }) {
         {/* Scrollable body */}
         <div style={{
           overflowY: "auto",
-          padding: `${spacing.sm}px ${spacing.md}px ${spacing.md}px`,
+          padding: `${spacing.sm}px ${spacing.md}px 0`,
+          paddingBottom: `calc(${spacing.md}px + env(safe-area-inset-bottom))`,
           flex: 1,
           WebkitOverflowScrolling: "touch",
         }}>
