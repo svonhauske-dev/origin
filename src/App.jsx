@@ -921,13 +921,6 @@ function ProtocolApp({ user, token, onSignOut }) {
     setShowSchedule(false);
   };
 
-  const bottomSupps = supps.filter(s => (s.category === "Injectable" || s.category === "Topical") && s.days.includes(viewDay));
-  const hasInjectables = bottomSupps.some(s => s.category === "Injectable");
-  const hasTopicals    = bottomSupps.some(s => s.category === "Topical");
-  const bottomSectionLabel = hasInjectables && hasTopicals ? "Injectables & Topicals"
-    : hasInjectables ? "Injectables"
-    : "Topicals";
-
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel   = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate  = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -1019,7 +1012,7 @@ function ProtocolApp({ user, token, onSignOut }) {
         </div>
       </div>
 
-      {/* Main slot list — injectable category excluded */}
+      {/* Main slot list */}
       <div style={{ borderRadius: radius.xl, border: `1px solid ${colors.borderBase}`, background: colors.bgCard, padding: spacing.md, marginBottom: spacing.md }}>
         {supps.length === 0 ? (
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
@@ -1029,7 +1022,9 @@ function ProtocolApp({ user, token, onSignOut }) {
             <button onClick={openAdd} style={{ ...primaryButtonStyle, minHeight: touch.min }}>Add first supplement</button>
           </div>
         ) : SLOTS.map(slot => {
-          const slotSupps = getSuppsForSlot(slot.id).filter(s => (s.category || "Oral") !== "Injectable");
+          const slotSupps = slot.id === "injectable"
+            ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
+            : getSuppsForSlot(slot.id).filter(s => (s.category || "Oral") !== "Injectable");
           if (!slotSupps.length) return null;
           const hasOffset = scheduleMode === "fixed"
             ? slot.id !== "injectable" && !!scheduleConfig.fixed_times?.[slot.id]
@@ -1040,49 +1035,6 @@ function ProtocolApp({ user, token, onSignOut }) {
           return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
         })}
       </div>
-
-      {/* Injectables & Topicals section */}
-      {bottomSupps.length > 0 && (
-        <div style={{ ...cardStyle, marginTop: 0 }}>
-          <div style={{ fontSize: typography.label, color: colors.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: spacing.sm, fontWeight: typography.semibold }}>
-            {bottomSectionLabel}
-          </div>
-          {bottomSupps.map(supp => {
-            const done = isChecked("injectable", supp.id);
-            return (
-              <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.sm, padding: `${spacing.sm}px 0`, borderBottom: `1px solid ${colors.borderSubtle}` }}>
-                <div onClick={() => toggleCheck("injectable", supp.id)}
-                  style={{ width: 24, height: 24, borderRadius: radius.md, flexShrink: 0,
-                    border: `1.5px solid ${done ? colors.accent : colors.borderStrong}`,
-                    background: done ? colors.accent : "transparent",
-                    display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  {done && <span style={{ color: colors.textPrimary, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: typography.body, color: done ? colors.textMuted : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
-                    {supp.name}
-                    <span style={{ fontSize: typography.label, color: colors.textMuted, background: colors.bgCardHover, borderRadius: radius.xs, padding: "1px 5px", letterSpacing: "0.04em", flexShrink: 0 }}>{supp.category}</span>
-                    {supp.category === "Injectable" && supp.timePreference && supp.timePreference !== "Anytime" && (
-                      <span style={{ fontSize: typography.label, color: colors.textMuted, background: colors.bgCardHover, borderRadius: radius.xs, padding: `1px ${spacing.xs}px`, letterSpacing: "0.04em", flexShrink: 0 }}>{supp.timePreference}</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2 }}>
-                    {supp.dose}{supp.notes ? " · " + supp.notes : ""}
-                  </div>
-                </div>
-                <button onClick={() => openEdit(supp)}
-                  style={{ fontSize: typography.label, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm,
-                    cursor: "pointer", border: `1px solid ${colors.borderStrong}`,
-                    background: "transparent", color: colors.textMuted,
-                    minHeight: touch.min, display: "flex", alignItems: "center",
-                    WebkitTapHighlightColor: "transparent" }}>
-                  Edit
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {/* Modals */}
       <Modal open={formOpen} onClose={closeForm}>
