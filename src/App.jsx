@@ -3,7 +3,9 @@ import {
   colors, spacing, radius, typography, touch, layout,
   cardStyle, inputStyle, labelStyle, ghostButtonStyle, badgeStyle,
 } from "./design-system";
+import { Settings } from "lucide-react";
 import Button from "./components/Button";
+import SettingsModal from "./components/SettingsModal";
 
 const SUPA_URL = "https://yahimlivfieuknagusxp.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaGltbGl2ZmlldWtuYWd1c3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3ODYwNDIsImV4cCI6MjA5MzM2MjA0Mn0._5_t5k1NCAHAFHEz0clqD8fSxsNCMzlqBoRPSmD7wxs";
@@ -734,6 +736,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   });
   const [anchorBehavior, setAnchorBehavior] = useState("flexible");
   const [consistentTime, setConsistentTime] = useState("07:00");
+  const [showSettings, setShowSettings]     = useState(false);
   const saveTimer = useRef(null);
 
   const slotOffsets = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -924,7 +927,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel   = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate  = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const heroCard   = { ...cardStyle, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" };
+  const heroCard   = { ...cardStyle, padding: spacing.sm, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" };
 
   // Hero state helpers
   const isConsistent   = anchorBehavior === "consistent";
@@ -935,6 +938,14 @@ function ProtocolApp({ user, token, onSignOut }) {
 
   return (
     <div style={{ fontFamily: typography.fontBody, color: colors.textPrimary, maxWidth: 480, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: BG_GRADIENT, minHeight: "100vh" }}>
+
+      {/* Greeting */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm }}>
+        <span style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Hello</span>
+        <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)} style={{ width: touch.min, height: touch.min }}>
+          <Settings size={18} />
+        </Button>
+      </div>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
@@ -955,7 +966,7 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Hero card */}
       <div style={heroCard}>
-        <div style={{ display: "flex", alignItems: "center", gap: spacing.md, marginBottom: spacing.md }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
           <div style={{ flex: 1 }}>
             {scheduleMode === "fixed" ? (
               <div>
@@ -997,18 +1008,6 @@ function ProtocolApp({ user, token, onSignOut }) {
             <text x="36" y="36" textAnchor="middle" dominantBaseline="middle" fill={colors.textPrimary} fontSize={typography.caption} fontWeight={typography.bold} fontFamily={typography.fontHeading}>{pct}%</text>
           </svg>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${colors.borderSubtle}`, paddingTop: spacing.sm, marginTop: spacing.sm, minHeight: 36 }}>
-          <div style={{ flex: 1 }}>
-            {notifStatus === "default"     && <Button variant="secondary" secondaryStyle="solid" onClick={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }}>Enable reminders</Button>}
-            {notifStatus === "granted"     && <span style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.medium }}>Reminders on</span>}
-            {notifStatus === "denied"      && <span style={{ fontSize: typography.caption, color: colors.danger }}>Reminders blocked</span>}
-            {notifStatus === "unsupported" && <span style={{ fontSize: typography.caption, color: colors.textMuted }}>Add to home screen for reminders</span>}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, minWidth: 100, justifyContent: "flex-end" }}>
-            {streak > 0 && <div style={{ display: "flex", alignItems: "center", gap: spacing.xxs, background: colors.warnDim, border: `1px solid ${colors.warnBorder}`, borderRadius: radius.full, padding: `${spacing.xxs}px ${spacing.xs}px` }}><span style={{ fontSize: typography.caption }}>🔥</span><span style={{ fontSize: typography.caption, fontWeight: typography.bold, color: colors.warn }}>{streak} day streak</span></div>}
-            <button onClick={onSignOut} style={{ fontSize: typography.caption, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", padding: `0 ${spacing.xs}px`, minHeight: touch.min, WebkitTapHighlightColor: "transparent" }}>Sign out</button>
-          </div>
-        </div>
       </div>
 
       {/* Main slot list */}
@@ -1039,6 +1038,13 @@ function ProtocolApp({ user, token, onSignOut }) {
       </div>
 
       {/* Modals */}
+      <SettingsModal
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        notifStatus={notifStatus}
+        onEnableNotifications={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }}
+        onSignOut={onSignOut}
+      />
       <Modal open={formOpen} onClose={closeForm}>
         <EditForm form={form} setForm={setForm} editingId={editingId} onSubmit={submitForm} onCancel={closeForm} onDelete={deleteSupp} />
       </Modal>
