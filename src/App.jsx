@@ -203,7 +203,7 @@ function LabModal({ open, onClose, onSave, labs, labDate }) {
       for (let i = 0; i < bytes.length; i += 8192) chunks.push(String.fromCharCode(...bytes.subarray(i, i+8192)));
       const b64 = btoa(chunks.join(""));
       setParseMsg("Sending to AI…");
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/parse-pdf", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000,
           system:"You are a medical lab result parser. Extract numeric values from lab PDFs. Return ONLY raw JSON, no markdown, no backticks. Keys: tsh, ft3, ft4, dhea, testosterone, glucose, insulin, vitd, crp, ferritin, date. Numeric strings only. Date as YYYY-MM-DD.",
@@ -515,9 +515,9 @@ function ProtocolApp({ user, token, onSignOut }) {
       const bytes = new Uint8Array(ab); const chunks = [];
       for (let i = 0; i < bytes.length; i += 8192) chunks.push(String.fromCharCode(...bytes.subarray(i, i+8192)));
       const b64 = btoa(chunks.join(""));
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/parse-pdf", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514", max_tokens: 2000,
           system: `You are a supplement protocol parser. Extract all medications and supplements from this document. Return ONLY a raw JSON array, no markdown, no backticks. Each item should have these exact fields:
