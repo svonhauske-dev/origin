@@ -1,6 +1,6 @@
 {
-  "name": "Protocol Tracker",
-  "short_name": "Protocol",
+  "name": "Tether",
+  "short_name": "Tether",
   "description": "Your supplement schedule, anchored to your morning Rx",
   "start_url": "/",
   "display": "standalone",

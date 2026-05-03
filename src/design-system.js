@@ -1,4 +1,4 @@
-// ── Protocol Tracker Design System ─────────────────────────────────────────────
+// ── Tether Design System ─────────────────────────────────────────────────────────
 
 export const colors = {
   // Brand
