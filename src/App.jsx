@@ -68,8 +68,8 @@ const dbUpsertLog  = (log, t) => supa("POST",   "/rest/v1/daily_logs?on_conflict
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const SLOTS = [
-  { id: "rx",            label: "Start my day",            sublabel: "Rx only · empty stomach",       icon: "★", color: "#4ade80" },
-  { id: "fasted",        label: "Empty stomach",           sublabel: "30 min post-Rx · before eating", icon: "○", color: "#34d399" },
+  { id: "rx",            label: "Start my day",            sublabel: "Rx only · empty stomach",       icon: "★", color: "#2930FF" },
+  { id: "fasted",        label: "Empty stomach",           sublabel: "30 min post-Rx · before eating", icon: "○", color: "#2930FF" },
   { id: "pre_breakfast", label: "30 min before breakfast", sublabel: "Weight Loss Pack · enzymes",     icon: "◎", color: "#67e8f9" },
   { id: "breakfast",     label: "With breakfast",          sublabel: "Fat-soluble · need food",        icon: "●", color: "#67e8f9" },
   { id: "pre_lunch",     label: "30 min before lunch",     sublabel: "T3 2nd dose · empty stomach",   icon: "◎", color: "#c084fc" },
@@ -163,7 +163,7 @@ function SignIn({ onSignIn }) {
         <div style={{ fontSize: 13, color: "#4a5568", marginBottom: 32, lineHeight: 1.7 }}>Your supplement schedule,<br />anchored to your morning Rx.</div>
         <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" type="email" style={si} />
         <input value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" type="password" style={{ ...si, marginTop: 8 }} />
-        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", marginTop: 16, padding: "12px 16px", minHeight: 44, background: "#4ade80", color: "#0a0a0f", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: loading ? "default" : "pointer" }}>
+        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", marginTop: 16, padding: "12px 16px", minHeight: 44, background: "#2930FF", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: loading ? "default" : "pointer" }}>
           {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
         </button>
         <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: 16, background: "none", border: "none", color: "#4a5568", fontSize: 13, cursor: "pointer" }}>
@@ -227,12 +227,12 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete }) {
         <label style={labelStyle}>Which days</label>
         <div style={{ display: "flex", gap: 8 }}>
           {DAYS.map((d, i) => { const on = form.days.includes(i); return (
-            <button key={i} onClick={() => toggleDay(i)} style={{ width: 44, height: 44, borderRadius: 9999, fontSize: 13, cursor: "pointer", fontWeight: 600, background: on ? "#4ade80" : "transparent", color: on ? "#0a0a0f" : "#8b90a0", border: `1px solid ${on ? "#4ade80" : "rgba(255,255,255,0.1)"}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
+            <button key={i} onClick={() => toggleDay(i)} style={{ width: 44, height: 44, borderRadius: 9999, fontSize: 13, cursor: "pointer", fontWeight: 600, background: on ? "#2930FF" : "transparent", color: on ? "#fff" : "#8b90a0", border: `1px solid ${on ? "#2930FF" : "rgba(255,255,255,0.1)"}`, padding: 0, flexShrink: 0 }}>{d[0]}</button>
           ); })}
         </div>
       </div>
       {editingId && <button onClick={onDelete} style={{ width: "100%", padding: "12px 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "transparent", color: "#f87171", border: "1px solid rgba(248,113,113,0.25)", fontSize: 15, fontWeight: 500, marginBottom: 8 }}>Delete supplement</button>}
-      <button onClick={onSubmit} style={{ width: "100%", padding: "12px 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 15, fontWeight: 700 }}>{editingId ? "Save changes" : "Add supplement"}</button>
+      <button onClick={onSubmit} style={{ width: "100%", padding: "12px 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#2930FF", color: "#fff", border: "none", fontSize: 15, fontWeight: 700 }}>{editingId ? "Save changes" : "Add supplement"}</button>
     </div>
   );
 }
@@ -247,7 +247,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, pillTime, isFuture, isCh
   const SC = {
     done:   { border: "rgba(255,255,255,0.05)",  bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
     missed: { border: "rgba(249,115,22,0.35)",   bg: "rgba(249,115,22,0.05)", hbg: "rgba(249,115,22,0.07)",  badge: { label: "missed", bg: "rgba(124,45,18,0.5)",    color: "#fed7aa" } },
-    now:    { border: "rgba(74,222,128,0.45)",   bg: "rgba(74,222,128,0.04)", hbg: "rgba(74,222,128,0.07)",  badge: { label: "now",    bg: "rgba(74,222,128,0.18)",   color: "#4ade80" } },
+    now:    { border: "rgba(41,48,255,0.45)",   bg: "rgba(41,48,255,0.04)", hbg: "rgba(41,48,255,0.07)",  badge: { label: "now",    bg: "rgba(41,48,255,0.18)",   color: "#2930FF" } },
     future: { border: "rgba(255,255,255,0.05)",  bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
   };
   const sc = SC[status];
@@ -257,7 +257,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, pillTime, isFuture, isCh
       <div onClick={() => setExpanded(e => !e)} style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           {allDone
-            ? <div style={{ width: 20, height: 20, borderRadius: 4, background: "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "#0a0a0f", fontSize: 11, fontWeight: 700 }}>✓</span></div>
+            ? <div style={{ width: 20, height: 20, borderRadius: 4, background: "#2930FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span></div>
             : <span style={{ color: slot.color, fontSize: 13, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
           }
           <div style={{ minWidth: 0 }}>
@@ -279,8 +279,8 @@ function SlotCard({ slot, slotSupps, status, timeLabel, pillTime, isFuture, isCh
             const done = isChecked(slot.id, supp.id);
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", borderBottom: i < slotSupps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, border: `1.5px solid ${done ? "#4ade80" : "rgba(255,255,255,0.15)"}`, background: done ? "#4ade80" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
-                  {done && <span style={{ color: "#0a0a0f", fontSize: 11, fontWeight: 700 }}>✓</span>}
+                <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, border: `1.5px solid ${done ? "#2930FF" : "rgba(255,255,255,0.15)"}`, background: done ? "#2930FF" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
+                  {done && <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, color: done ? "#4a5568" : "#f1f5f9", textDecoration: done ? "line-through" : "none", fontWeight: done ? 400 : 500 }}>{supp.name}</div>
@@ -439,7 +439,7 @@ function ProtocolApp({ user, token, onSignOut }) {
 
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
   const dayLabel = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const card = { borderRadius: 24, border: "1px solid rgba(255,255,255,0.07)", background: flashGreen ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: P, marginBottom: P, transition: "background 0.4s ease" };
+  const card = { borderRadius: 24, border: "1px solid rgba(255,255,255,0.07)", background: flashGreen ? "rgba(41,48,255,0.06)" : "rgba(255,255,255,0.03)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: P, marginBottom: P, transition: "background 0.4s ease" };
 
   if (loading) return <Loader text="Loading your protocol…" />;
 
@@ -451,7 +451,7 @@ function ProtocolApp({ user, token, onSignOut }) {
         <button onClick={() => goDay(-1)} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 12, flexShrink: 0 }}>‹</button>
         <div style={{ flex: 1, textAlign: "center", padding: "0 8px" }}>
           <div style={{ fontSize: 11, color: "#4a5568", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>PROTOCOL · {getMonthYear().toUpperCase()}</div>
-          <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? "#fff" : "#4ade80", padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
+          <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? "#fff" : "#2930FF", padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
           {!isToday && <div style={{ fontSize: 11, color: "#4a5568", marginTop: 4 }}>tap to return to today</div>}
         </div>
         <button onClick={() => goDay(1)} style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", color: "#8b90a0", borderRadius: 12, flexShrink: 0 }}>›</button>
@@ -463,7 +463,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           <div style={{ flex: 1 }}>
             {!pillTime ? (
               <div>
-                <button onClick={startDay} style={{ width: "100%", padding: "0 16px", minHeight: 48, background: isFuture ? "rgba(255,255,255,0.05)" : "#4ade80", color: isFuture ? "#4a5568" : "#0a0a0f", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: isFuture ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <button onClick={startDay} style={{ width: "100%", padding: "0 16px", minHeight: 48, background: isFuture ? "rgba(255,255,255,0.05)" : "#2930FF", color: isFuture ? "#4a5568" : "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 700, cursor: isFuture ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isFuture ? "Future day" : "Start my day"}
                 </button>
                 {!isFuture && <div style={{ fontSize: 13, color: "#4a5568", marginTop: 8, textAlign: "center" }}>logs your Rx meds · sets full schedule</div>}
@@ -478,26 +478,26 @@ function ProtocolApp({ user, token, onSignOut }) {
                   </div>
                 ) : (
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.04em", color: "#4ade80" }}>{pillTime}</span>
+                    <span style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.04em", color: "#2930FF" }}>{pillTime}</span>
                     <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: 13, color: "#4a5568", background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>
                   </div>
                 )}
-                {pct === 100 && <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginTop: 8 }}>Protocol complete ✓</div>}
+                {pct === 100 && <div style={{ fontSize: 13, color: "#2930FF", fontWeight: 600, marginTop: 8 }}>Protocol complete ✓</div>}
               </div>
             )}
           </div>
           {/* Progress ring — 72×72, r=30 */}
           <svg width="72" height="72" viewBox="0 0 72 72" style={{ flexShrink: 0 }}>
             <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-            <circle cx="36" cy="36" r={r} fill="none" stroke="#4ade80" strokeWidth="5" strokeDasharray={circ} strokeDashoffset={circ - dash} strokeLinecap="round" transform="rotate(-90 36 36)" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
+            <circle cx="36" cy="36" r={r} fill="none" stroke="#2930FF" strokeWidth="5" strokeDasharray={circ} strokeDashoffset={circ - dash} strokeLinecap="round" transform="rotate(-90 36 36)" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
             <text x="36" y="36" textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize="13" fontWeight="700">{pct}%</text>
           </svg>
         </div>
         {/* Footer row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
           <div>
-            {notifStatus === "default"     && <button onClick={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }} style={{ fontSize: 13, padding: "8px 16px", minHeight: 44, borderRadius: 9999, cursor: "pointer", border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.06)", color: "#4ade80", fontWeight: 600 }}>Enable reminders</button>}
-            {notifStatus === "granted"     && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 500 }}>Reminders on</span>}
+            {notifStatus === "default"     && <button onClick={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); }} style={{ fontSize: 13, padding: "8px 16px", minHeight: 44, borderRadius: 9999, cursor: "pointer", border: "1px solid rgba(41,48,255,0.3)", background: "rgba(41,48,255,0.06)", color: "#2930FF", fontWeight: 600 }}>Enable reminders</button>}
+            {notifStatus === "granted"     && <span style={{ fontSize: 13, color: "#2930FF", fontWeight: 500 }}>Reminders on</span>}
             {notifStatus === "denied"      && <span style={{ fontSize: 13, color: "#f87171" }}>Reminders blocked</span>}
             {notifStatus === "unsupported" && <span style={{ fontSize: 13, color: "#4a5568" }}>Add to home screen for reminders</span>}
           </div>
@@ -510,7 +510,7 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Add row */}
       <div style={{ marginBottom: P }}>
-        <button onClick={openAdd} style={{ width: "100%", padding: "0 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", border: "1px dashed rgba(74,222,128,0.22)", background: "rgba(74,222,128,0.03)", fontSize: 15, fontWeight: 600, color: "#4ade80" }}>+ Add supplement</button>
+        <button onClick={openAdd} style={{ width: "100%", padding: "0 16px", minHeight: 44, borderRadius: 16, cursor: "pointer", border: "1px dashed rgba(41,48,255,0.22)", background: "rgba(41,48,255,0.03)", fontSize: 15, fontWeight: 600, color: "#2930FF" }}>+ Add supplement</button>
       </div>
 
       {/* Slot list */}
@@ -520,7 +520,7 @@ function ProtocolApp({ user, token, onSignOut }) {
             <div style={{ fontSize: 28, marginBottom: 16 }}>💊</div>
             <div style={{ fontSize: 15, fontWeight: 600, color: "#e2e8f0", marginBottom: 8 }}>Your protocol is empty</div>
             <div style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.7, marginBottom: 24 }}>Add your medications and supplements above.<br />The schedule anchors to when you take your first Rx each morning.</div>
-            <button onClick={openAdd} style={{ width: "100%", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#4ade80", color: "#0a0a0f", border: "none", fontSize: 15, fontWeight: 700 }}>Add first supplement</button>
+            <button onClick={openAdd} style={{ width: "100%", minHeight: 44, borderRadius: 16, cursor: "pointer", background: "#2930FF", color: "#fff", border: "none", fontSize: 15, fontWeight: 700 }}>Add first supplement</button>
           </div>
         ) : SLOTS.map(slot => {
           const slotSupps = getSuppsForSlot(slot.id); if (!slotSupps.length) return null;
