@@ -2,9 +2,9 @@
 
 export const colors = {
   // Brand
-  accent:        "#2930FF",
-  accentDim:     "rgba(41,48,255,0.12)",
-  accentBorder:  "rgba(41,48,255,0.3)",
+  accent:        "#3D9A8F",
+  accentDim:     "rgba(61,154,143,0.12)",
+  accentBorder:  "rgba(61,154,143,0.3)",
 
   // Backgrounds
   bgBase:        "#080b14",
@@ -34,8 +34,8 @@ export const colors = {
   infoDim:    "rgba(96,165,250,0.08)",
 
   // Slot colors
-  slotRx:          "#2930FF",
-  slotFasted:      "#2930FF",
+  slotRx:          "#3D9A8F",
+  slotFasted:      "#3D9A8F",
   slotPreBreakfast:"#67e8f9",
   slotBreakfast:   "#67e8f9",
   slotPreLunch:    "#c084fc",

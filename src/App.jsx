@@ -426,7 +426,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
   const SC = {
     done:   { border: colors.borderSubtle,     bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
     missed: { border: "rgba(249,115,22,0.35)", bg: "rgba(249,115,22,0.05)", hbg: "rgba(249,115,22,0.07)", badge: { label: "missed", bg: "rgba(124,45,18,0.5)",  color: "#fed7aa" } },
-    now:    { border: "rgba(41,48,255,0.45)",  bg: "rgba(41,48,255,0.04)", hbg: "rgba(41,48,255,0.07)",  badge: { label: "now",    bg: "rgba(41,48,255,0.18)", color: colors.accent } },
+    now:    { border: "rgba(61,154,143,0.45)",  bg: "rgba(61,154,143,0.04)", hbg: "rgba(61,154,143,0.07)",  badge: { label: "now",    bg: "rgba(61,154,143,0.18)", color: colors.accent } },
     future: { border: colors.borderSubtle,     bg: "rgba(255,255,255,0.02)", hbg: "transparent",           badge: null },
   };
   const sc = SC[status];
@@ -656,10 +656,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: "-0.02em", background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center" }}>{dayLabel}</button>
           {!isToday && <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxs }}>tap to return to today</div>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-          <button onClick={() => setShowSchedule(true)} style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: `1px solid rgba(255,255,255,0.08)`, cursor: "pointer", color: "rgba(255,255,255,0.45)", borderRadius: 8, fontSize: 22 }}>⚙</button>
-          <button onClick={() => goDay(1)} style={navArrow}>›</button>
-        </div>
+        <button onClick={() => goDay(1)} style={navArrow}>›</button>
       </div>
 
       {/* Hero card */}
@@ -712,8 +709,9 @@ function ProtocolApp({ user, token, onSignOut }) {
       </div>
 
       {/* Add row */}
-      <div style={{ marginBottom: spacing.md }}>
-        <button onClick={openAdd} style={{ width: "100%", padding: `0 ${spacing.md}px`, minHeight: touch.min, borderRadius: radius.lg, cursor: "pointer", border: `1px dashed ${colors.accentBorder}`, background: colors.accentDim, fontSize: typography.body, fontWeight: typography.semibold, color: colors.accent }}>+ Add supplement</button>
+      <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
+        <button onClick={openAdd} style={{ flex: 1, padding: `${spacing.sm}px`, borderRadius: radius.lg, cursor: "pointer", border: "1px dashed rgba(61,154,143,0.3)", background: "rgba(61,154,143,0.04)", fontSize: typography.caption, fontWeight: typography.semibold, color: "#3D9A8F", minHeight: 44, letterSpacing: "-0.01em", WebkitTapHighlightColor: "transparent" }}>+ Add Supplement</button>
+        <button onClick={() => setShowSchedule(true)} style={{ flex: 1, padding: `${spacing.sm}px`, borderRadius: radius.lg, cursor: "pointer", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", fontSize: typography.caption, fontWeight: typography.semibold, color: "rgba(255,255,255,0.45)", minHeight: 44, letterSpacing: "-0.01em", WebkitTapHighlightColor: "transparent" }}>Edit Schedule</button>
       </div>
 
       {/* Slot list */}
