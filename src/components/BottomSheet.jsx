@@ -60,7 +60,6 @@ export default function BottomSheet({ open, onClose, title, children }) {
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         {/* Drag handle */}
@@ -92,7 +91,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
         <div style={{
           overflowY: "auto",
           padding: `${spacing.sm}px ${spacing.md}px 0`,
-          paddingBottom: spacing.md,
+          paddingBottom: `calc(${spacing.md}px + env(safe-area-inset-bottom))`,
           flex: 1,
           WebkitOverflowScrolling: "touch",
         }}>
