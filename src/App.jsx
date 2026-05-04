@@ -20,14 +20,46 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 // ── Supabase helpers ──────────────────────────────────────────────────────────
 
+async function refreshSession() {
+  const refreshToken = localStorage.getItem("sb_refresh_token");
+  if (!refreshToken) return null;
+  try {
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (d.access_token) {
+        localStorage.setItem("sb_token", d.access_token);
+        if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
+        return d.access_token;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 async function supa(method, path, body, token) {
+  const url = `${SUPA_URL}${path}`;
   const headers = {
     "Content-Type": "application/json",
     "apikey": SUPA_KEY,
     "Authorization": `Bearer ${token || SUPA_KEY}`,
     "Prefer": "resolution=merge-duplicates,return=representation",
   };
-  const res = await fetch(SUPA_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+
+  let res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+
+  if (res.status === 401 && token) {
+    const newToken = await refreshSession();
+    if (newToken) {
+      headers.Authorization = `Bearer ${newToken}`;
+      res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    }
+  }
+
   if (!res.ok) {
     let detail = null;
     try { detail = await res.json(); } catch {}
@@ -48,6 +80,15 @@ async function getSession() {
       headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${token}` },
     });
     if (res.ok) { const d = await res.json(); return d.id ? d : null; }
+    if (res.status === 401) {
+      const newToken = await refreshSession();
+      if (newToken) {
+        const retry = await fetch(`${SUPA_URL}/auth/v1/user`, {
+          headers: { "apikey": SUPA_KEY, "Authorization": `Bearer ${newToken}` },
+        });
+        if (retry.ok) { const d = await retry.json(); return d.id ? d : null; }
+      }
+    }
   } catch (e) {}
   return null;
 }
@@ -59,7 +100,11 @@ async function signUp(email, password) {
     body: JSON.stringify({ email, password }),
   });
   const d = await res.json();
-  if (res.ok && d.access_token) { localStorage.setItem("sb_token", d.access_token); return d.user; }
+  if (res.ok && d.access_token) {
+    localStorage.setItem("sb_token", d.access_token);
+    if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
+    return d.user;
+  }
   return null;
 }
 
@@ -71,12 +116,19 @@ async function signInPassword(email, password) {
   });
   if (res.ok) {
     const d = await res.json();
-    if (d.access_token) { localStorage.setItem("sb_token", d.access_token); return d.user; }
+    if (d.access_token) {
+      localStorage.setItem("sb_token", d.access_token);
+      if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
+      return d.user;
+    }
   }
   return null;
 }
 
-function signOut() { localStorage.removeItem("sb_token"); }
+function signOut() {
+  localStorage.removeItem("sb_token");
+  localStorage.removeItem("sb_refresh_token");
+}
 
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
