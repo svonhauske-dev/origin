@@ -50,7 +50,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
           position: "relative",
           width: "100%",
           maxWidth: 480,
-          maxHeight: "90vh",
+          maxHeight: "calc(100dvh - env(safe-area-inset-top) - 12px)",
           background: colors.bgModal,
           borderTopLeftRadius: radius.lg,
           borderTopRightRadius: radius.lg,
