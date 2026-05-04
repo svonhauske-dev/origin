@@ -31,7 +31,6 @@ export default function Modal({ open, onClose, title, children }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: spacing.md,
       }}
     >
       {/* Backdrop */}
@@ -49,9 +48,9 @@ export default function Modal({ open, onClose, title, children }) {
       <div
         style={{
           position: "relative",
-          width: "100%",
+          width: `calc(100% - ${spacing.md * 2}px)`,
           maxWidth: 480,
-          maxHeight: "85vh",
+          maxHeight: "75vh",
           background: colors.bgModal,
           borderRadius: radius.lg,
           boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
