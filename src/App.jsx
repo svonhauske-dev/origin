@@ -170,7 +170,7 @@ const DEFAULT_CONFIG = {
 };
 
 function deriveOffsets(mode, cfg) {
-  if (mode === "fixed") return null;
+  if (mode === "none" || mode === "fixed") return null;
   if (mode === "fasting") {
     const winStart = cfg.window_start ?? 0;
     const winLen   = cfg.window_length ?? 480;
@@ -204,8 +204,8 @@ function deriveOffsets(mode, cfg) {
   };
 }
 
-// Row 1: Medication | Wakeup — Row 2: Fasting | Fixed
 const MODES = [
+  { id: "none",       title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
   { id: "medication", title: "Medication Anchor",    desc: "Cascades from when you take your meds" },
   { id: "wakeup",     title: "Wake Up Anchor",       desc: "Cascades from when you wake up" },
   { id: "fasting",    title: "Intermittent Fasting", desc: "Builds around your eating window" },
@@ -243,6 +243,8 @@ const START_SUBTITLES = {
 };
 
 const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
+
+const ANYTIME_SLOT = { id: "anytime", label: "Anytime", sublabel: "No specific time", icon: "◦", color: colors.textMuted };
 
 const CATEGORIES = ["Oral", "Rx", "Injectable", "Topical"];
 
@@ -498,14 +500,14 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
 
   return (
     <div>
-      {/* 2×2 mode grid */}
+      {/* Mode grid — "none" spans full width, others 2-col */}
       <div style={{ marginBottom: spacing.lg }}>
         <Label>Schedule type</Label>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: spacing.xs }}>
           {MODES.map(m => {
             const on = localMode === m.id;
             return (
-              <Card key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, marginBottom: 0 }}>
+              <Card key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? colors.accentDim : "transparent", border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`, marginBottom: 0, ...(m.id === "none" ? { gridColumn: "1 / -1" } : {}) }}>
                 <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? colors.accent : colors.textPrimary }}>{m.title}</span>
                 <span style={{ fontSize: typography.label, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</span>
               </Card>
@@ -514,15 +516,22 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
         </div>
       </div>
 
+      {/* No Schedule — explanation only, no config */}
+      {localMode === "none" && (
+        <Card variant="accent" style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, fontSize: typography.label, color: colors.accent, marginBottom: spacing.md }}>
+          Tracking only — no notifications. Add supplements without picking "when to take it" to use a pure checklist.
+        </Card>
+      )}
+
       {/* Anchor note */}
-      {localMode !== "fixed" && (
+      {localMode !== "fixed" && localMode !== "none" && (
         <Card variant="accent" style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, fontSize: typography.label, color: colors.accent, marginBottom: spacing.md }}>
           {ANCHOR_NOTES[localMode]}
         </Card>
       )}
 
-      {/* Flexible / Consistent toggle (non-fixed modes) */}
-      {localMode !== "fixed" && (
+      {/* Flexible / Consistent toggle (non-fixed, non-none modes) */}
+      {localMode !== "fixed" && localMode !== "none" && (
         <div style={{ marginBottom: spacing.md }}>
           <Label>Daily timing</Label>
           <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.xs }}>
@@ -645,8 +654,8 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
         </div>
       )}
 
-      {/* Live preview */}
-      <div style={{ marginBottom: spacing.lg }}>
+      {/* Live preview — hidden in no-schedule mode */}
+      {localMode !== "none" && <div style={{ marginBottom: spacing.lg }}>
         <Label>{localMode === "fixed" ? "Schedule preview" : "Preview (7:00 am anchor)"}</Label>
         <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderSubtle}`, background: colors.bgCard, padding: spacing.md, display: "flex", flexDirection: "column", gap: spacing.xs }}>
           {previewRows.length === 0
@@ -662,7 +671,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
               ))
           }
         </div>
-      </div>
+      </div>}
 
       <Button variant="primary" fullWidth onClick={handleSave}>Save schedule</Button>
     </div>
@@ -671,7 +680,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
 
 // ── SlotCard ──────────────────────────────────────────────────────────────────
 
-function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, toggleCheck, openEdit }) {
+function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, toggleCheck, openEdit, noSchedule }) {
   const allDone = slotSupps.every(s => isChecked(slot.id, s.id));
   const [expanded, setExpanded] = useState(!allDone);
   useEffect(() => { setExpanded(!allDone); }, [allDone]);
@@ -686,7 +695,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
   const sc = SC[status];
 
   return (
-    <div style={{ marginBottom: spacing.xs, borderRadius: radius.md, border: `1px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: status === "future" && !pillTime && !isVariableSlot ? 0.38 : 1 }}>
+    <div style={{ marginBottom: spacing.xs, borderRadius: radius.md, border: `1px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime && !isVariableSlot ? 0.38 : 1 }}>
       <div onClick={() => setExpanded(e => !e)} style={{ padding: `${spacing.sm}px ${spacing.md}px`, display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flex: 1, minWidth: 0 }}>
           {allDone
@@ -702,7 +711,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? slot.color : colors.textMuted, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>
+          {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? slot.color : colors.textMuted, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
           <span style={{ fontSize: typography.caption, color: colors.textMuted, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
         </div>
       </div>
@@ -771,7 +780,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [streak, setStreak]                 = useState(0);
   const [flashGreen, setFlashGreen]         = useState(false);
   const [showSchedule, setShowSchedule]     = useState(false);
-  const [scheduleMode, setScheduleMode]     = useState("medication");
+  const [scheduleMode, setScheduleMode]     = useState("none");
   const [scheduleConfig, setScheduleConfig] = useState({
     ...DEFAULT_CONFIG,
     fixed_times: { ...DEFAULT_CONFIG.fixed_times },
@@ -890,7 +899,7 @@ function ProtocolApp({ user, token, onSignOut }) {
     for (let i = 0; i < 30; i++) {
       const ddk = dateKey(d);
       const pt  = pillTimes[ddk];
-      if (!pt && scheduleMode !== "fixed" && anchorBehavior !== "consistent") break;
+      if (!pt && scheduleMode !== "fixed" && scheduleMode !== "none" && anchorBehavior !== "consistent") break;
       const day     = d.getDay();
       const allDone = CORE_SLOTS.every(sid => supps.filter(x => !x.paused && x.slots.includes(sid) && x.days.includes(day)).every(x => !!checked[`${ddk}_${sid}_${x.id}`]));
       if (!allDone) break;
@@ -942,7 +951,11 @@ function ProtocolApp({ user, token, onSignOut }) {
     if (diff > 15) return "missed"; if (diff > -5) return "now"; return "future";
   };
 
-  let coreTotal = 0, coreDone = 0;
+  const anytimeSupps = scheduleMode === "none"
+    ? homeSupps.filter(s => s.slots.length === 0 && s.days.includes(viewDay))
+    : [];
+  let coreTotal = anytimeSupps.length, coreDone = 0;
+  anytimeSupps.forEach(s => { if (isChecked("anytime", s.id)) coreDone++; });
   CORE_SLOTS.forEach(sid => {
     const sl = getSuppsForSlot(sid).filter(s => (s.category || "Oral") !== "Injectable" && (s.category || "Oral") !== "Topical");
     coreTotal += sl.length;
@@ -1113,7 +1126,15 @@ function ProtocolApp({ user, token, onSignOut }) {
       <Card style={{ borderRadius: radius.xl, border: `1px solid ${colors.borderBase}`, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.md, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
           <div style={{ flex: 1 }}>
-            {scheduleMode === "fixed" ? (
+            {scheduleMode === "none" ? (
+              <div>
+                <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>No schedule</Label>
+                <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long" })}</div>
+                <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: 2 }}>{shortDate}</div>
+                {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>All done ✓</div>}
+                {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
+              </div>
+            ) : scheduleMode === "fixed" ? (
               <div>
                 <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>Fixed schedule</Label>
                 <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{DAYS[viewDay]}</div>
@@ -1161,25 +1182,33 @@ function ProtocolApp({ user, token, onSignOut }) {
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
             <div style={{ fontSize: typography.hero, marginBottom: spacing.md }}>💊</div>
             <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
-            <div style={{ fontSize: typography.caption, color: colors.textMuted, lineHeight: 1.7, marginBottom: spacing.lg }}>Add your medications and supplements. Your schedule builds from when you take your first med each morning.</div>
+            <div style={{ fontSize: typography.caption, color: colors.textMuted, lineHeight: 1.7, marginBottom: spacing.lg }}>Add your first supplement to get started.</div>
             <Button variant="primary" fullWidth onClick={openAdd}>Add first supplement</Button>
           </div>
-        ) : SLOTS.map(slot => {
-          const slotSupps = slot.id === "injectable"
-            ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
-            : slot.id === "topical"
-              ? getSuppsForSlot(slot.id).filter(s => s.category === "Topical")
-              : getSuppsForSlot(slot.id).filter(s => s.category !== "Injectable" && s.category !== "Topical");
-          if (!slotSupps.length) return null;
-          const isVarSlot = slot.id === "injectable" || slot.id === "topical";
-          const hasOffset = scheduleMode === "fixed"
-            ? !isVarSlot && !!scheduleConfig.fixed_times?.[slot.id]
-            : slot.id === "rx"
-              ? !!pillTime
-              : !isVarSlot && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
-          const timeLabel = isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
-          return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={slotStatus(slot.id)} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} />;
-        })}
+        ) : (<>
+          {/* Anytime block — only in no-schedule mode, for unsorted supplements */}
+          {scheduleMode === "none" && anytimeSupps.length > 0 && (
+            <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule />
+          )}
+          {SLOTS.map(slot => {
+            const slotSupps = slot.id === "injectable"
+              ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
+              : slot.id === "topical"
+                ? getSuppsForSlot(slot.id).filter(s => s.category === "Topical")
+                : getSuppsForSlot(slot.id).filter(s => s.category !== "Injectable" && s.category !== "Topical");
+            if (!slotSupps.length) return null;
+            const isVarSlot = slot.id === "injectable" || slot.id === "topical";
+            const hasOffset = scheduleMode === "fixed"
+              ? !isVarSlot && !!scheduleConfig.fixed_times?.[slot.id]
+              : slot.id === "rx"
+                ? !!pillTime
+                : !isVarSlot && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
+            const noSched = scheduleMode === "none";
+            const timeLabel = noSched ? "" : isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
+            const status = noSched ? "future" : slotStatus(slot.id);
+            return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} />;
+          })}
+        </>)}
       </div>
 
       {/* Modals */}
