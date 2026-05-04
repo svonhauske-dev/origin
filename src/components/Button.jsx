@@ -109,7 +109,7 @@ export default function Button({
       flexShrink: 0,
       padding: 0,
       ...(active
-        ? { background: colors.accent, color: colors.textPrimary, border: "none" }
+        ? { background: colors.accentDim, color: colors.accent, border: `1px solid ${colors.accent}` }
         : { background: "transparent", color: colors.textSecondary, border: `1px solid ${colors.borderStrong}` }),
     };
   } else {

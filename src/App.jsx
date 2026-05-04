@@ -358,7 +358,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete, onTo
           {CATEGORIES.map(cat => {
             const on = form.category === cat;
             return (
-              <Button key={cat} variant="pill" active={on} solidActive style={{ flex: 1 }} onClick={() => {
+              <Button key={cat} variant="pill" active={on} style={{ flex: 1 }} onClick={() => {
                 if (cat === "Injectable") {
                   setForm(f => ({ ...f, category: cat, slots: ["injectable"], timePreference: f.timePreference || "Anytime" }));
                 } else if (cat === "Topical") {
