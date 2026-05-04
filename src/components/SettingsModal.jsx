@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { colors, spacing, typography, touch } from "../design-system";
 import Button from "./Button";
 import Label from "./Label";
-import Modal from "./Modal";
+import BottomSheet from "./BottomSheet";
 import { useToast } from "./ToastContext";
 
 export default function SettingsModal({ open, onClose, notifStatus, onEnableNotifications, onOpenManage, onSignOut }) {
@@ -14,7 +14,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Settings">
+    <BottomSheetopen={open} onClose={onClose} title="Settings">
       <Label style={{ marginBottom: spacing.xs }}>Supplements</Label>
       <div
         onClick={onOpenManage}
@@ -53,6 +53,6 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />
 
       <Button variant="destructive" fullWidth onClick={() => { onSignOut(); onClose(); }}>Sign out</Button>
-    </Modal>
+    </BottomSheet>
   );
 }

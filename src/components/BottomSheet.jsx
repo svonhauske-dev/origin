@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { colors, spacing, radius, typography } from "../design-system";
 import Button from "./Button";
 
-export default function Modal({ open, onClose, title, children }) {
+export default function BottomSheet({ open, onClose, title, children }) {
   useEffect(function() {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -29,7 +29,7 @@ export default function Modal({ open, onClose, title, children }) {
         zIndex: 200,
         pointerEvents: open ? "all" : "none",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-end",
         justifyContent: "center",
       }}
     >
@@ -44,24 +44,33 @@ export default function Modal({ open, onClose, title, children }) {
           transition: "opacity 250ms ease-out",
         }}
       />
-      {/* Modal container */}
+      {/* Sheet */}
       <div
         style={{
           position: "relative",
-          width: `calc(100% - ${spacing.md * 2}px)`,
+          width: "100%",
           maxWidth: 480,
-          maxHeight: "75vh",
+          maxHeight: "calc(100dvh - env(safe-area-inset-top) - 12px)",
           background: colors.bgModal,
-          borderRadius: radius.lg,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          borderTopLeftRadius: radius.lg,
+          borderTopRightRadius: radius.lg,
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+          transform: open ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 250ms ease-out",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          opacity: open ? 1 : 0,
-          transform: open ? "scale(1)" : "scale(0.95)",
-          transition: "opacity 250ms ease-out, transform 250ms ease-out",
         }}
       >
+        {/* Drag handle */}
+        <div style={{
+          width: 40,
+          height: 4,
+          borderRadius: radius.full,
+          background: colors.borderStrong,
+          margin: "8px auto 0",
+          flexShrink: 0,
+        }} />
         {/* Header */}
         <div style={{
           display: "flex",
@@ -81,7 +90,7 @@ export default function Modal({ open, onClose, title, children }) {
         {/* Scrollable body */}
         <div style={{
           overflowY: "auto",
-          padding: `${spacing.sm}px ${spacing.md}px ${spacing.md}px`,
+          padding: `${spacing.sm}px ${spacing.md}px 24px`,
           flex: 1,
           WebkitOverflowScrolling: "touch",
         }}>

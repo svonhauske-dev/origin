@@ -9,7 +9,7 @@ import Input from "./components/Input";
 import Card from "./components/Card";
 import Badge from "./components/Badge";
 import Label from "./components/Label";
-import Modal from "./components/Modal";
+import BottomSheet from "./components/BottomSheet";
 import SettingsModal from "./components/SettingsModal";
 import { ToastProvider, useToast } from "./components/ToastContext";
 import Toast from "./components/Toast";
@@ -1199,10 +1199,10 @@ function ProtocolApp({ user, token, onSignOut }) {
         onDelete={requestDelete}
         onTogglePause={togglePause}
       />
-      <Modal open={formOpen} onClose={closeForm} title={editingId ? "Edit supplement" : "New supplement"}>
+      <BottomSheetopen={formOpen} onClose={closeForm} title={editingId ? "Edit supplement" : "New supplement"}>
         <EditForm form={form} setForm={setForm} editingId={editingId} onSubmit={submitForm} onCancel={closeForm} onDelete={deleteSupp} onTogglePause={handleEditFormTogglePause} />
-      </Modal>
-      <Modal open={showSchedule} onClose={() => setShowSchedule(false)} title="Daily Schedule">
+      </BottomSheet>
+      <BottomSheetopen={showSchedule} onClose={() => setShowSchedule(false)} title="Daily Schedule">
         <ScheduleModal
           key={String(showSchedule)}
           scheduleMode={scheduleMode}
@@ -1214,7 +1214,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           onSave={saveSchedule}
           onClose={() => setShowSchedule(false)}
         />
-      </Modal>
+      </BottomSheet>
     </div>
   );
 }
