@@ -1,0 +1,235 @@
+import { useState } from 'react';
+import { colors, spacing, radius, typography, layout, segBtnStyle } from '../design-system';
+import { parseHHMM, fmtTime, addMins } from '../lib/time';
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets, toHrMin, fromHrMin } from '../config';
+import { SLOTS } from '../lib/notifications';
+import Button from './Button';
+import Input from './Input';
+import Label from './Label';
+import Card from './Card';
+
+export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setScheduleConfig,
+                                        anchorBehavior, consistentTime, onSave, onClose, saveFnRef }) {
+  const [localMode,     setLocalMode]     = useState(scheduleMode);
+  const [localConfig,   setLocalConfig]   = useState({
+    ...DEFAULT_CONFIG,
+    ...scheduleConfig,
+    fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(scheduleConfig.fixed_times || {}) },
+  });
+  const [localBehavior, setLocalBehavior] = useState(anchorBehavior);
+  const [localTime,     setLocalTime]     = useState(consistentTime);
+
+  const updateConfig = (key, value) => setLocalConfig(c => ({ ...c, [key]: value }));
+  const updateFixed  = (key, value) => setLocalConfig(c => ({
+    ...c, fixed_times: { ...c.fixed_times, [key]: value || null },
+  }));
+
+  const handleSave = () => {
+    setScheduleMode(localMode);
+    setScheduleConfig(localConfig);
+    onSave(localMode, localConfig, localBehavior, localTime);
+  };
+  if (saveFnRef) saveFnRef.current = handleSave;
+
+  const previewBase = parseHHMM("07:00");
+  const derived     = localMode !== "fixed" ? deriveOffsets(localMode, localConfig) : null;
+
+  const previewRows = localMode === "fixed"
+    ? FIXED_SLOTS
+        .filter(fs => localConfig.fixed_times?.[fs.key])
+        .map(fs => ({ label: fs.label, timeStr: localConfig.fixed_times[fs.key] }))
+        .sort((a, b) => a.timeStr.localeCompare(b.timeStr))
+    : [
+        { label: MODES.find(m => m.id === localMode)?.title ?? "Anchor", offset: 0 },
+        ...Object.entries(derived || {})
+          .filter(([, v]) => v !== null && v !== undefined)
+          .map(([sid, offset]) => ({ label: SLOTS.find(s => s.id === sid)?.label ?? sid, offset })),
+      ].sort((a, b) => a.offset - b.offset);
+
+  const mealRows = [
+    { key: "breakfast",    label: "Breakfast" },
+    { key: "lunch",        label: "Lunch" },
+    { key: "dinner",       label: "Dinner" },
+    { key: "after_dinner", label: "Evening" },
+  ];
+
+  const isOffsetMode = localMode === "medication" || localMode === "wakeup";
+
+  return (
+    <div>
+      {/* Mode grid — "none" spans full width, others 2-col */}
+      <div style={{ marginBottom: spacing.lg }}>
+        <Label>Schedule type</Label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: spacing.xs }}>
+          {MODES.map(m => {
+            const on = localMode === m.id;
+            return (
+              <Card key={m.id} onClick={() => setLocalMode(m.id)} style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? colors.accentSubtle : "transparent", border: `1px solid ${on ? colors.accent : colors.borderSubtle}`, marginBottom: 0, ...(m.id === "none" ? { gridColumn: "1 / -1" } : {}) }}>
+                <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? colors.accent : colors.textPrimary }}>{m.title}</span>
+                <span style={{ fontSize: typography.label, color: colors.textMuted, lineHeight: 1.4 }}>{m.desc}</span>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* No Schedule — explanation only, no config */}
+      {localMode === "none" && (
+        <Card variant="accent" style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, fontSize: typography.label, color: colors.accent, marginBottom: spacing.md }}>
+          Tracking only — no notifications. Add supplements without picking "when to take it" to use a pure checklist.
+        </Card>
+      )}
+
+      {/* Anchor note */}
+      {localMode !== "fixed" && localMode !== "none" && (
+        <Card variant="accent" style={{ padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, fontSize: typography.label, color: colors.accent, marginBottom: spacing.md }}>
+          {ANCHOR_NOTES[localMode]}
+        </Card>
+      )}
+
+      {/* Flexible / Consistent toggle (non-fixed, non-none modes) */}
+      {localMode !== "fixed" && localMode !== "none" && (
+        <div style={{ marginBottom: spacing.md }}>
+          <Label>Daily timing</Label>
+          <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.xs }}>
+            {[["flexible", "Flexible"], ["consistent", "Consistent"]].map(([val, label]) => {
+              const on = localBehavior === val;
+              return (
+                <button key={val} onClick={() => setLocalBehavior(val)} style={segBtnStyle(on)}>{label}</button>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: typography.label, color: colors.textMuted, lineHeight: 1.6 }}>
+            {localBehavior === "flexible"
+              ? "Tap each morning to set your schedule for the day."
+              : "Your schedule runs automatically at the same time every day."}
+          </div>
+          {localBehavior === "consistent" && (
+            <div style={{ marginTop: spacing.sm }}>
+              <Label>Start time</Label>
+              <Input variant="time" value={localTime} onChange={e => setLocalTime(e.target.value)} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Medication / Wakeup: offset editor */}
+      {isOffsetMode && (
+        <>
+          <div style={{ marginBottom: spacing.md }}>
+            <Label>Meal schedule</Label>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+              {mealRows.map(({ key, label }) => {
+                const total   = localConfig[key];
+                const isEmpty = total === null || total === undefined;
+                const { h, m } = toHrMin(isEmpty ? 0 : total);
+                return (
+                  <Card key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                    <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{label}</span>
+                    <Input
+                      variant="number" width={52} min="0" max="23"
+                      value={isEmpty ? "" : h}
+                      onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(e.target.value, isEmpty ? 0 : m))}
+                      placeholder="0"
+                    />
+                    <span style={{ fontSize: typography.label, color: colors.textMuted }}>hr</span>
+                    <Input
+                      variant="number" width={52} min="0" max="59"
+                      value={isEmpty ? "" : m}
+                      onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(isEmpty ? 0 : h, e.target.value))}
+                      placeholder="0"
+                    />
+                    <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>after anchor</span>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ marginBottom: spacing.lg }}>
+            <Label>Pre-meal window</Label>
+            <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Take pre-meal supplements</span>
+              <Input
+                variant="number" width={52} min="0" max="120"
+                value={localConfig.pre_meal_window ?? 30}
+                onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
+              />
+              <span style={{ fontSize: typography.label, color: colors.textMuted }}>min before eating</span>
+            </Card>
+            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xs, paddingLeft: spacing.xs }}>applies to all meals</div>
+          </div>
+        </>
+      )}
+
+      {/* Fasting: segmented controls */}
+      {localMode === "fasting" && (
+        <div style={{ marginBottom: spacing.lg }}>
+          <div style={{ marginBottom: spacing.md }}>
+            <Label>Window length</Label>
+            <div style={{ display: "flex", gap: spacing.xs }}>
+              {[[240, "4 hr"], [360, "6 hr"], [480, "8 hr"]].map(([val, lbl]) => {
+                const on = (localConfig.window_length ?? 480) === val;
+                return <button key={val} onClick={() => updateConfig("window_length", val)} style={segBtnStyle(on)}>{lbl}</button>;
+              })}
+            </div>
+          </div>
+          <div style={{ marginBottom: spacing.md }}>
+            <Label>Meals per day</Label>
+            <div style={{ display: "flex", gap: spacing.xs }}>
+              {[[2, "2 meals"], [3, "3 meals"]].map(([val, lbl]) => {
+                const on = (localConfig.meals_per_day ?? 2) === val;
+                return <button key={val} onClick={() => updateConfig("meals_per_day", val)} style={segBtnStyle(on)}>{lbl}</button>;
+              })}
+            </div>
+          </div>
+          <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+            <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal supplements</span>
+            <Input variant="number" width={52} min="0" max="120" value={localConfig.pre_meal_window ?? 30} onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)} />
+            <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>min before</span>
+          </Card>
+          <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xs, paddingLeft: spacing.xs }}>How many minutes before each meal to take pre-meal supplements</div>
+        </div>
+      )}
+
+      {/* Fixed: time pickers */}
+      {localMode === "fixed" && (
+        <div style={{ marginBottom: spacing.lg }}>
+          <Label>Fixed times</Label>
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+            {FIXED_SLOTS.map(({ key, label }) => (
+              <Card key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>{label}</span>
+                <Input
+                  variant="time"
+                  value={localConfig.fixed_times?.[key] || ""}
+                  onChange={e => updateFixed(key, e.target.value)}
+                  style={{ width: "auto" }}
+                />
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Live preview — hidden in no-schedule mode */}
+      {localMode !== "none" && <div style={{ marginBottom: spacing.lg }}>
+        <Label>{localMode === "fixed" ? "Schedule preview" : "Preview (7:00 am anchor)"}</Label>
+        <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderSubtle}`, background: colors.bgCard, padding: spacing.md, display: "flex", flexDirection: "column", gap: spacing.xs }}>
+          {previewRows.length === 0
+            ? <span style={{ fontSize: typography.caption, color: colors.textMuted }}>No times configured yet</span>
+            : previewRows.map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
+                  <span style={{ fontSize: typography.caption, fontVariantNumeric: "tabular-nums", color: colors.accent, fontWeight: typography.semibold, minWidth: 42 }}>
+                    {row.timeStr ?? fmtTime(addMins(previewBase, row.offset))}
+                  </span>
+                  <span style={{ fontSize: typography.caption, color: colors.textMuted }}>—</span>
+                  <span style={{ fontSize: typography.caption, color: colors.textSecondary }}>{row.label}</span>
+                </div>
+              ))
+          }
+        </div>
+      </div>}
+
+    </div>
+  );
+}

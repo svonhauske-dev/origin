@@ -35,3 +35,46 @@ export const toHrMin = (totalMins) => {
 };
 
 export const fromHrMin = (h, m) => (parseInt(h) || 0) * 60 + (parseInt(m) || 0);
+
+export const MODES = [
+  { id: "none",       title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
+  { id: "medication", title: "Medication Anchor",    desc: "Cascades from when you take your meds" },
+  { id: "wakeup",     title: "Wake Up Anchor",       desc: "Cascades from when you wake up" },
+  { id: "fasting",    title: "Intermittent Fasting", desc: "Builds around your eating window" },
+  { id: "fixed",      title: "Fixed Times",          desc: "Same schedule every day" },
+];
+
+export function deriveOffsets(mode, cfg) {
+  if (mode === "none" || mode === "fixed") return null;
+  if (mode === "fasting") {
+    const winStart = cfg.window_start ?? 0;
+    const winLen   = cfg.window_length ?? 480;
+    const meals    = cfg.meals_per_day ?? 2;
+    const interval = Math.floor(winLen / (meals + 1));
+    const pmw      = cfg.pre_meal_window ?? 30;
+    return {
+      pre_breakfast: winStart + interval - pmw,
+      breakfast:     winStart + interval,
+      pre_lunch:     meals >= 2 ? winStart + (interval * 2) - pmw : null,
+      lunch:         meals >= 2 ? winStart + (interval * 2) : null,
+      pre_dinner:    meals >= 3 ? winStart + (interval * 3) - pmw : null,
+      dinner:        meals >= 3 ? winStart + (interval * 3) : null,
+      after_dinner:  winStart + winLen + 30,
+      injectable:    null,
+      topical:       null,
+    };
+  }
+  const pmw       = cfg.pre_meal_window ?? 30;
+  const pre_bfast = (cfg.breakfast ?? 60) - pmw;
+  return {
+    pre_breakfast: pre_bfast,
+    breakfast:     cfg.breakfast ?? 60,
+    pre_lunch:     (cfg.lunch ?? 300) - pmw,
+    lunch:         cfg.lunch ?? 300,
+    pre_dinner:    (cfg.dinner ?? 540) - pmw,
+    dinner:        cfg.dinner ?? 540,
+    after_dinner:  cfg.after_dinner ?? 660,
+    injectable:    null,
+    topical:       null,
+  };
+}
