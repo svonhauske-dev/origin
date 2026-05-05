@@ -8,7 +8,7 @@ export const colors = {
   bgModal:         "#FFFFFF",   // pure white for modals/cards
   bgCard:          "#FFFFFF",   // slot cards
   bgCardSubtle:    "#F4F6F8",   // matches base for nested elements
-  bgBackdrop:      "rgba(26,26,26,0.4)",
+  bgBackdrop:      "rgba(26,26,26,0.55)",
   bgInput:         "#FFFFFF",
   bgInputDisabled: "#F2F4F6",
 
@@ -85,10 +85,10 @@ export const spacing = {
 
 export const radius = {
   xs:   2,    // badges, tags
-  sm:   4,    // inputs, small buttons
-  md:   6,    // inner cards, rows
-  lg:   8,    // buttons, cards
-  xl:   12,   // modals, large cards
+  sm:   4,    // checkboxes, tight UI elements
+  md:   12,   // cards, modals, inputs — canonical surface radius
+  lg:   16,   // unused — reserved for larger surfaces
+  xl:   20,   // unused — reserved for extra-large surfaces
   full: 9999, // pill buttons, avatars
 };
 

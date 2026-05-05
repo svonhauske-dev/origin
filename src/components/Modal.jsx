@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { colors, spacing, radius, typography, layout, touch, shadows, zIndex as zIndexTokens } from "../design-system";
+import { colors, spacing, radius, typography, layout, touch, shadows, effects, zIndex as zIndexTokens } from "../design-system";
 import Button from "./Button";
 
 export default function Modal({ open, onClose, title, children, footer }) {
@@ -33,6 +33,8 @@ export default function Modal({ open, onClose, title, children, footer }) {
           left: 0,
           right: 0,
           background: colors.bgBackdrop,
+          backdropFilter: effects.backdropBlur,
+          WebkitBackdropFilter: effects.backdropBlur,
           opacity: open ? 1 : 0,
           transition: "opacity 250ms ease-out",
           pointerEvents: open ? "all" : "none",
@@ -59,7 +61,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
             width: `calc(100% - ${spacing.md * 2}px)`,
             maxWidth: layout.maxContentWidth,
             maxHeight: `calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 48px)`,
-            background: colors.bgModal,
+            background: colors.bgBase,
             borderRadius: radius.md,
             boxShadow: shadows.modal,
             transform: open ? "scale(1)" : "scale(0.95)",
