@@ -1006,6 +1006,24 @@ function ProtocolApp({ user, token, onSignOut }) {
       await dbSaveSchedule({ user_id: user.id, schedule_type: mode, offsets }, token);
       setAnchorBehavior(behavior);
       setConsistentTime(cTime);
+
+      // Switching to flexible: clear today's pre-populated pill_time so the
+      // "Start my day" CTA reappears — but only if the user hasn't checked
+      // anything off yet (checked entries = real logged data, don't touch those).
+      if (behavior === "flexible" && isToday) {
+        const hasAnyChecks = Object.values(checked[dk] || {}).some(v => v === true);
+        if (!hasAnyChecks) {
+          setPillTimes(pt => { const next = { ...pt }; delete next[dk]; return next; });
+          dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: null, checked: {} }, token)
+            .catch(e => console.error("Failed to clear log pill_time:", e));
+        }
+      }
+
+      // Switching to consistent: pre-populate today's pill_time with the set time.
+      if (behavior === "consistent" && isToday && cTime) {
+        setPillTimes(pt => ({ ...pt, [dk]: cTime }));
+      }
+
       showToast("Schedule updated");
     } catch (err) {
       showToast("Couldn't save — try again");
