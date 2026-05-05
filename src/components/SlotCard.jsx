@@ -31,7 +31,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
               {slot.label}
               {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : "missed"}>{sc.badge.label}</Badge>}
             </div>
-            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} supplement${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
+            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>

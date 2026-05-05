@@ -44,6 +44,15 @@ export const MODES = [
   { id: "fixed",      title: "Fixed Times",          desc: "Same schedule every day, no anchor" },
 ];
 
+export function getSlotLabelForMode(slotId, mode) {
+  if (slotId === "rx") {
+    if (mode === "wakeup")   return "Empty Stomach";
+    if (mode === "fasting")  return "Anchor";
+    return "Anchor Medication";
+  }
+  return null;
+}
+
 export function deriveOffsets(mode, cfg) {
   if (mode === "none" || mode === "fixed") return null;
   if (mode === "fasting") {

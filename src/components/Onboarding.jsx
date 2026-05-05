@@ -1,19 +1,12 @@
 import { useState } from "react";
 import { colors, spacing, radius, typography, layout, gradients, segBtnStyle } from "../design-system";
-import { DEFAULT_CONFIG, FIXED_SLOTS, toHrMin, fromHrMin } from "../config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, MODES, toHrMin, fromHrMin } from "../config";
 import Button from "./Button";
 import Card from "./Card";
 import HelperText from "./HelperText";
 import Input from "./Input";
 import Label from "./Label";
 
-const ONBOARDING_MODES = [
-  { id: "none",       title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
-  { id: "wakeup",     title: "Wake Up Anchor",        desc: "Your day cascades from when you wake up" },
-  { id: "medication", title: "Medication Anchor",     desc: "Your day cascades from when you take your medication" },
-  { id: "fasting",    title: "Intermittent Fasting",  desc: "Built around your eating window" },
-  { id: "fixed",      title: "Fixed Times",           desc: "Same schedule every day, no anchor" },
-];
 
 const STEP2_SUBTITLES = {
   wakeup:     "Set your meal offsets. You can change these anytime.",
@@ -103,7 +96,7 @@ export default function Onboarding({ onComplete }) {
           </div>
 
           <div style={{ flex: 1 }}>
-            {ONBOARDING_MODES.map(m => {
+            {MODES.map(m => {
               const on = selectedMode === m.id;
               return (
                 <Card

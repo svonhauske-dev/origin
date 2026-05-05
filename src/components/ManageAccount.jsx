@@ -62,7 +62,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
 
   const handleSaveEmail = async () => {
     setEmailMsg("");
-    if (!EMAIL_RE.test(newEmail.trim())) { setEmailMsg("Enter a valid email address."); return; }
+    if (!EMAIL_RE.test(newEmail.trim())) { setEmailMsg("Enter a valid email address"); return; }
     setEmailSaving(true);
     try {
       await updateEmail(newEmail.trim(), token);

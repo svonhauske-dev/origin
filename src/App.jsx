@@ -3,7 +3,7 @@ import {
   colors, spacing, radius, typography, touch, layout,
   gradients, shadows, zIndex, segBtnStyle,
 } from "./design-system";
-import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets } from "./config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode } from "./config";
 import { Settings, Trash2, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
@@ -515,7 +515,9 @@ function ProtocolApp({ user, token, onSignOut }) {
               const noSched = scheduleMode === "none";
               const timeLabel = noSched ? "" : isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
               const status = noSched ? "future" : slotStatus(slot.id);
-              return <SlotCard key={slot.id} slot={slot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} />;
+              const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
+              const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
+              return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} />;
             })}
           </div>
         )}
