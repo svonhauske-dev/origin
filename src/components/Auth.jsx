@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { signInPassword, signUp } from '../lib/api';
-import { colors, spacing, typography, layout, gradients } from '../design-system';
+import { colors, spacing, typography, layout, touch, gradients } from '../design-system';
 import Button from './Button';
 import Input from './Input';
 import Label from './Label';
@@ -26,8 +26,12 @@ export default function Auth({ onSignIn }) {
   return (
     <div style={{ fontFamily: typography.fontBody, background: gradients.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }}>
       <div style={{ width: "100%", maxWidth: layout.signInWidth, textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: spacing.md }}>💊</div>
-        <div style={{ fontSize: typography.hero, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>Tether</div>
+        <div style={{
+          // Decorative emoji — sized outside the typography system intentionally
+          fontSize: 40,
+          marginBottom: spacing.md,
+        }}>💊</div>
+        <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>Tether</div>
         <div style={{ fontSize: typography.caption, color: colors.textMuted, marginBottom: spacing.xl, lineHeight: 1.7 }}>Your supplement schedule,<br />built around your life.</div>
         <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
           <Label>Email</Label>
@@ -40,7 +44,7 @@ export default function Auth({ onSignIn }) {
         <Button variant="primary" fullWidth onClick={handleSubmit} disabled={loading}>
           {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
         </Button>
-        <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent" }}>
+        <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
           {mode === "signin" ? "No account? Sign up" : "Have an account? Sign in"}
         </button>
         {msg && <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>}

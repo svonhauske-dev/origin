@@ -203,7 +203,7 @@ export default function Onboarding({ onComplete }) {
                         onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(isEmpty ? 0 : h, e.target.value))}
                         placeholder="0"
                       />
-                      <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>after anchor</span>
+                      <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: layout.labelColumn }}>after anchor</span>
                     </Card>
                   );
                 })}
@@ -253,7 +253,7 @@ export default function Onboarding({ onComplete }) {
                 value={config.pre_meal_window ?? 30}
                 onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
               />
-              <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>min before</span>
+              <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: layout.labelColumn }}>min before</span>
             </Card>
           </div>
         )}

@@ -430,7 +430,7 @@ function ProtocolApp({ user, token, onSignOut }) {
     <div style={{ fontFamily: typography.fontBody, color: colors.textPrimary, maxWidth: layout.maxContentWidth, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: BG_GRADIENT, minHeight: "100vh" }}>
 
       {/* Greeting */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Tether</span>
         <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
           <Settings size={18} />
@@ -468,7 +468,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       <div style={{ borderRadius: radius.xl, border: `1px solid ${colors.borderBase}`, background: colors.bgCard, padding: spacing.md, marginBottom: spacing.md }}>
         {homeSupps.length === 0 ? (
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
-            <div style={{ fontSize: typography.hero, marginBottom: spacing.md }}>💊</div>
+            <div style={{ fontSize: typography.display, marginBottom: spacing.md }}>💊</div>
             <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
             <div style={{ fontSize: typography.caption, color: colors.textMuted, lineHeight: 1.7, marginBottom: spacing.lg }}>Add your first supplement to get started.</div>
             <Button variant="primary" fullWidth onClick={openAdd}>Add first supplement</Button>

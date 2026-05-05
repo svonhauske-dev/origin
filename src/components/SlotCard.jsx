@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { colors, spacing, radius, typography } from '../design-system';
+import { colors, spacing, radius, typography, touch } from '../design-system';
 import Badge from './Badge';
 import Button from './Button';
 
@@ -43,7 +43,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
           {slotSupps.map((supp, i) => {
             const done = isChecked(slot.id, supp.id);
             return (
-              <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.sm}px 0`, borderBottom: i < slotSupps.length - 1 ? `1px solid ${colors.divider}` : "none", minHeight: 52 }}>
+              <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.sm}px 0`, borderBottom: i < slotSupps.length - 1 ? `1px solid ${colors.divider}` : "none", minHeight: touch.row }}>
                 <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: radius.sm, flexShrink: 0, border: `1.5px solid ${done ? colors.accent : colors.borderStrong}`, background: done ? colors.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
                   {done && <span style={{ color: colors.textOnAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>

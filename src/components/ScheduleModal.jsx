@@ -139,7 +139,7 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
                       onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(isEmpty ? 0 : h, e.target.value))}
                       placeholder="0"
                     />
-                    <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>after anchor</span>
+                    <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: layout.labelColumn }}>after anchor</span>
                   </Card>
                 );
               })}
@@ -185,7 +185,7 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
           <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
             <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal supplements</span>
             <Input variant="number" width={52} min="0" max="120" value={localConfig.pre_meal_window ?? 30} onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)} />
-            <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: 60 }}>min before</span>
+            <span style={{ fontSize: typography.label, color: colors.textMuted, minWidth: layout.labelColumn }}>min before</span>
           </Card>
           <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xs, paddingLeft: spacing.xs }}>How many minutes before each meal to take pre-meal supplements</div>
         </div>

@@ -101,7 +101,6 @@ export const typography = {
   title:    18,
   heading:  22,
   display:  32,
-  hero:     28,
 
   // Weights
   regular:  400,
@@ -122,7 +121,8 @@ export const typography = {
 };
 
 export const touch = {
-  min: 44,
+  min: 44, // single-line touch target — buttons, icon buttons
+  row: 52, // multi-line touch target — supplement rows with name + dose
 };
 
 export const layout = {
@@ -132,6 +132,7 @@ export const layout = {
   maxContentWidth:  480,
   signInWidth:      360,
   toastMaxWidth:    448,
+  labelColumn:      60, // fixed-width label column in meal schedule rows
 };
 
 export const gradients = {

@@ -1,4 +1,4 @@
-import { colors, spacing, radius, typography } from '../design-system';
+import { colors, spacing, radius, typography, effects } from '../design-system';
 import Button from './Button';
 import Input from './Input';
 import Label from './Label';
@@ -30,7 +30,7 @@ export default function Hero({
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
 
   return (
-    <Card style={{ borderRadius: radius.xl, border: `1px solid ${colors.borderBase}`, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.md, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" }}>
+    <Card style={{ borderRadius: radius.xl, border: `1px solid ${colors.borderBase}`, backdropFilter: effects.backdropBlur, WebkitBackdropFilter: effects.backdropBlur, padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.md, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" }}>
       <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
         <div style={{ flex: 1 }}>
           {scheduleMode === "none" ? (
