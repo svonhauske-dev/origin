@@ -38,7 +38,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
 
       <Label style={{ marginBottom: spacing.sm }}>Notifications</Label>
       {notifStatus === "default" && (
-        <Button variant="secondary" secondaryStyle="solid" fullWidth onClick={handleEnableNotifications}>Enable reminders</Button>
+        <Button variant="secondary" fullWidth onClick={handleEnableNotifications}>Enable reminders</Button>
       )}
       {notifStatus === "granted" && (
         <div style={{ fontSize: typography.body, color: colors.accent, fontWeight: typography.medium }}>Reminders are on</div>

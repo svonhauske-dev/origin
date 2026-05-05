@@ -70,18 +70,10 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, onE
                       Delete {supp.name}?
                     </span>
                     <div style={{ display: "flex", gap: spacing.xs, flexShrink: 0 }}>
-                      <Button
-                        variant="tertiary"
-                        onClick={() => setConfirmId(null)}
-                        style={{ padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption }}
-                      >
+                      <Button variant="tertiary" size="compact" onClick={() => setConfirmId(null)}>
                         Cancel
                       </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDelete(supp)}
-                        style={{ padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption }}
-                      >
+                      <Button variant="destructive" size="compact" onClick={() => handleDelete(supp)}>
                         Delete
                       </Button>
                     </div>

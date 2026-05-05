@@ -158,22 +158,6 @@ export const effects = {
 
 // ── Reusable style objects ──────────────────────────────────────────────────────
 
-export const ghostButtonStyle = {
-  background: "transparent",
-  border: `1px solid ${colors.borderStrong}`,
-  borderRadius: radius.lg,
-  color: colors.textSecondary,
-  cursor: "pointer",
-  fontSize: typography.caption,
-  fontWeight: typography.medium,
-  minHeight: touch.min,
-  padding: `${spacing.xs}px ${spacing.md}px`,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  WebkitTapHighlightColor: "transparent",
-};
-
 export const segBtnStyle = (on) => ({
   flex: 1,
   padding: `${spacing.sm}px`,

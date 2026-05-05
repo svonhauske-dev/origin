@@ -4,9 +4,10 @@ import {
 
 export default function Button({
   variant = "primary",
+  size = "default",
   active,
   solidActive = false,
-  secondaryStyle = "solid",
+  isFuture = false,
   fullWidth,
   disabled,
   type = "button",
@@ -37,6 +38,18 @@ export default function Button({
       minHeight: touch.min,
       padding: `${spacing.sm}px ${spacing.md}px`,
       fontSize: typography.body,
+    };
+  } else if (variant === "startDay") {
+    v = {
+      background: isFuture ? colors.bgCardHover : colors.accent,
+      color: isFuture ? colors.textMuted : colors.textOnAccent,
+      border: "none",
+      fontWeight: typography.semibold,
+      borderRadius: radius.full,
+      minHeight: spacing.xxl,
+      padding: `${spacing.sm}px ${spacing.md}px`,
+      fontSize: typography.body,
+      cursor: isFuture ? "default" : "pointer",
     };
   } else if (variant === "secondary") {
     v = {
@@ -114,8 +127,13 @@ export default function Button({
     v = {};
   }
 
+  const compact = size === "compact" ? {
+    padding: `${spacing.xs}px ${spacing.sm}px`,
+    fontSize: typography.caption,
+  } : {};
+
   return (
-    <button type={type} disabled={disabled} style={{ ...base, ...v, ...style }} {...rest}>
+    <button type={type} disabled={disabled} style={{ ...base, ...v, ...compact, ...style }} {...rest}>
       {variant === "pill" && typeof children === "string"
         ? <span className="pill-label" data-text={children}>{children}</span>
         : children}

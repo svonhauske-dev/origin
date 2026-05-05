@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   colors, spacing, radius, typography, touch, layout,
-  gradients, shadows, zIndex, ghostButtonStyle, segBtnStyle,
+  gradients, shadows, zIndex, segBtnStyle,
 } from "./design-system";
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin } from "./config";
 import { Settings, Trash2, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -1126,7 +1126,7 @@ function ProtocolApp({ user, token, onSignOut }) {
                 {editPillTime && pillTime ? (
                   <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
                     <Input variant="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ flex: 1 }} />
-                    <button onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }} style={{ ...ghostButtonStyle, width: "auto", borderRadius: radius.sm }}>Save</button>
+                    <Button variant="secondary" size="compact" onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }}>Save</Button>
                   </div>
                 ) : (
                   <div style={{ display: "flex", alignItems: "baseline", gap: spacing.xs }}>
@@ -1138,7 +1138,7 @@ function ProtocolApp({ user, token, onSignOut }) {
               </div>
             ) : (
               <div>
-                <Button variant="primary" fullWidth onClick={startDay} style={{ minHeight: spacing.xxl, background: isFuture ? colors.bgCardHover : colors.accent, color: isFuture ? colors.textMuted : colors.textOnAccent, cursor: isFuture ? "default" : "pointer" }}>
+                <Button variant="startDay" isFuture={isFuture} fullWidth onClick={startDay}>
                   {isFuture ? "Future day" : (START_LABELS[scheduleMode] || "Start my day")}
                 </Button>
                 {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>{START_SUBTITLES[scheduleMode] || "sets your daily schedule"}</div>}
