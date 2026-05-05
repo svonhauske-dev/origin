@@ -1,63 +1,75 @@
 // ── Tether Design System ─────────────────────────────────────────────────────────
 
 export const colors = {
-  // Brand
-  accent:        "#3D9A8F",
-  accentDim:     "rgba(61,154,143,0.12)",
-  accentBorder:  "rgba(61,154,143,0.3)",
+  // Accent
+  accent:        "#384361",   // deep slate blue
+  accentHover:   "#2D3650",   // deeper on press/hover
+  accentDim:     "#E5E8F0",   // pale slate tint — ghost active, selected backgrounds
+  accentSubtle:  "#E5E8F0",   // alias for accentDim
+  accentBorder:  "rgba(56,67,97,0.3)",
 
   // Backgrounds
-  bgBase:        "#080b14",
-  bgGradientMid: "#0a0f1e",       // gradient middle stop
-  bgGradientEnd: "#060a12",       // gradient end stop
-  bgBackdrop:    "rgba(0,0,0,0.78)", // modal/overlay backdrop
-  bgCard:        "rgba(255,255,255,0.03)",
-  bgCardHover:   "rgba(255,255,255,0.05)",
-  bgInput:       "#0d0f1a",
-  bgModal:       "#13151f",
+  bgBase:        "#F5F6F8",   // main app background — cool light grey
+  bgGradientMid: "#F2F3F5",   // near-imperceptible gradient stop
+  bgGradientEnd: "#EEF0F3",   // gradient end — slightly cooler
+  bgModal:       "#FFFFFF",   // modal / card surfaces — pure white
+  bgCard:        "#FFFFFF",   // slot cards, supplement rows
+  bgCardHover:   "#F0F2F5",   // subtle hover on white surfaces
+  bgCardSubtle:  "#FAFBFC",   // nested / inset surfaces
+  bgBackdrop:    "rgba(28,30,33,0.4)", // modal backdrop — cool ink
+  bgInput:       "#FFFFFF",   // input field background
+  bgInputDisabled: "#F2F3F5", // disabled input
 
   // Text
-  textPrimary:   "#ffffff",
-  textSecondary: "#8b90a0",
-  textMuted:     "#4a5568",
-  textDone:      "#4a5568",
-  textFaint:     "rgba(255,255,255,0.25)", // very faint text (date sublabel)
+  textPrimary:   "#1C1E21",   // deep cool ink
+  textSecondary: "#4A5159",   // cool charcoal
+  textMuted:     "#7A8189",   // cool mid-grey
+  textDone:      "#7A8189",   // completed / struck-through items
+  textFaint:     "rgba(28,30,33,0.3)", // very faint (date sublabel)
+  textDisabled:  "#B5BBC2",
+  textOnAccent:  "#FFFFFF",   // white on slate blue
+  textOnDanger:  "#FFFFFF",   // white on danger
 
   // Borders
-  borderStrong:  "rgba(255,255,255,0.12)",
-  borderBase:    "rgba(255,255,255,0.08)",
-  borderSubtle:  "rgba(255,255,255,0.05)",
+  borderStrong:  "#C7CCD2",   // prominent dividers, drag handles
+  borderBase:    "#DDE0E5",   // standard borders
+  borderSubtle:  "#E5E9EE",   // barely-there divisions
+  borderFocus:   "#384361",   // focused inputs — matches accent
 
   // Semantic
-  danger:       "#f87171",
-  dangerBorder: "rgba(248,113,113,0.25)",
+  danger:        "#9B5757",   // desaturated cool clay-red
+  dangerBorder:  "rgba(155,87,87,0.3)",
+  dangerSubtle:  "#F5E8E8",   // pale red tint
+  success:       "#5A7C5C",   // muted cool sage
+  warning:       "#9B8557",   // muted cool olive
+  warningSubtle: "#F5EFE5",
 
   // Surfaces
-  cardSubtle: "rgba(255,255,255,0.02)",
-  divider:    "rgba(255,255,255,0.04)",
+  cardSubtle: "#F8F9FA",      // very slightly off-white card variant
+  divider:    "#ECEEF1",      // ultra-light row divider
 
-  // Slot status
-  statusMissedBorder:     "rgba(249,115,22,0.35)",
-  statusMissedBg:         "rgba(249,115,22,0.05)",
-  statusMissedHover:      "rgba(249,115,22,0.07)",
-  statusMissedBadgeBg:    "rgba(124,45,18,0.5)",
-  statusMissedBadgeColor: "#fed7aa",
-  statusNowBorder:        "rgba(61,154,143,0.45)",
-  statusNowBg:            "rgba(61,154,143,0.04)",
-  statusNowHover:         "rgba(61,154,143,0.07)",
-  statusNowBadgeBg:       "rgba(61,154,143,0.18)",
+  // Slot status — clay-red for missed, accent for now
+  statusMissedBorder:     "rgba(155,87,87,0.35)",
+  statusMissedBg:         "rgba(155,87,87,0.05)",
+  statusMissedHover:      "rgba(155,87,87,0.08)",
+  statusMissedBadgeBg:    "rgba(155,87,87,0.12)",
+  statusMissedBadgeColor: "#9B5757",
+  statusNowBorder:        "rgba(56,67,97,0.35)",
+  statusNowBg:            "rgba(56,67,97,0.04)",
+  statusNowHover:         "rgba(56,67,97,0.07)",
+  statusNowBadgeBg:       "rgba(56,67,97,0.14)",
 
-  // Slot colors
-  slotRx:          "#3D9A8F",
-  slotPreBreakfast:"#67e8f9",
-  slotBreakfast:   "#67e8f9",
-  slotPreLunch:    "#c084fc",
-  slotLunch:       "#c084fc",
-  slotPreDinner:   "#fb923c",
-  slotDinner:      "#fb923c",
-  slotAfterDinner: "#818cf8",
-  slotInjectable:  "#94a3b8",
-  slotTopical:     "#f9a8d4",
+  // Slot colors — desaturated cool tones, walking cool spectrum
+  slotRx:          "#5C6F7A",   // cool slate (anchor/rx)
+  slotPreBreakfast:"#647A82",   // cool steel
+  slotBreakfast:   "#6E8595",   // dusty cool blue
+  slotPreLunch:    "#6F8388",   // cool teal-grey
+  slotLunch:       "#73867E",   // muted sage-grey
+  slotPreDinner:   "#6B7C7E",   // cool stone
+  slotDinner:      "#5A6B72",   // deep cool slate
+  slotAfterDinner: "#4D5862",   // charcoal blue-grey (evening)
+  slotInjectable:  "#6F7888",   // neutral cool grey
+  slotTopical:     "#7A8088",   // slightly lighter cool grey
 };
 
 export const spacing = {
@@ -123,18 +135,25 @@ export const layout = {
 };
 
 export const gradients = {
-  bg: `linear-gradient(160deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`,
+  bg: `linear-gradient(165deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`,
 };
 
 export const shadows = {
-  modal:   "0 8px 32px rgba(0,0,0,0.4)",
-  popover: "0 8px 24px rgba(0,0,0,0.4)",
+  card:    "0 1px 3px rgba(28,30,33,0.04), 0 1px 2px rgba(28,30,33,0.06)",
+  modal:   "0 12px 40px rgba(28,30,33,0.10), 0 4px 12px rgba(28,30,33,0.06)",
+  popover: "0 8px 24px rgba(28,30,33,0.08), 0 2px 6px rgba(28,30,33,0.05)",
+  toast:   "0 8px 24px rgba(28,30,33,0.12)",
+  focus:   "0 0 0 3px rgba(56,67,97,0.15)",
 };
 
 export const zIndex = {
   backdrop: 199,
   modal:    200,
   toast:    400,
+};
+
+export const effects = {
+  backdropBlur: "blur(8px) saturate(1.2)",
 };
 
 // ── Reusable style objects ──────────────────────────────────────────────────────
