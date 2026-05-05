@@ -81,12 +81,14 @@ export async function signUp(email, password) {
     body: JSON.stringify({ email, password }),
   });
   const d = await res.json();
-  if (res.ok && d.access_token) {
-    localStorage.setItem("sb_token", d.access_token);
-    if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
-    return d.user;
+  if (!res.ok) {
+    const text = d?.error_description || d?.msg || d?.error || "";
+    if (/already registered|already exists/i.test(text)) throw new Error("EMAIL_TAKEN");
+    throw new Error("SIGNUP_FAILED");
   }
-  return null;
+  localStorage.setItem("sb_token", d.access_token);
+  if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
+  return { user: d.user, session: d };
 }
 
 export async function signInPassword(email, password) {
@@ -95,15 +97,11 @@ export async function signInPassword(email, password) {
     headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
     body: JSON.stringify({ email, password }),
   });
-  if (res.ok) {
-    const d = await res.json();
-    if (d.access_token) {
-      localStorage.setItem("sb_token", d.access_token);
-      if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
-      return d.user;
-    }
-  }
-  return null;
+  const d = await res.json();
+  if (!res.ok) throw new Error("INVALID_CREDENTIALS");
+  localStorage.setItem("sb_token", d.access_token);
+  if (d.refresh_token) localStorage.setItem("sb_refresh_token", d.refresh_token);
+  return { user: d.user, session: d };
 }
 
 export function signOut() {
@@ -119,3 +117,27 @@ export const dbGetLog       = (date, t) => supa("GET",    `/rest/v1/daily_logs?s
 export const dbUpsertLog    = (log, t)  => supa("POST",   "/rest/v1/daily_logs?on_conflict=user_id,log_date", log, t);
 export const dbGetSchedule  = (t)       => supa("GET",    "/rest/v1/user_schedule?select=*", null, t).then(r => r?.[0] || null);
 export const dbSaveSchedule = (data, t) => supa("POST",   "/rest/v1/user_schedule?on_conflict=user_id", data, t);
+
+export const dbGetProfile    = (userId, t)       => supa("GET",   `/rest/v1/user_profiles?id=eq.${userId}&select=*`, null, t).then(r => r?.[0] || null);
+export const dbCreateProfile = (data, t)         => supa("POST",  "/rest/v1/user_profiles", data, t);
+export const dbUpdateProfile = (userId, data, t) => supa("PATCH", `/rest/v1/user_profiles?id=eq.${userId}`, data, t);
+
+export async function updateEmail(newEmail, token) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "apikey": SUPA_KEY, "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ email: newEmail }),
+  });
+  if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d?.msg || "EMAIL_UPDATE_FAILED"); }
+  return res.json();
+}
+
+export async function updatePassword(newPassword, token) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "apikey": SUPA_KEY, "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ password: newPassword }),
+  });
+  if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d?.msg || "PASSWORD_UPDATE_FAILED"); }
+  return res.json();
+}

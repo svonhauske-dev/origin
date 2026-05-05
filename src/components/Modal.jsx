@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { colors, spacing, radius, typography, layout, touch, shadows, effects, zIndex as zIndexTokens } from "../design-system";
 import Button from "./Button";
 
-export default function Modal({ open, onClose, title, children, footer }) {
+export default function Modal({ open, onClose, title, children, footer, leftAction }) {
   useEffect(function() {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -81,12 +81,24 @@ export default function Modal({ open, onClose, title, children, footer }) {
             flexShrink: 0,
             borderBottom: `1px solid ${colors.borderSubtle}`,
           }}>
-            <span style={{
-              fontSize: typography.title,
-              fontWeight: typography.semibold,
-              color: colors.textPrimary,
-              fontFamily: typography.fontHeading,
-            }}>{title}</span>
+            {leftAction ? (
+              <>
+                {leftAction}
+                <span style={{
+                  fontSize: typography.title,
+                  fontWeight: typography.semibold,
+                  color: colors.textPrimary,
+                  fontFamily: typography.fontHeading,
+                }}>{title}</span>
+              </>
+            ) : (
+              <span style={{
+                fontSize: typography.title,
+                fontWeight: typography.semibold,
+                color: colors.textPrimary,
+                fontFamily: typography.fontHeading,
+              }}>{title}</span>
+            )}
             <Button variant="icon" aria-label="Close" onClick={onClose}><X size={18} /></Button>
           </div>
           {/* Scrollable body */}

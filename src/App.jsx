@@ -18,6 +18,7 @@ import ManageSupplementsSheet from "./components/ManageSupplementsSheet";
 import Onboarding from "./components/Onboarding";
 import Loader from "./components/Loader";
 import Auth from "./components/Auth";
+import PromptName from "./components/PromptName";
 import SlotCard from "./components/SlotCard";
 import EditForm from "./components/EditForm";
 import ScheduleModal from "./components/ScheduleModal";
@@ -27,6 +28,7 @@ import {
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
   dbGetLog, dbUpsertLog,
   dbGetSchedule, dbSaveSchedule,
+  dbGetProfile, dbCreateProfile,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY } from './lib/time';
 import { SLOTS, scheduleNotifications, notifOK } from './lib/notifications';
@@ -94,6 +96,8 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [showManage, setShowManage]         = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState({});
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [profile, setProfile]               = useState(null);
+  const [needsNamePrompt, setNeedsNamePrompt] = useState(false);
   const saveTimer = useRef(null);
   const schedSaveRef = useRef(null);
   const { show: showToast } = useToast();
@@ -120,11 +124,14 @@ function ProtocolApp({ user, token, onSignOut }) {
     (async () => {
       setLoading(true);
       try {
-        const [s, log, sched] = await Promise.all([
+        const [s, log, sched, prof] = await Promise.all([
           dbGetSupps(token),
           dbGetLog(dk, token),
           dbGetSchedule(token),
+          dbGetProfile(user.id, token).catch(() => null),
         ]);
+        setProfile(prof);
+        if (prof === null) setNeedsNamePrompt(true);
         const migrated = [];
         const toWrite  = [];
         for (const supp of (s || [])) {
@@ -419,6 +426,17 @@ function ProtocolApp({ user, token, onSignOut }) {
   const shortDate = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   if (loading) return <Loader text="Loading your protocol…" />;
+  if (needsNamePrompt) return (
+    <PromptName onSave={async (name) => {
+      try {
+        await dbCreateProfile({ id: user.id, display_name: name }, token);
+        setProfile({ id: user.id, display_name: name });
+      } catch {
+        setProfile({ id: user.id, display_name: null });
+      }
+      setNeedsNamePrompt(false);
+    }} />
+  );
   if (needsOnboarding) return (
     <Onboarding onComplete={async (mode, config, behavior, cTime) => {
       const ok = await saveSchedule(mode, config, behavior, cTime);
@@ -431,7 +449,9 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Greeting */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
-        <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Tether</span>
+        <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>
+          {profile?.display_name ? `Hello, ${profile.display_name}` : "Tether"}
+        </span>
         <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
           <Settings size={18} />
         </Button>
@@ -509,6 +529,10 @@ function ProtocolApp({ user, token, onSignOut }) {
         onEnableNotifications={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); return r; }}
         onOpenManage={() => { setShowSettings(false); setShowManage(true); }}
         onSignOut={handleSignOut}
+        user={user}
+        token={token}
+        profile={profile}
+        onProfileUpdate={(updated) => setProfile(updated)}
       />
       <ManageSupplementsSheet
         open={showManage}

@@ -1,26 +1,76 @@
 import { useState } from 'react';
-import { signInPassword, signUp } from '../lib/api';
-import { colors, spacing, typography, layout, touch, gradients } from '../design-system';
+import { Check } from 'lucide-react';
+import { signInPassword, signUp, dbCreateProfile } from '../lib/api';
+import { colors, spacing, typography, layout, touch, gradients, radius } from '../design-system';
 import Button from './Button';
 import Input from './Input';
 import Label from './Label';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const PASSWORD_RULES = [
+  { label: "8+ characters",     test: p => p.length >= 8 },
+  { label: "Uppercase letter",  test: p => /[A-Z]/.test(p) },
+  { label: "Number",            test: p => /[0-9]/.test(p) },
+  { label: "Special character", test: p => /[^A-Za-z0-9]/.test(p) },
+];
+
+function PasswordRule({ met, label }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, marginBottom: spacing.xxs }}>
+      <div style={{
+        width: 16, height: 16, borderRadius: radius.full,
+        background: met ? colors.accent : "transparent",
+        border: `1px solid ${met ? colors.accent : colors.borderSubtle}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0, transition: "background 150ms, border-color 150ms",
+      }}>
+        {met && <Check size={10} color={colors.textOnAccent} strokeWidth={3} />}
+      </div>
+      <span style={{ fontSize: typography.label, color: met ? colors.textPrimary : colors.textMuted, transition: "color 150ms" }}>{label}</span>
+    </div>
+  );
+}
+
 export default function Auth({ onSignIn }) {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName]         = useState("");
   const [mode, setMode]         = useState("signin");
   const [loading, setLoading]   = useState(false);
   const [msg, setMsg]           = useState("");
 
+  const emailOk   = EMAIL_RE.test(email.trim());
+  const rulesOk   = PASSWORD_RULES.every(r => r.test(password));
+  const canSubmit = !loading && (mode === "signin" ? emailOk && password.length > 0 : emailOk && rulesOk);
+
   const handleSubmit = async () => {
-    if (!email.trim() || !password.trim()) return;
-    setLoading(true); setMsg("");
-    const user = mode === "signin"
-      ? await signInPassword(email.trim(), password)
-      : await signUp(email.trim(), password);
-    setLoading(false);
-    if (user) onSignIn(user);
-    else setMsg(mode === "signin" ? "Invalid email or password." : "Could not create account — try again.");
+    if (!canSubmit) return;
+    setLoading(true);
+    setMsg("");
+    try {
+      if (mode === "signin") {
+        const { user } = await signInPassword(email.trim(), password);
+        onSignIn(user);
+      } else {
+        const { user, session } = await signUp(email.trim(), password);
+        try { await dbCreateProfile({ id: user.id, display_name: name.trim() || null }, session.access_token); } catch {}
+        onSignIn(user);
+      }
+    } catch (err) {
+      setLoading(false);
+      if (err.message === "EMAIL_TAKEN") {
+        setMsg("EMAIL_TAKEN");
+      } else {
+        setMsg(mode === "signin" ? "Invalid email or password." : "Could not create account — try again.");
+      }
+    }
+  };
+
+  const switchMode = () => {
+    setMode(m => m === "signin" ? "signup" : "signin");
+    setMsg("");
+    setPassword("");
   };
 
   return (
@@ -37,21 +87,54 @@ export default function Auth({ onSignIn }) {
         <div style={{ fontSize: typography.body, color: colors.textSecondary, marginBottom: spacing.xl, lineHeight: 1.6 }}>
           {mode === "signin" ? "Pick up where you left off" : "Let's set up your protocol"}
         </div>
+
+        {mode === "signup" && (
+          <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
+            <Label>Name</Label>
+            <Input type="text" value={name} onChange={e => { setName(e.target.value); setMsg(""); }} placeholder="Your name (optional)" />
+          </div>
+        )}
+
         <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
           <Label>Email</Label>
-          <Input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" />
+          <Input type="email" value={email} onChange={e => { setEmail(e.target.value); setMsg(""); }} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" />
         </div>
-        <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
+
+        <div style={{ marginBottom: mode === "signup" ? spacing.xs : spacing.md, textAlign: "left" }}>
           <Label>Password</Label>
-          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" />
+          <Input type="password" value={password} onChange={e => { setPassword(e.target.value); setMsg(""); }} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" />
         </div>
-        <Button variant="primary" fullWidth onClick={handleSubmit} disabled={loading}>
+
+        {mode === "signup" && (
+          <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
+            {PASSWORD_RULES.map(r => <PasswordRule key={r.label} label={r.label} met={r.test(password)} />)}
+          </div>
+        )}
+
+        <Button variant="primary" fullWidth onClick={handleSubmit} disabled={!canSubmit}>
           {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
         </Button>
-        <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+
+        {msg === "EMAIL_TAKEN" ? (
+          <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>
+            That email is already registered.{" "}
+            <button
+              onClick={() => { setMode("signin"); setMsg(""); }}
+              style={{ background: "none", border: "none", color: colors.accent, fontSize: typography.caption, cursor: "pointer", padding: 0, textDecoration: "underline" }}
+            >
+              Sign in instead?
+            </button>
+          </div>
+        ) : msg ? (
+          <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>
+        ) : null}
+
+        <button
+          onClick={switchMode}
+          style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
+        >
           {mode === "signin" ? "New to Tether? Sign up" : "Already have an account? Sign in"}
         </button>
-        {msg && <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>}
       </div>
     </div>
   );
