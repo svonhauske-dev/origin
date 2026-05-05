@@ -84,7 +84,7 @@ export default function EditForm({ form, setForm, editingId }) {
           </div>
         </div>
       )}
-      <div style={{ marginBottom: spacing.sm }}>
+      <div style={{ marginBottom: spacing.md }}>
         <Label>Which days</Label>
         <div style={{ display: "flex", gap: spacing.xs }}>
           {DAYS.map((d, i) => (

@@ -36,12 +36,12 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
 
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />
 
-      <Label style={{ marginBottom: spacing.sm }}>Notifications</Label>
+      <Label style={{ marginBottom: spacing.xs }}>Notifications</Label>
       {notifStatus === "default" && (
         <Button variant="secondary" fullWidth onClick={handleEnableNotifications}>Enable reminders</Button>
       )}
       {notifStatus === "granted" && (
-        <div style={{ fontSize: typography.body, color: colors.accent, fontWeight: typography.medium }}>Reminders are on</div>
+        <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.medium }}>Reminders are on</div>
       )}
       {notifStatus === "denied" && (
         <div style={{ fontSize: typography.caption, color: colors.danger }}>Reminders are blocked — enable them in your device settings</div>

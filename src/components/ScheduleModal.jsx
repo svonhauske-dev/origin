@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, spacing, radius, typography, layout, segBtnStyle } from '../design-system';
+import { colors, spacing, radius, typography, layout, touch, segBtnStyle } from '../design-system';
 import { parseHHMM, fmtTime, addMins } from '../lib/time';
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets, toHrMin, fromHrMin } from '../config';
 import { SLOTS } from '../lib/notifications';
@@ -219,7 +219,7 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
             ? <span style={{ fontSize: typography.caption, color: colors.textMuted }}>No times configured yet</span>
             : previewRows.map((row, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: spacing.sm }}>
-                  <span style={{ fontSize: typography.caption, fontVariantNumeric: "tabular-nums", color: colors.accent, fontWeight: typography.semibold, minWidth: 42 }}>
+                  <span style={{ fontSize: typography.caption, fontVariantNumeric: "tabular-nums", color: colors.accent, fontWeight: typography.semibold, minWidth: touch.min }}>
                     {row.timeStr ?? fmtTime(addMins(previewBase, row.offset))}
                   </span>
                   <span style={{ fontSize: typography.caption, color: colors.textMuted }}>—</span>
