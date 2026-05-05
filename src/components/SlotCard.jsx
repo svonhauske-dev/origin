@@ -4,7 +4,7 @@ import { colors, spacing, radius, typography, touch } from '../design-system';
 import Badge from './Badge';
 import Button from './Button';
 
-export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, toggleCheck, openEdit, noSchedule }) {
+export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, toggleCheck, openEdit, noSchedule, isReadOnly, isPast }) {
   const allDone = slotSupps.every(s => isChecked(slot.id, s.id));
   const [expanded, setExpanded] = useState(!allDone);
   useEffect(() => { setExpanded(!allDone); }, [allDone]);
@@ -45,7 +45,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
             const done = isChecked(slot.id, supp.id);
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.sm}px 0`, borderBottom: i < slotSupps.length - 1 ? `1px solid ${colors.divider}` : "none", minHeight: touch.row }}>
-                <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: radius.sm, flexShrink: 0, border: `1.5px solid ${done ? colors.accent : colors.borderStrong}`, background: done ? colors.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
+                <div onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: radius.sm, flexShrink: 0, border: `1.5px solid ${done ? colors.accent : colors.borderStrong}`, background: done ? colors.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: (isFuture || isReadOnly) ? "default" : "pointer" }}>
                   {done && <span style={{ color: colors.textOnAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -55,7 +55,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                   </div>
                   <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
                 </div>
-                <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ border: "none" }}><Pencil size={16} /></Button>
+                {!isReadOnly && !isPast && <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ border: "none" }}><Pencil size={16} /></Button>}
               </div>
             );
           })}

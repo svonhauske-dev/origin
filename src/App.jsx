@@ -98,6 +98,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [profile, setProfile]               = useState(null);
   const [needsNamePrompt, setNeedsNamePrompt] = useState(false);
+  const [pastDayEditing, setPastDayEditing]   = useState(false);
   const saveTimer = useRef(null);
   const schedSaveRef = useRef(null);
   const { show: showToast } = useToast();
@@ -106,11 +107,13 @@ function ProtocolApp({ user, token, onSignOut }) {
   const visibleSupps  = supps.filter(s => !pendingDeletes[s.id]);
   const homeSupps     = visibleSupps.filter(s => !s.paused);
 
-  const dk       = dateKey(viewDate);
-  const isToday  = dateKey(viewDate) === dateKey(TODAY);
-  const isFuture = startOfDay(viewDate) > TODAY;
-  const pillTime = pillTimes[dk] || null;
-  const viewDay  = viewDate.getDay();
+  const dk         = dateKey(viewDate);
+  const isToday    = dateKey(viewDate) === dateKey(TODAY);
+  const isFuture   = startOfDay(viewDate) > TODAY;
+  const isPast     = !isToday && startOfDay(viewDate) < TODAY;
+  const isReadOnly = isPast && !pastDayEditing;
+  const pillTime   = pillTimes[dk] || null;
+  const viewDay    = viewDate.getDay();
 
   // fixed mode: always active; consistent mode: pre-populate with set time
   const effectivePillTime = scheduleMode === "fixed"
@@ -222,7 +225,7 @@ function ProtocolApp({ user, token, onSignOut }) {
     setStreak(s);
   }, [checked, pillTimes, supps, scheduleMode, anchorBehavior]);
 
-  const goDay         = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); };
+  const goDay         = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); setPastDayEditing(false); };
   const setPillForDay = (t) => setPillTimes(pt => ({ ...pt, [dk]: t }));
 
   const getSlotTime = (sid) => {
@@ -239,7 +242,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   };
 
   const slotTimeStr     = (sid) => { const t = getSlotTime(sid); return t ? fmtTime(t) : "--:--"; };
-  const toggleCheck     = (sid, suppId) => { const k = `${dk}_${sid}_${suppId}`; setChecked(c => ({ ...c, [k]: !c[k] })); };
+  const toggleCheck     = (sid, suppId) => { if (isReadOnly) return; const k = `${dk}_${sid}_${suppId}`; setChecked(c => ({ ...c, [k]: !c[k] })); };
   const isChecked       = (sid, suppId) => !!checked[`${dk}_${sid}_${suppId}`];
   const getSuppsForSlot = (sid) => homeSupps.filter(s => s.slots.includes(sid) && s.days.includes(viewDay));
 
@@ -462,66 +465,75 @@ function ProtocolApp({ user, token, onSignOut }) {
         <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)}><ChevronLeft size={24} color={colors.textSecondary} style={{ marginRight: spacing.xxxs }} /></Button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
           <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
-          <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
+          <button onClick={() => { if (!isToday) { setViewDate(TODAY); setPastDayEditing(false); } }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
           <div style={{ fontSize: typography.caption2, color: colors.textFaint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
         </div>
         <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)}><ChevronRight size={24} color={colors.textSecondary} style={{ marginLeft: spacing.xxxs }} /></Button>
       </div>
 
-      {/* Add row */}
-      <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
-        <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add item</Button>
-        <Button variant="secondary" onClick={() => setShowSchedule(true)} style={{ flex: 1, background: colors.bgModal }}>Edit schedule</Button>
-      </div>
+      {/* Add row — hidden on past days (not scope of past-day editing) */}
+      {!isPast && (
+        <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
+          <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add item</Button>
+          <Button variant="secondary" onClick={() => setShowSchedule(true)} style={{ flex: 1, background: colors.bgModal }}>Edit schedule</Button>
+        </div>
+      )}
 
-      {/* Hero card */}
-      <Hero
-        scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
-        pct={pct} coreTotal={coreTotal} coreDone={coreDone}
-        pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
-        editPillTime={editPillTime} setEditPillTime={setEditPillTime}
-        tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
-        isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}
-      />
+      {/* Content area — visually muted on read-only past days */}
+      <div style={{ opacity: isReadOnly ? 0.6 : 1, transition: "opacity 200ms ease-out" }}>
 
-      {/* Main slot list */}
-      <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderBase}`, background: colors.bgCard, padding: spacing.md, marginBottom: spacing.md }}>
-        {homeSupps.length === 0 ? (
-          <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
-            <div style={{ fontSize: typography.display, marginBottom: spacing.md }}>💊</div>
-            <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
-            <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first item to get started.</div>
-            <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
-            {/* Anytime block — only in no-schedule mode, for unsorted supplements */}
-            {scheduleMode === "none" && anytimeSupps.length > 0 && (
-              <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule />
-            )}
-            {SLOTS.map(slot => {
-              const slotSupps = slot.id === "injectable"
-                ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
-                : slot.id === "topical"
-                  ? getSuppsForSlot(slot.id).filter(s => s.category === "Topical")
-                  : getSuppsForSlot(slot.id).filter(s => s.category !== "Injectable" && s.category !== "Topical");
-              if (!slotSupps.length) return null;
-              const isVarSlot = slot.id === "injectable" || slot.id === "topical";
-              const hasOffset = scheduleMode === "fixed"
-                ? !isVarSlot && !!scheduleConfig.fixed_times?.[slot.id]
-                : slot.id === "rx"
-                  ? !!pillTime
-                  : !isVarSlot && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
-              const noSched = scheduleMode === "none";
-              const timeLabel = noSched ? "" : isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
-              const status = noSched ? "future" : slotStatus(slot.id);
-              const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
-              const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
-              return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} />;
-            })}
-          </div>
-        )}
-      </div>
+        {/* Hero card */}
+        <Hero
+          scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
+          pct={pct} coreTotal={coreTotal} coreDone={coreDone}
+          pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
+          editPillTime={editPillTime} setEditPillTime={setEditPillTime}
+          tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
+          isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}
+          isPast={isPast} isReadOnly={isReadOnly}
+          pastDayEditing={pastDayEditing} setPastDayEditing={setPastDayEditing}
+        />
+
+        {/* Main slot list */}
+        <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderBase}`, background: colors.bgCard, padding: spacing.md, marginBottom: spacing.md }}>
+          {homeSupps.length === 0 ? (
+            <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
+              <div style={{ fontSize: typography.display, marginBottom: spacing.md }}>💊</div>
+              <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
+              <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first item to get started.</div>
+              {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+              {/* Anytime block — only in no-schedule mode, for unsorted supplements */}
+              {scheduleMode === "none" && anytimeSupps.length > 0 && (
+                <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
+              )}
+              {SLOTS.map(slot => {
+                const slotSupps = slot.id === "injectable"
+                  ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
+                  : slot.id === "topical"
+                    ? getSuppsForSlot(slot.id).filter(s => s.category === "Topical")
+                    : getSuppsForSlot(slot.id).filter(s => s.category !== "Injectable" && s.category !== "Topical");
+                if (!slotSupps.length) return null;
+                const isVarSlot = slot.id === "injectable" || slot.id === "topical";
+                const hasOffset = scheduleMode === "fixed"
+                  ? !isVarSlot && !!scheduleConfig.fixed_times?.[slot.id]
+                  : slot.id === "rx"
+                    ? !!pillTime
+                    : !isVarSlot && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
+                const noSched = scheduleMode === "none";
+                const timeLabel = noSched ? "" : isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
+                const status = noSched ? "future" : slotStatus(slot.id);
+                const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
+                const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
+                return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
+              })}
+            </div>
+          )}
+        </div>
+
+      </div>{/* end opacity wrapper */}
 
       {/* Modals */}
       <SettingsModal

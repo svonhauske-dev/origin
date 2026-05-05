@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react';
 import { colors, spacing, radius, typography, effects } from '../design-system';
 import Button from './Button';
 import Input from './Input';
@@ -23,19 +24,43 @@ export default function Hero({
   pillTime, anchorBehavior, consistentTime,
   editPillTime, setEditPillTime, tmpTime, setTmpTime, setPillForDay,
   isFuture, flashGreen, startDay, viewDay,
+  isPast, isReadOnly, pastDayEditing, setPastDayEditing,
 }) {
   const isConsistent    = anchorBehavior === "consistent";
   const heroHasTime     = pillTime != null || isConsistent;
   const heroDisplayTime = pillTime || consistentTime;
   const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
 
+  const viewingLabel = isPast
+    ? `Viewing ${viewDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}`
+    : null;
+
   return (
     <Card style={{ border: `1px solid ${colors.borderBase}`, backdropFilter: effects.backdropBlur, WebkitBackdropFilter: effects.backdropBlur, padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.md, background: flashGreen ? colors.accentDim : colors.bgCard, transition: "background 0.4s ease" }}>
+
+      {/* Past-day header: eyebrow label + Edit / Done button */}
+      {isPast && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xs }}>
+          <Label style={{ color: colors.textMuted, marginBottom: 0 }}>{viewingLabel}</Label>
+          <Button
+            variant="secondary"
+            size="compact"
+            onClick={() => setPastDayEditing(!pastDayEditing)}
+            style={{ transition: "opacity 200ms" }}
+          >
+            {pastDayEditing
+              ? "Done"
+              : <span style={{ display: "flex", alignItems: "center", gap: spacing.xxs }}><Pencil size={14} />Edit</span>
+            }
+          </Button>
+        </div>
+      )}
+
       <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
         <div style={{ flex: 1 }}>
           {scheduleMode === "none" ? (
             <div>
-              <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>No schedule</Label>
+              {!isPast && <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>No schedule</Label>}
               <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long" })}</div>
               <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xxxs }}>{shortDate}</div>
               {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
@@ -43,17 +68,19 @@ export default function Hero({
             </div>
           ) : scheduleMode === "fixed" ? (
             <div>
-              <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>Fixed schedule</Label>
+              {!isPast && <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>Fixed schedule</Label>}
               <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{DAYS[viewDay]}</div>
               {pct === 100 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
               {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
             </div>
           ) : heroHasTime ? (
             <div>
-              <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>
-                {pillTime ? "Started at" : "Scheduled"}
-              </Label>
-              {editPillTime && pillTime ? (
+              {!isPast && (
+                <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>
+                  {pillTime ? "Started at" : "Scheduled"}
+                </Label>
+              )}
+              {editPillTime && pillTime && !isReadOnly ? (
                 <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
                   <Input variant="time" value={tmpTime} onChange={e => setTmpTime(e.target.value)} style={{ flex: 1 }} />
                   <Button variant="secondary" size="compact" onClick={() => { setPillForDay(tmpTime); setEditPillTime(false); }}>Save</Button>
@@ -61,12 +88,21 @@ export default function Hero({
               ) : (
                 <div style={{ display: "flex", alignItems: "baseline", gap: spacing.xs }}>
                   <span style={{ fontSize: typography.display, fontWeight: typography.bold, letterSpacing: typography.displayLetterSpacing, color: colors.accent, fontFamily: typography.fontHeading }}>{heroDisplayTime}</span>
-                  {pillTime && <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>}
+                  {pillTime && !isReadOnly && (
+                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>
+                  )}
                 </div>
               )}
               {pct === 100 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
             </div>
+          ) : isPast ? (
+            // Past day with no anchor time — no CTA, neutral message
+            <div>
+              <div style={{ fontSize: typography.caption, color: colors.textMuted }}>No anchor time recorded</div>
+              {pct > 0 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
+            </div>
           ) : (
+            // Today / future: show the "start day" CTA
             <div>
               <Button variant="startDay" isFuture={isFuture} fullWidth onClick={startDay}>
                 {isFuture ? "Future day" : (START_LABELS[scheduleMode] || "Start my day")}
