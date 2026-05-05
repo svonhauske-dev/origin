@@ -88,48 +88,78 @@ export default function Auth({ onSignIn }) {
           {mode === "signin" ? "Pick up where you left off" : "Let's set up your protocol"}
         </div>
 
-        {mode === "signup" && (
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+          {mode === "signup" && (
+            <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
+              <Label>Name</Label>
+              <Input
+                type="text"
+                name="name"
+                autoComplete="name"
+                autoCapitalize="words"
+                value={name}
+                onChange={e => { setName(e.target.value); setMsg(""); }}
+                placeholder="Your name (optional)"
+              />
+            </div>
+          )}
+
           <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-            <Label>Name</Label>
-            <Input type="text" value={name} onChange={e => { setName(e.target.value); setMsg(""); }} placeholder="Your name (optional)" />
+            <Label>Email</Label>
+            <Input
+              type="email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              value={email}
+              onChange={e => { setEmail(e.target.value); setMsg(""); }}
+              placeholder="your@email.com"
+            />
           </div>
-        )}
 
-        <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={e => { setEmail(e.target.value); setMsg(""); }} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" />
-        </div>
-
-        <div style={{ marginBottom: mode === "signup" ? spacing.xs : spacing.md, textAlign: "left" }}>
-          <Label>Password</Label>
-          <Input type="password" value={password} onChange={e => { setPassword(e.target.value); setMsg(""); }} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" />
-        </div>
-
-        {mode === "signup" && (
-          <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-            {PASSWORD_RULES.map(r => <PasswordRule key={r.label} label={r.label} met={r.test(password)} />)}
+          <div style={{ marginBottom: mode === "signup" ? spacing.xs : spacing.md, textAlign: "left" }}>
+            <Label>Password</Label>
+            <Input
+              type="password"
+              name="password"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              value={password}
+              onChange={e => { setPassword(e.target.value); setMsg(""); }}
+              placeholder="password"
+            />
           </div>
-        )}
 
-        <Button variant="primary" fullWidth onClick={handleSubmit} disabled={!canSubmit}>
-          {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
-        </Button>
+          {mode === "signup" && (
+            <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
+              {PASSWORD_RULES.map(r => <PasswordRule key={r.label} label={r.label} met={r.test(password)} />)}
+            </div>
+          )}
 
-        {msg === "EMAIL_TAKEN" ? (
-          <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>
-            That email is already registered.{" "}
-            <button
-              onClick={() => { setMode("signin"); setMsg(""); }}
-              style={{ background: "none", border: "none", color: colors.accent, fontSize: typography.caption, cursor: "pointer", padding: 0, textDecoration: "underline" }}
-            >
-              Sign in instead?
-            </button>
-          </div>
-        ) : msg ? (
-          <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>
-        ) : null}
+          <Button variant="primary" fullWidth type="submit" disabled={!canSubmit}>
+            {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
+          </Button>
+
+          {msg === "EMAIL_TAKEN" ? (
+            <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>
+              That email is already registered.{" "}
+              <button
+                type="button"
+                onClick={() => { setMode("signin"); setMsg(""); }}
+                style={{ background: "none", border: "none", color: colors.accent, fontSize: typography.caption, cursor: "pointer", padding: 0, textDecoration: "underline" }}
+              >
+                Sign in instead?
+              </button>
+            </div>
+          ) : msg ? (
+            <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>
+          ) : null}
+        </form>
 
         <button
+          type="button"
           onClick={switchMode}
           style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
         >
