@@ -6,16 +6,65 @@ import Label from "./Label";
 import Modal from "./Modal";
 import ManageAccount from "./ManageAccount";
 import { useToast } from "./ToastContext";
+import {
+  isPushSupported, needsHomeScreenInstall, getNotificationPermission,
+  getCurrentSubscription, subscribeToPush, unsubscribeFromPush,
+} from "../lib/notifications";
+import { dbUpdateScheduleField } from "../lib/api";
 
-export default function SettingsModal({ open, onClose, notifStatus, onEnableNotifications, onOpenManage, onSignOut, user, token, profile, onProfileUpdate }) {
+export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, user, token, profile, onProfileUpdate }) {
   const { show: showToast } = useToast();
-  const [view, setView] = useState("main");
+  const [view, setView]                   = useState("main");
+  const [permission, setPermission]       = useState("default");
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [needsInstall, setNeedsInstall]   = useState(false);
+  const [pushSupported, setPushSupported] = useState(true);
+  const [toggling, setToggling]           = useState(false);
 
-  useEffect(() => { if (!open) setView("main"); }, [open]);
+  useEffect(() => {
+    if (!open) { setView("main"); return; }
+    setPermission(getNotificationPermission());
+    setNeedsInstall(needsHomeScreenInstall());
+    setPushSupported(isPushSupported());
+    getCurrentSubscription().then(sub => setHasSubscription(!!sub));
+  }, [open]);
 
-  const handleEnableNotifications = async () => {
-    const result = await onEnableNotifications();
-    if (result === "granted") showToast("Reminders on");
+  const handleToggleNotifications = async () => {
+    if (toggling) return;
+    setToggling(true);
+    try {
+      if (hasSubscription) {
+        await unsubscribeFromPush();
+        await dbUpdateScheduleField("notifications_enabled", false, user.id, token);
+        setHasSubscription(false);
+        showToast("Reminders off");
+      } else {
+        if (needsInstall) {
+          setView("install");
+          return;
+        }
+        await subscribeToPush();
+        await dbUpdateScheduleField("notifications_enabled", true, user.id, token);
+        setPermission("granted");
+        setHasSubscription(true);
+        showToast("Reminders on");
+      }
+    } catch (err) {
+      if (err.message?.includes("denied")) {
+        showToast("Permission denied — enable in device settings");
+        setPermission("denied");
+      } else if (err.message?.includes("PWA install")) {
+        setView("install");
+      } else if (err.message?.includes("VAPID")) {
+        showToast("Reminders not configured yet");
+        console.error(err);
+      } else {
+        showToast("Couldn't update reminders");
+        console.error(err);
+      }
+    } finally {
+      setToggling(false);
+    }
   };
 
   if (view === "account") {
@@ -38,6 +87,102 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
           onShowToast={showToast}
         />
       </Modal>
+    );
+  }
+
+  if (view === "install") {
+    return (
+      <Modal
+        open={open}
+        onClose={onClose}
+        title="Add to home screen"
+        leftAction={
+          <Button variant="icon" aria-label="Back" onClick={() => setView("main")}>
+            <ChevronLeft size={18} />
+          </Button>
+        }
+      >
+        <div style={{ paddingTop: spacing.xs }}>
+          <p style={{ fontSize: typography.body, color: colors.textSecondary, marginBottom: spacing.md, lineHeight: 1.6 }}>
+            To enable reminders on iOS, Tether must be installed to your home screen.
+          </p>
+          <ol style={{ paddingLeft: spacing.lg, color: colors.textSecondary, lineHeight: 1.8, fontSize: typography.body }}>
+            <li>Tap the Share button in Safari</li>
+            <li>Scroll down and tap "Add to Home Screen"</li>
+            <li>Open Tether from your home screen</li>
+            <li>Return to Settings and enable reminders</li>
+          </ol>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Notification row content depending on state
+  let notifContent;
+  if (!pushSupported) {
+    notifContent = (
+      <div style={{ fontSize: typography.caption, color: colors.textMuted }}>
+        Notifications aren't supported in this browser.
+      </div>
+    );
+  } else if (permission === "denied") {
+    notifContent = (
+      <div style={{ fontSize: typography.caption, color: colors.danger }}>
+        Permission blocked. Enable Tether in your device settings.
+      </div>
+    );
+  } else if (needsInstall) {
+    notifContent = (
+      <div
+        onClick={() => setView("install")}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          cursor: "pointer", userSelect: "none", WebkitTapHighlightColor: "transparent",
+          minHeight: touch.min,
+        }}
+      >
+        <span style={{ fontSize: typography.caption, color: colors.textMuted, flex: 1, paddingRight: spacing.sm }}>
+          Install Tether to your home screen to enable reminders.
+        </span>
+        <ChevronRight size={18} color={colors.textSecondary} style={{ flexShrink: 0 }} />
+      </div>
+    );
+  } else {
+    // Normal flow — toggle
+    notifContent = (
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        minHeight: touch.min,
+      }}>
+        <span style={{ fontSize: typography.body, color: colors.textPrimary }}>Reminders</span>
+        <button
+          onClick={handleToggleNotifications}
+          disabled={toggling}
+          aria-label={hasSubscription ? "Turn off reminders" : "Turn on reminders"}
+          style={{
+            width: 44, height: 26, borderRadius: 13,
+            background: hasSubscription ? colors.accent : colors.borderStrong,
+            border: "none",
+            cursor: toggling ? "default" : "pointer",
+            transition: "background 200ms",
+            position: "relative",
+            flexShrink: 0,
+            WebkitTapHighlightColor: "transparent",
+            opacity: toggling ? 0.6 : 1,
+          }}
+        >
+          <span style={{
+            position: "absolute",
+            top: 3,
+            left: hasSubscription ? 21 : 3,
+            width: 20, height: 20,
+            borderRadius: "50%",
+            background: "white",
+            transition: "left 200ms",
+            display: "block",
+          }} />
+        </button>
+      </div>
     );
   }
 
@@ -76,18 +221,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />
 
       <Label style={{ marginBottom: spacing.xs }}>Notifications</Label>
-      {notifStatus === "default" && (
-        <Button variant="secondary" fullWidth onClick={handleEnableNotifications}>Enable reminders</Button>
-      )}
-      {notifStatus === "granted" && (
-        <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.medium }}>Reminders are on</div>
-      )}
-      {notifStatus === "denied" && (
-        <div style={{ fontSize: typography.caption, color: colors.danger }}>Reminders are blocked — enable them in your device settings</div>
-      )}
-      {notifStatus === "unsupported" && (
-        <div style={{ fontSize: typography.caption, color: colors.textMuted }}>Add Tether to your home screen to enable reminders</div>
-      )}
+      {notifContent}
 
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />
 

@@ -1,7 +1,11 @@
-import { colors } from '../design-system';
-import { parseHHMM, addMins } from './time';
+// src/lib/notifications.js — Web Push notifications client API
 
-export const notifOK = () => "Notification" in window;
+import { supa, getSession } from "./api";
+import { colors } from "../design-system";
+
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
+// ── Slot definitions — used by SlotCard / App.jsx for slot rendering ──────────
 
 export const SLOTS = [
   { id: "rx",            label: "Anchor Medication", sublabel: "Empty stomach · first thing", icon: "★", color: colors.slotAnchor },
@@ -16,20 +20,126 @@ export const SLOTS = [
   { id: "topical",       label: "Topicals",          sublabel: "Skin & external",             icon: "◐", color: colors.slotTopical },
 ];
 
-export function scheduleNotifications(pt, supps, vd, dk, offsets) {
-  if (window._nto) window._nto.forEach(clearTimeout);
-  window._nto = [];
-  if (!pt || Notification.permission !== "granted") return;
-  const base = parseHHMM(pt), now = new Date();
-  SLOTS.forEach(slot => {
-    if (slot.id === "injectable" || slot.id === "topical") return;
-    const offset = slot.id === "rx" ? 0 : (offsets?.[slot.id] ?? null);
-    if (offset === null) return;
-    const t = addMins(base, offset), diff = t - now; if (diff < 0) return;
-    const sl = supps.filter(s => s.slots.includes(slot.id) && s.days.includes(vd));
-    if (!sl.length) return;
-    window._nto.push(setTimeout(() => {
-      try { new Notification("Time for your protocol", { body: `${slot.label}: ${sl.map(s => s.name).join(", ")}`, tag: `${dk}_${slot.id}` }); } catch (e) {}
-    }, diff));
+// ── Service worker registration ───────────────────────────────────────────────
+
+let swRegistrationPromise = null;
+
+export async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Service workers not supported in this browser");
+  }
+  if (!swRegistrationPromise) {
+    swRegistrationPromise = navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  }
+  return swRegistrationPromise;
+}
+
+// ── Browser support detection ─────────────────────────────────────────────────
+
+export function isPushSupported() {
+  return (
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
+  );
+}
+
+export function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+export function isIOSPWA() {
+  return isIOS() && window.navigator.standalone === true;
+}
+
+export function needsHomeScreenInstall() {
+  return isIOS() && !isIOSPWA();
+}
+
+// ── Permission ────────────────────────────────────────────────────────────────
+
+export function getNotificationPermission() {
+  if (!("Notification" in window)) return "unsupported";
+  return Notification.permission;
+}
+
+// ── Subscribe / unsubscribe ───────────────────────────────────────────────────
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from(rawData, (c) => c.charCodeAt(0));
+}
+
+export async function subscribeToPush() {
+  if (!isPushSupported()) {
+    throw new Error("Push notifications not supported in this browser");
+  }
+  if (needsHomeScreenInstall()) {
+    throw new Error("PWA install required on iOS — please add Tether to your home screen first");
+  }
+  if (!VAPID_PUBLIC_KEY) {
+    throw new Error("VAPID public key missing — check VITE_VAPID_PUBLIC_KEY env var");
+  }
+
+  const reg = await registerServiceWorker();
+  await navigator.serviceWorker.ready;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    throw new Error("Notification permission denied");
+  }
+
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
   });
+
+  const user = await getSession();
+  if (!user) throw new Error("Not signed in");
+  const tok = localStorage.getItem("sb_token") || "";
+
+  const subJSON = subscription.toJSON();
+  await supa("POST", "/rest/v1/push_subscriptions", {
+    user_id: user.id,
+    endpoint: subJSON.endpoint,
+    p256dh: subJSON.keys.p256dh,
+    auth: subJSON.keys.auth,
+    user_agent: navigator.userAgent,
+  }, tok);
+
+  return subscription;
+}
+
+export async function unsubscribeFromPush() {
+  if (!isPushSupported()) return;
+
+  const reg = await registerServiceWorker();
+  const subscription = await reg.pushManager.getSubscription();
+
+  if (subscription) {
+    const endpoint = subscription.endpoint;
+    await subscription.unsubscribe();
+
+    const tok = localStorage.getItem("sb_token") || "";
+    await supa(
+      "DELETE",
+      `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
+      null,
+      tok
+    );
+  }
+}
+
+// ── Status check ──────────────────────────────────────────────────────────────
+
+export async function getCurrentSubscription() {
+  if (!isPushSupported()) return null;
+  try {
+    const reg = await registerServiceWorker();
+    return await reg.pushManager.getSubscription();
+  } catch {
+    return null;
+  }
 }

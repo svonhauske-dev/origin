@@ -118,6 +118,9 @@ export const dbUpsertLog    = (log, t)  => supa("POST",   "/rest/v1/daily_logs?o
 export const dbGetSchedule  = (t)       => supa("GET",    "/rest/v1/user_schedule?select=*", null, t).then(r => r?.[0] || null);
 export const dbSaveSchedule = (data, t) => supa("POST",   "/rest/v1/user_schedule?on_conflict=user_id", data, t);
 
+export const dbUpdateScheduleField = (field, value, userId, token) =>
+  supa("PATCH", `/rest/v1/user_schedule?user_id=eq.${userId}`, { [field]: value }, token);
+
 export const dbGetProfile    = (userId, t)       => supa("GET",   `/rest/v1/user_profiles?id=eq.${userId}&select=*`, null, t).then(r => r?.[0] || null);
 export const dbCreateProfile = (data, t)         => supa("POST",  "/rest/v1/user_profiles", data, t);
 export const dbUpdateProfile = (userId, data, t) => supa("PATCH", `/rest/v1/user_profiles?id=eq.${userId}`, data, t);

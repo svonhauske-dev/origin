@@ -28,10 +28,12 @@ import {
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
   dbGetLog, dbUpsertLog,
   dbGetSchedule, dbSaveSchedule,
+  dbUpdateScheduleField,
   dbGetProfile, dbCreateProfile,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY } from './lib/time';
-import { SLOTS, scheduleNotifications, notifOK } from './lib/notifications';
+import { SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
+import NotificationPrompt from "./components/NotificationPrompt";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -81,7 +83,6 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [formOpen, setFormOpen]             = useState(false);
   const [editingId, setEditingId]           = useState(null);
   const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", timePreference: "Anytime", paused: false });
-  const [notifStatus, setNotifStatus]       = useState(notifOK() ? Notification.permission : "unsupported");
   const [streak, setStreak]                 = useState(0);
   const [flashGreen, setFlashGreen]         = useState(false);
   const [showSchedule, setShowSchedule]     = useState(false);
@@ -98,7 +99,8 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [profile, setProfile]               = useState(null);
   const [needsNamePrompt, setNeedsNamePrompt] = useState(false);
-  const [pastDayEditing, setPastDayEditing]   = useState(false);
+  const [pastDayEditing, setPastDayEditing]         = useState(false);
+  const [needsNotificationPrompt, setNeedsNotificationPrompt] = useState(false);
   const [submitting, setSubmitting]           = useState(false);
   const [submitError, setSubmitError]         = useState(null);
   const saveTimer = useRef(null);
@@ -123,6 +125,9 @@ function ProtocolApp({ user, token, onSignOut }) {
     : anchorBehavior === "consistent"
       ? (pillTime || consistentTime)
       : pillTime;
+
+  // Register service worker early so it's ready to receive pushes
+  useEffect(() => { registerServiceWorker().catch(() => {}); }, []);
 
   // Initial load
   useEffect(() => {
@@ -256,7 +261,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       const rxSupps = homeSupps.filter(s => s.slots.includes("rx") && s.days.includes(viewDay));
       setChecked(c => { const n = { ...c }; rxSupps.forEach(s => { n[`${dk}_rx_${s.id}`] = true; }); return n; });
     }
-    scheduleNotifications(t, homeSupps, viewDay, dk, slotOffsets);
     setFlashGreen(true); setTimeout(() => setFlashGreen(false), 600);
   };
 
@@ -371,12 +375,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       console.error(err);
       return false;
     }
-    try {
-      const updatedHome = supps.map(x => x.id === supp.id ? updated : x).filter(s => !pendingDeletes[s.id] && !s.paused);
-      scheduleNotifications(effectivePillTime, updatedHome, viewDay, dk, slotOffsets);
-    } catch (e) {
-      console.warn("scheduleNotifications failed (non-fatal):", e);
-    }
     return true;
   };
 
@@ -442,8 +440,28 @@ function ProtocolApp({ user, token, onSignOut }) {
   if (needsOnboarding) return (
     <Onboarding onComplete={async (mode, config, behavior, cTime) => {
       const ok = await saveSchedule(mode, config, behavior, cTime);
-      if (ok) setNeedsOnboarding(false);
+      if (ok) {
+        setNeedsOnboarding(false);
+        if (isPushSupported() && !needsHomeScreenInstall()) {
+          const sub = await getCurrentSubscription();
+          if (!sub) setNeedsNotificationPrompt(true);
+        }
+      }
     }} />
+  );
+  if (needsNotificationPrompt) return (
+    <NotificationPrompt
+      onEnable={async () => {
+        try {
+          await subscribeToPush();
+          await dbUpdateScheduleField("notifications_enabled", true, user.id, token);
+        } catch {
+          // permission denied or any other error — just continue to app
+        }
+        setNeedsNotificationPrompt(false);
+      }}
+      onSkip={() => setNeedsNotificationPrompt(false)}
+    />
   );
 
   return (
@@ -538,8 +556,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       <SettingsModal
         open={showSettings}
         onClose={() => setShowSettings(false)}
-        notifStatus={notifStatus}
-        onEnableNotifications={async () => { const r = await Notification.requestPermission(); setNotifStatus(r); return r; }}
         onOpenManage={() => { setShowSettings(false); setShowManage(true); }}
         onSignOut={handleSignOut}
         user={user}
