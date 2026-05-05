@@ -1,79 +1,79 @@
 // ── Tether Design System ─────────────────────────────────────────────────────────
 
 export const colors = {
-  // Accent
-  accent:        "#384361",   // deep slate blue
-  accentHover:   "#2D3650",   // deeper on press/hover
-  accentDim:     "#E5E8F0",   // pale slate tint — ghost active, selected backgrounds
-  accentSubtle:  "#E5E8F0",   // alias for accentDim
-  accentBorder:  "rgba(56,67,97,0.3)",
+  // Surfaces — softly warm paper feel, lifted white surfaces
+  bgBase:          "#FAFAF8",   // off-white paper background, barely warm
+  bgGradientMid:   "#F8F8F6",   // gradient stop
+  bgGradientEnd:   "#F5F5F3",   // gradient end — slightly deeper
+  bgModal:         "#FFFFFF",   // pure white for modals/cards
+  bgCard:          "#FFFFFF",   // slot cards
+  bgCardSubtle:    "#FAFAF8",   // matches base for nested elements
+  bgBackdrop:      "rgba(26,26,26,0.4)",
+  bgInput:         "#FFFFFF",
+  bgInputDisabled: "#F5F5F3",
 
-  // Backgrounds
-  bgBase:        "#F5F6F8",   // main app background — cool light grey
-  bgGradientMid: "#F2F3F5",   // near-imperceptible gradient stop
-  bgGradientEnd: "#EEF0F3",   // gradient end — slightly cooler
-  bgModal:       "#FFFFFF",   // modal / card surfaces — pure white
-  bgCard:        "#FFFFFF",   // slot cards, supplement rows
-  bgCardHover:   "#F0F2F5",   // subtle hover on white surfaces
-  bgCardSubtle:  "#FAFBFC",   // nested / inset surfaces
-  bgBackdrop:    "rgba(28,30,33,0.4)", // modal backdrop — cool ink
-  bgInput:       "#FFFFFF",   // input field background
-  bgInputDisabled: "#F2F3F5", // disabled input
+  // Text — near-black ink, soft greys
+  textPrimary:     "#1A1A1A",   // near-black, deep but not harsh
+  textSecondary:   "#5C5C5C",   // neutral mid-grey
+  textMuted:       "#8C8C8C",   // quieter grey for labels, captions
+  textDisabled:    "#C2C2C2",
+  textOnAccent:    "#FFFFFF",
+  textOnDanger:    "#FFFFFF",
 
-  // Text
-  textPrimary:   "#1C1E21",   // deep cool ink
-  textSecondary: "#4A5159",   // cool charcoal
-  textMuted:     "#7A8189",   // cool mid-grey
-  textDone:      "#7A8189",   // completed / struck-through items
-  textFaint:     "rgba(28,30,33,0.3)", // very faint (date sublabel)
-  textDisabled:  "#B5BBC2",
-  textOnAccent:  "#FFFFFF",   // white on slate blue
-  textOnDanger:  "#FFFFFF",   // white on danger
+  // Accent — deep ink-blue, single confident color
+  accent:          "#1F3A52",   // deep ink blue — fountain pen ink
+  accentHover:     "#162C40",   // slightly deeper for hover
+  accentSubtle:    "#E8ECF0",   // pale tint for ghost-active states
 
-  // Borders
-  borderStrong:  "#C7CCD2",   // prominent dividers, drag handles
-  borderBase:    "#DDE0E5",   // standard borders
-  borderSubtle:  "#E5E9EE",   // barely-there divisions
-  borderFocus:   "#384361",   // focused inputs — matches accent
+  // Borders — hairline restraint
+  borderSubtle:    "#E5E5E3",   // barely-there hairlines
+  borderStrong:    "#2C2C2C",   // when a border needs to assert (rare)
+  borderFocus:     "#1F3A52",   // matches accent, focus rings
 
-  // Semantic
-  danger:        "#9B5757",   // desaturated cool clay-red
-  dangerBorder:  "rgba(155,87,87,0.3)",
-  dangerSubtle:  "#F5E8E8",   // pale red tint
-  success:       "#5A7C5C",   // muted cool sage
-  warning:       "#9B8557",   // muted cool olive
-  warningSubtle: "#F5EFE5",
+  // Slot colors — all collapsed to single muted grey
+  slotAnchor:       "#5C5C5C",
+  slotPreBreakfast: "#5C5C5C",
+  slotBreakfast:    "#5C5C5C",
+  slotPreLunch:     "#5C5C5C",
+  slotLunch:        "#5C5C5C",
+  slotPreDinner:    "#5C5C5C",
+  slotDinner:       "#5C5C5C",
+  slotEvening:      "#5C5C5C",
+  slotInjectable:   "#5C5C5C",
+  slotTopical:      "#5C5C5C",
 
-  // Surfaces
-  cardSubtle: "#F8F9FA",      // very slightly off-white card variant
-  divider:    "#ECEEF1",      // ultra-light row divider
+  // Status — restrained even in error states
+  success:         "#3D6647",   // deep muted forest green
+  danger:          "#8C3F3F",   // deep muted oxide red
+  dangerSubtle:    "#F2E8E8",
+  warning:         "#8C7240",   // deep muted ochre
+  warningSubtle:   "#F2EDE5",
 
-  // Slot status — clay-red for missed, accent for now
-  statusMissedBorder:     "rgba(155,87,87,0.35)",
-  statusMissedBg:         "rgba(155,87,87,0.05)",
-  statusMissedHover:      "rgba(155,87,87,0.08)",
-  statusMissedBadgeBg:    "rgba(155,87,87,0.12)",
-  statusMissedBadgeColor: "#9B5757",
-  statusNowBorder:        "rgba(56,67,97,0.35)",
-  statusNowBg:            "rgba(56,67,97,0.04)",
-  statusNowHover:         "rgba(56,67,97,0.07)",
-  statusNowBadgeBg:       "rgba(56,67,97,0.14)",
-
-  // Slot colors — desaturated cool tones, walking cool spectrum
-  slotRx:          "#5C6F7A",   // cool slate (anchor/rx)
-  slotPreBreakfast:"#647A82",   // cool steel
-  slotBreakfast:   "#6E8595",   // dusty cool blue
-  slotPreLunch:    "#6F8388",   // cool teal-grey
-  slotLunch:       "#73867E",   // muted sage-grey
-  slotPreDinner:   "#6B7C7E",   // cool stone
-  slotDinner:      "#5A6B72",   // deep cool slate
-  slotAfterDinner: "#4D5862",   // charcoal blue-grey (evening)
-  slotInjectable:  "#6F7888",   // neutral cool grey
-  slotTopical:     "#7A8088",   // slightly lighter cool grey
+  // ── Backward-compat aliases — components reference these; do not remove ──────
+  accentDim:              "#E8ECF0",             // → accentSubtle
+  accentBorder:           "rgba(31,58,82,0.3)",  // derived from accent
+  bgCardHover:            "#F0F0EE",             // subtle hover on white
+  borderBase:             "#E5E5E3",             // → borderSubtle
+  textDone:               "#8C8C8C",             // → textMuted
+  textFaint:              "rgba(26,26,26,0.3)",  // very faint (date sublabel)
+  dangerBorder:           "rgba(140,63,63,0.3)", // derived from danger
+  cardSubtle:             "#FAFAF8",             // → bgCardSubtle
+  divider:                "#E5E5E3",             // → borderSubtle
+  statusMissedBorder:     "rgba(140,63,63,0.35)",
+  statusMissedBg:         "rgba(140,63,63,0.05)",
+  statusMissedHover:      "rgba(140,63,63,0.08)",
+  statusMissedBadgeBg:    "rgba(140,63,63,0.12)",
+  statusMissedBadgeColor: "#8C3F3F",
+  statusNowBorder:        "rgba(31,58,82,0.35)",
+  statusNowBg:            "rgba(31,58,82,0.04)",
+  statusNowHover:         "rgba(31,58,82,0.07)",
+  statusNowBadgeBg:       "rgba(31,58,82,0.14)",
+  slotRx:                 "#5C5C5C",             // → slotAnchor
+  slotAfterDinner:        "#5C5C5C",             // → slotEvening
 };
 
 export const spacing = {
-  xxxs: 2,   // tighter than xxs, for 2px margins
+  xxxs: 2,
   xxs:  4,
   xs:   8,
   sm:   12,
@@ -84,24 +84,24 @@ export const spacing = {
 };
 
 export const radius = {
-  xs:   4,    // badges, tags
-  sm:   8,    // inputs, small buttons
-  md:   12,   // inner cards, rows
-  lg:   16,   // buttons, cards
-  xl:   24,   // modals, large cards
+  xs:   2,    // badges, tags
+  sm:   4,    // inputs, small buttons
+  md:   6,    // inner cards, rows
+  lg:   8,    // buttons, cards
+  xl:   12,   // modals, large cards
   full: 9999, // pill buttons, avatars
 };
 
 export const typography = {
   // Sizes — all multiples of 2
-  caption2: 10,   // very compact sublabels (unchanged)
+  caption2: 10,
   label:    12,
   caption:  14,
   body:     16,
   title:    18,
-  heading:  22,   // new — section/modal headings
-  display:  32,   // new — large display numbers (anchor time)
-  hero:     28,   // preserved — app title, empty-state emoji
+  heading:  22,
+  display:  32,
+  hero:     28,
 
   // Weights
   regular:  400,
@@ -113,12 +113,12 @@ export const typography = {
   labelSpacingTight:    "0.04em",
   labelSpacing:         "0.08em",
   labelSpacingWide:     "0.1em",
-  headingLetterSpacing: "-0.02em", // headings and display dates
-  displayLetterSpacing: "-0.04em", // large anchor time display
+  headingLetterSpacing: "-0.02em",
+  displayLetterSpacing: "-0.04em",
 
-  // Font families
-  fontBody:    "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-  fontHeading: "'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  // Font families — single Geist system
+  fontBody:    '"Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif',
+  fontHeading: '"Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif',
 };
 
 export const touch = {
@@ -126,24 +126,24 @@ export const touch = {
 };
 
 export const layout = {
-  closeButton:      32,  // close button (✕) width/height
-  modeButtonHeight: 64,  // schedule mode grid button height
-  segHeight:        40,  // segmented control height (intentionally below touch.min)
-  maxContentWidth:  480, // maximum width for page/modal content
-  signInWidth:      360, // sign-in form max width
-  toastMaxWidth:    448, // toast container max width (maxContentWidth - md*2)
+  closeButton:      32,
+  modeButtonHeight: 64,
+  segHeight:        40,
+  maxContentWidth:  480,
+  signInWidth:      360,
+  toastMaxWidth:    448,
 };
 
 export const gradients = {
-  bg: `linear-gradient(165deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`,
+  bg: `linear-gradient(180deg,${colors.bgBase} 0%,${colors.bgGradientMid} 50%,${colors.bgGradientEnd} 100%)`,
 };
 
 export const shadows = {
-  card:    "0 1px 3px rgba(28,30,33,0.04), 0 1px 2px rgba(28,30,33,0.06)",
-  modal:   "0 12px 40px rgba(28,30,33,0.10), 0 4px 12px rgba(28,30,33,0.06)",
-  popover: "0 8px 24px rgba(28,30,33,0.08), 0 2px 6px rgba(28,30,33,0.05)",
-  toast:   "0 8px 24px rgba(28,30,33,0.12)",
-  focus:   "0 0 0 3px rgba(56,67,97,0.15)",
+  card:    "0 1px 2px rgba(26,26,26,0.04)",
+  modal:   "0 8px 32px rgba(26,26,26,0.08), 0 2px 8px rgba(26,26,26,0.04)",
+  popover: "0 4px 16px rgba(26,26,26,0.06)",
+  toast:   "0 4px 16px rgba(26,26,26,0.10)",
+  focus:   "0 0 0 3px rgba(31,58,82,0.15)",
 };
 
 export const zIndex = {
@@ -181,9 +181,9 @@ export const segBtnStyle = (on) => ({
   cursor: "pointer",
   fontSize: typography.caption,
   fontFamily: typography.fontBody,
-  background: on ? colors.accentDim : "transparent",
+  background: on ? colors.accentSubtle : "transparent",
   color: on ? colors.accent : colors.textSecondary,
-  border: `1px solid ${on ? colors.accentBorder : colors.borderStrong}`,
+  border: `1px solid ${on ? colors.accentBorder : colors.borderSubtle}`,
   fontWeight: on ? typography.semibold : typography.regular,
   minHeight: layout.segHeight,
 });
