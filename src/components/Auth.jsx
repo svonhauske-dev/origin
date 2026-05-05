@@ -31,8 +31,12 @@ export default function Auth({ onSignIn }) {
           fontSize: 40,
           marginBottom: spacing.md,
         }}>💊</div>
-        <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>Tether</div>
-        <div style={{ fontSize: typography.caption, color: colors.textMuted, marginBottom: spacing.xl, lineHeight: 1.7 }}>Your supplement schedule,<br />built around your life.</div>
+        <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>
+          {mode === "signin" ? "Welcome back" : "Hello"}
+        </div>
+        <div style={{ fontSize: typography.body, color: colors.textSecondary, marginBottom: spacing.xl, lineHeight: 1.6 }}>
+          {mode === "signin" ? "Pick up where you left off" : "Let's set up your protocol"}
+        </div>
         <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
           <Label>Email</Label>
           <Input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="your@email.com" />
@@ -45,7 +49,7 @@ export default function Auth({ onSignIn }) {
           {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
         </Button>
         <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-          {mode === "signin" ? "No account? Sign up" : "Have an account? Sign in"}
+          {mode === "signin" ? "New to Tether? Sign up" : "Already have an account? Sign in"}
         </button>
         {msg && <div style={{ marginTop: spacing.md, fontSize: typography.caption, color: colors.danger }}>{msg}</div>}
       </div>

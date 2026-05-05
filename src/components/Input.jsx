@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { colors, spacing, radius, typography, shadows } from "../design-system";
+import { colors, spacing, radius, typography } from "../design-system";
 
 export default function Input({ variant = "text", width, style, type, onFocus, onBlur, ...rest }) {
   const [focused, setFocused] = useState(false);
@@ -9,14 +9,13 @@ export default function Input({ variant = "text", width, style, type, onFocus, o
     background: colors.bgInput,
     color: colors.textPrimary,
     border: focused ? `1.5px solid ${colors.accent}` : `1px solid ${colors.borderSubtle}`,
-    boxShadow: focused ? shadows.focus : "none",
     borderRadius: radius.md,
     fontSize: typography.body,
     fontFamily: typography.fontBody,
     outline: "none",
     WebkitAppearance: "none",
     boxSizing: "border-box",
-    transition: "border-color 150ms ease, box-shadow 150ms ease",
+    transition: "border-color 150ms ease",
   };
 
   const v = variant === "number"
