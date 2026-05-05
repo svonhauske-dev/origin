@@ -2,21 +2,21 @@
 
 export const colors = {
   // Surfaces — softly warm paper feel, lifted white surfaces
-  bgBase:          "#FAFAF8",   // off-white paper background, barely warm
-  bgGradientMid:   "#F8F8F6",   // gradient stop
-  bgGradientEnd:   "#F5F5F3",   // gradient end — slightly deeper
+  bgBase:          "#F4F6F8",   // cool off-white, subtle blue undertone
+  bgGradientMid:   "#F2F4F6",   // gradient stop
+  bgGradientEnd:   "#EEF1F4",   // gradient end — slightly cooler
   bgModal:         "#FFFFFF",   // pure white for modals/cards
   bgCard:          "#FFFFFF",   // slot cards
-  bgCardSubtle:    "#FAFAF8",   // matches base for nested elements
+  bgCardSubtle:    "#F4F6F8",   // matches base for nested elements
   bgBackdrop:      "rgba(26,26,26,0.4)",
   bgInput:         "#FFFFFF",
   bgInputDisabled: "#F5F5F3",
 
   // Text — near-black ink, soft greys
   textPrimary:     "#1A1A1A",   // near-black, deep but not harsh
-  textSecondary:   "#5C5C5C",   // neutral mid-grey
-  textMuted:       "#8C8C8C",   // quieter grey for labels, captions
-  textDisabled:    "#C2C2C2",
+  textSecondary:   "#5A6168",   // cool charcoal
+  textMuted:       "#8A929A",   // cool mid-grey
+  textDisabled:    "#BFC4CA",
   textOnAccent:    "#FFFFFF",
   textOnDanger:    "#FFFFFF",
 
@@ -26,7 +26,7 @@ export const colors = {
   accentSubtle:    "#F0F0EE",   // pale warm grey for ghost-active states
 
   // Borders — hairline restraint
-  borderSubtle:    "#E5E5E3",   // barely-there hairlines
+  borderSubtle:    "#E2E6EA",   // cool hairline
   borderStrong:    "#2C2C2C",   // when a border needs to assert (rare)
   borderFocus:     "#1A1A1A",   // matches accent, focus rings
 
@@ -53,12 +53,12 @@ export const colors = {
   accentDim:              "#F0F0EE",             // → accentSubtle
   accentBorder:           "rgba(26,26,26,0.3)",  // derived from accent
   bgCardHover:            "#F0F0EE",             // subtle hover on white
-  borderBase:             "#E5E5E3",             // → borderSubtle
+  borderBase:             "#E2E6EA",             // → borderSubtle
   textDone:               "#8C8C8C",             // → textMuted
   textFaint:              "rgba(26,26,26,0.3)",  // very faint (date sublabel)
   dangerBorder:           "rgba(140,63,63,0.3)", // derived from danger
-  cardSubtle:             "#FAFAF8",             // → bgCardSubtle
-  divider:                "#E5E5E3",             // → borderSubtle
+  cardSubtle:             "#F4F6F8",             // → bgCardSubtle
+  divider:                "#E2E6EA",             // → borderSubtle
   statusMissedBorder:     "rgba(140,63,63,0.35)",
   statusMissedBg:         "rgba(140,63,63,0.05)",
   statusMissedHover:      "rgba(140,63,63,0.08)",

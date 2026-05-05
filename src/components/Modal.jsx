@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { colors, spacing, radius, typography, layout, shadows, zIndex as zIndexTokens } from "../design-system";
+import { X } from "lucide-react";
+import { colors, spacing, radius, typography, layout, touch, shadows, zIndex as zIndexTokens } from "../design-system";
 import Button from "./Button";
 
 export default function Modal({ open, onClose, title, children, footer }) {
@@ -84,7 +85,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
               color: colors.textPrimary,
               fontFamily: typography.fontHeading,
             }}>{title}</span>
-            <Button variant="icon" aria-label="Close" onClick={onClose}>✕</Button>
+            <Button variant="icon" aria-label="Close" onClick={onClose} style={{ width: touch.min, height: touch.min }}><X size={18} /></Button>
           </div>
           {/* Scrollable body */}
           <div style={{

@@ -650,7 +650,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
               {slot.label}
               {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : "missed"}>{sc.badge.label}</Badge>}
             </div>
-            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} supplement${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
+            <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} supplement${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
@@ -659,7 +659,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
         </div>
       </div>
       {expanded && (
-        <div style={{ padding: `0 ${spacing.md}px`, borderTop: `1px solid ${sc.border}` }}>
+        <div style={{ padding: `0 ${spacing.md}px ${spacing.xs}px`, borderTop: `1px solid ${sc.border}` }}>
           {slotSupps.map((supp, i) => {
             const done = isChecked(slot.id, supp.id);
             return (
@@ -672,7 +672,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
                     {supp.name}
                     {supp.category === "Rx" && <Badge variant="category">Rx</Badge>}
                   </div>
-                  <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: 2, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
+                  <div style={{ fontSize: typography.label, color: colors.textMuted, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
                 </div>
                 <button onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ fontSize: typography.label, padding: `${spacing.xs}px ${spacing.sm}px`, borderRadius: radius.sm, cursor: "pointer", border: `1px solid ${colors.borderBase}`, background: colors.bgCard, color: colors.textSecondary, flexShrink: 0, minHeight: touch.min, display: "flex", alignItems: "center" }}>Edit</button>
               </div>
@@ -1084,13 +1084,13 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
-        <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)} style={{ width: touch.min, height: touch.min, borderRadius: radius.md, border: `1px solid ${colors.borderBase}` }}><ChevronLeft size={24} color={colors.textSecondary} /></Button>
+        <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)} style={{ width: touch.min, height: touch.min }}><ChevronLeft size={24} color={colors.textSecondary} /></Button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
           <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
           <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
-          <div style={{ fontSize: typography.caption2, color: colors.textFaint, marginTop: 2, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
+          <div style={{ fontSize: typography.caption2, color: colors.textFaint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
         </div>
-        <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)} style={{ width: touch.min, height: touch.min, borderRadius: radius.md, border: `1px solid ${colors.borderBase}` }}><ChevronRight size={24} color={colors.textSecondary} /></Button>
+        <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)} style={{ width: touch.min, height: touch.min }}><ChevronRight size={24} color={colors.textSecondary} /></Button>
       </div>
 
       {/* Add row */}
@@ -1107,7 +1107,7 @@ function ProtocolApp({ user, token, onSignOut }) {
               <div>
                 <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>No schedule</Label>
                 <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long" })}</div>
-                <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: 2 }}>{shortDate}</div>
+                <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xxxs }}>{shortDate}</div>
                 {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>All done ✓</div>}
                 {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
               </div>
@@ -1138,7 +1138,7 @@ function ProtocolApp({ user, token, onSignOut }) {
               </div>
             ) : (
               <div>
-                <Button variant="primary" fullWidth onClick={startDay} style={{ minHeight: spacing.xxl, background: isFuture ? colors.bgCardHover : colors.accent, color: isFuture ? colors.textMuted : colors.textPrimary, cursor: isFuture ? "default" : "pointer" }}>
+                <Button variant="primary" fullWidth onClick={startDay} style={{ minHeight: spacing.xxl, background: isFuture ? colors.bgCardHover : colors.accent, color: isFuture ? colors.textMuted : colors.textOnAccent, cursor: isFuture ? "default" : "pointer" }}>
                   {isFuture ? "Future day" : (START_LABELS[scheduleMode] || "Start my day")}
                 </Button>
                 {!isFuture && <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" }}>{START_SUBTITLES[scheduleMode] || "sets your daily schedule"}</div>}
