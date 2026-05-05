@@ -21,14 +21,14 @@ export const colors = {
   textOnDanger:    "#FFFFFF",
 
   // Accent — deep ink-blue, single confident color
-  accent:          "#1F3A52",   // deep ink blue — fountain pen ink
-  accentHover:     "#162C40",   // slightly deeper for hover
-  accentSubtle:    "#E8ECF0",   // pale tint for ghost-active states
+  accent:          "#1A1A1A",   // near-black ink — action color
+  accentHover:     "#000000",   // pure black on hover/press
+  accentSubtle:    "#F0F0EE",   // pale warm grey for ghost-active states
 
   // Borders — hairline restraint
   borderSubtle:    "#E5E5E3",   // barely-there hairlines
   borderStrong:    "#2C2C2C",   // when a border needs to assert (rare)
-  borderFocus:     "#1F3A52",   // matches accent, focus rings
+  borderFocus:     "#1A1A1A",   // matches accent, focus rings
 
   // Slot colors — all collapsed to single muted grey
   slotAnchor:       "#5C5C5C",
@@ -50,8 +50,8 @@ export const colors = {
   warningSubtle:   "#F2EDE5",
 
   // ── Backward-compat aliases — components reference these; do not remove ──────
-  accentDim:              "#E8ECF0",             // → accentSubtle
-  accentBorder:           "rgba(31,58,82,0.3)",  // derived from accent
+  accentDim:              "#F0F0EE",             // → accentSubtle
+  accentBorder:           "rgba(26,26,26,0.3)",  // derived from accent
   bgCardHover:            "#F0F0EE",             // subtle hover on white
   borderBase:             "#E5E5E3",             // → borderSubtle
   textDone:               "#8C8C8C",             // → textMuted
@@ -143,7 +143,7 @@ export const shadows = {
   modal:   "0 8px 32px rgba(26,26,26,0.08), 0 2px 8px rgba(26,26,26,0.04)",
   popover: "0 4px 16px rgba(26,26,26,0.06)",
   toast:   "0 4px 16px rgba(26,26,26,0.10)",
-  focus:   "0 0 0 3px rgba(31,58,82,0.15)",
+  focus:   "0 0 0 3px rgba(26,26,26,0.15)",
 };
 
 export const zIndex = {
