@@ -85,7 +85,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
               color: colors.textPrimary,
               fontFamily: typography.fontHeading,
             }}>{title}</span>
-            <Button variant="icon" aria-label="Close" onClick={onClose} style={{ width: touch.min, height: touch.min }}><X size={18} /></Button>
+            <Button variant="icon" aria-label="Close" onClick={onClose}><X size={18} /></Button>
           </div>
           {/* Scrollable body */}
           <div style={{

@@ -100,8 +100,8 @@ export default function Button({
     };
   } else if (variant === "icon") {
     v = {
-      width: layout.closeButton,
-      height: layout.closeButton,
+      width: touch.min,
+      height: touch.min,
       borderRadius: radius.full,
       background: colors.bgCardHover,
       border: `1px solid ${colors.borderSubtle}`,

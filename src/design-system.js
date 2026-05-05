@@ -54,20 +54,20 @@ export const colors = {
   accentBorder:           "rgba(26,26,26,0.3)",  // derived from accent
   bgCardHover:            "#EEF1F4",             // subtle hover on white — cool grey
   borderBase:             "#E2E6EA",             // → borderSubtle
-  textDone:               "#8C8C8C",             // → textMuted
+  textDone:               "#8A929A",             // → textMuted
   textFaint:              "rgba(26,26,26,0.3)",  // very faint (date sublabel)
   dangerBorder:           "rgba(140,63,63,0.3)", // derived from danger
   cardSubtle:             "#F4F6F8",             // → bgCardSubtle
   divider:                "#E2E6EA",             // → borderSubtle
-  statusMissedBorder:     "rgba(140,63,63,0.35)",
-  statusMissedBg:         "rgba(140,63,63,0.05)",
-  statusMissedHover:      "rgba(140,63,63,0.08)",
-  statusMissedBadgeBg:    "rgba(140,63,63,0.12)",
-  statusMissedBadgeColor: "#8C3F3F",
-  statusNowBorder:        "rgba(31,58,82,0.35)",
-  statusNowBg:            "rgba(31,58,82,0.04)",
-  statusNowHover:         "rgba(31,58,82,0.07)",
-  statusNowBadgeBg:       "rgba(31,58,82,0.14)",
+  statusMissedBorder:     "rgba(140,114,64,0.35)",
+  statusMissedBg:         "rgba(140,114,64,0.05)",
+  statusMissedHover:      "rgba(140,114,64,0.08)",
+  statusMissedBadgeBg:    "#F2EDE5",               // → warningSubtle
+  statusMissedBadgeColor: "#8C7240",               // → warning
+  statusNowBorder:        "rgba(26,26,26,0.35)",
+  statusNowBg:            "rgba(26,26,26,0.04)",
+  statusNowHover:         "rgba(26,26,26,0.07)",
+  statusNowBadgeBg:       "rgba(26,26,26,0.14)",
   slotRx:                 "#5C5C5C",             // → slotAnchor
   slotAfterDinner:        "#5C5C5C",             // → slotEvening
 };
@@ -126,7 +126,7 @@ export const touch = {
 };
 
 export const layout = {
-  closeButton:      32,
+  closeButton:      44,
   modeButtonHeight: 64,
   segHeight:        40,
   maxContentWidth:  480,

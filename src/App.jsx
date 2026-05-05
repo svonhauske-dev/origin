@@ -150,14 +150,14 @@ const BG_GRADIENT = gradients.bg;
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const SLOTS = [
-  { id: "rx",            label: "Anchor Medication", sublabel: "Empty stomach · first thing", icon: "★", color: colors.slotRx },
+  { id: "rx",            label: "Anchor Medication", sublabel: "Empty stomach · first thing", icon: "★", color: colors.slotAnchor },
   { id: "pre_breakfast", label: "Before Breakfast",  sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreBreakfast },
   { id: "breakfast",     label: "With Breakfast",    sublabel: "With food",                   icon: "●", color: colors.slotBreakfast },
   { id: "pre_lunch",     label: "Before Lunch",      sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreLunch },
   { id: "lunch",         label: "With Lunch",        sublabel: "With food",                   icon: "●", color: colors.slotLunch },
   { id: "pre_dinner",    label: "Before Dinner",     sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreDinner },
   { id: "dinner",        label: "With Dinner",       sublabel: "With food",                   icon: "●", color: colors.slotDinner },
-  { id: "after_dinner",  label: "After Dinner",      sublabel: "Before bed",                  icon: "◑", color: colors.slotAfterDinner },
+  { id: "after_dinner",  label: "After Dinner",      sublabel: "Before bed",                  icon: "◑", color: colors.slotEvening },
   { id: "injectable",    label: "Injectables",       sublabel: "Subcutaneous",                icon: "⊕", color: colors.slotInjectable },
   { id: "topical",       label: "Topicals",          sublabel: "Skin & external",             icon: "◐", color: colors.slotTopical },
 ];
@@ -1077,20 +1077,20 @@ function ProtocolApp({ user, token, onSignOut }) {
       {/* Greeting */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.sm }}>
         <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>Tether</span>
-        <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)} style={{ width: touch.min, height: touch.min }}>
+        <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
           <Settings size={18} />
         </Button>
       </div>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
-        <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)} style={{ width: touch.min, height: touch.min }}><ChevronLeft size={24} color={colors.textSecondary} /></Button>
+        <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)}><ChevronLeft size={24} color={colors.textSecondary} /></Button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
           <div style={{ fontSize: typography.label, color: colors.textMuted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
           <button onClick={() => { if (!isToday) setViewDate(TODAY); }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? colors.textPrimary : colors.accent, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
           <div style={{ fontSize: typography.caption2, color: colors.textFaint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
         </div>
-        <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)} style={{ width: touch.min, height: touch.min }}><ChevronRight size={24} color={colors.textSecondary} /></Button>
+        <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)}><ChevronRight size={24} color={colors.textSecondary} /></Button>
       </div>
 
       {/* Add row */}
@@ -1163,7 +1163,7 @@ function ProtocolApp({ user, token, onSignOut }) {
             <Button variant="primary" fullWidth onClick={openAdd}>Add first supplement</Button>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: spacing.lg }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
             {/* Anytime block — only in no-schedule mode, for unsorted supplements */}
             {scheduleMode === "none" && anytimeSupps.length > 0 && (
               <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule />
