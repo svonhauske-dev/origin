@@ -59,7 +59,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
 
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />
 
-      <Label style={{ marginBottom: spacing.xs }}>Supplements</Label>
+      <Label style={{ marginBottom: spacing.xs }}>Protocol</Label>
       <div
         onClick={onOpenManage}
         style={{
@@ -69,7 +69,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
           marginBottom: spacing.xs,
         }}
       >
-        <span style={{ fontSize: typography.body, color: colors.textPrimary }}>Manage supplements</span>
+        <span style={{ fontSize: typography.body, color: colors.textPrimary }}>Manage protocol</span>
         <ChevronRight size={20} color={colors.textSecondary} />
       </div>
 
@@ -86,7 +86,7 @@ export default function SettingsModal({ open, onClose, notifStatus, onEnableNoti
         <div style={{ fontSize: typography.caption, color: colors.danger }}>Reminders are blocked — enable them in your device settings</div>
       )}
       {notifStatus === "unsupported" && (
-        <div style={{ fontSize: typography.caption, color: colors.textMuted }}>Add Protocol to your home screen to enable reminders</div>
+        <div style={{ fontSize: typography.caption, color: colors.textMuted }}>Add Tether to your home screen to enable reminders</div>
       )}
 
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, margin: `${spacing.lg}px 0` }} />

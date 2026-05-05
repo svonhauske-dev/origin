@@ -62,7 +62,7 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
       <div style={{ marginBottom: spacing.lg }}>
         <Label>Schedule type</Label>
         {localMode === "none" && (
-          <HelperText>Add supplements without picking a time slot to use a pure checklist.</HelperText>
+          <HelperText>Add items without a time slot to use a simple checklist.</HelperText>
         )}
         {(localMode === "medication" || localMode === "wakeup") && (
           <HelperText>{ANCHOR_NOTES[localMode]}</HelperText>
@@ -139,9 +139,9 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
           </div>
           <div style={{ marginBottom: spacing.lg }}>
             <Label>Pre-meal window</Label>
-            <HelperText>Time before each meal to take pre-meal supplements</HelperText>
+            <HelperText>How early before each meal to schedule pre-meal items</HelperText>
             <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
-              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Take pre-meal supplements</span>
+              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal items</span>
               <Input
                 variant="number" width={52} min="0" max="120"
                 value={localConfig.pre_meal_window ?? 30}
@@ -175,9 +175,9 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
             </div>
           </div>
           <Label>Pre-meal window</Label>
-          <HelperText>Time before each meal to take pre-meal supplements</HelperText>
+          <HelperText>How early before each meal to schedule pre-meal items</HelperText>
           <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
-            <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal supplements</span>
+            <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal items</span>
             <Input variant="number" width={52} min="0" max="120" value={localConfig.pre_meal_window ?? 30} onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)} />
             <span style={{ fontSize: typography.caption, color: colors.textMuted }}>min</span>
           </Card>
@@ -207,7 +207,7 @@ export default function ScheduleModal({ scheduleMode, setScheduleMode, scheduleC
       {/* Live preview — hidden in no-schedule mode */}
       {localMode !== "none" && (
         <div style={{ marginBottom: spacing.lg }}>
-          <Label>{localMode === "fixed" ? "Schedule preview" : "Preview (7:00 am anchor)"}</Label>
+          <Label>{localMode === "fixed" ? "Schedule preview" : "Preview — 7:00 am anchor"}</Label>
           <div style={{ borderRadius: radius.md, border: `1px solid ${colors.borderSubtle}`, background: colors.bgCard, padding: spacing.md, display: "flex", flexDirection: "column", gap: spacing.xs }}>
             {previewRows.length === 0
               ? <span style={{ fontSize: typography.caption, color: colors.textMuted }}>No times configured yet</span>

@@ -69,7 +69,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
       setNewEmail("");
       onShowToast("Check your inbox to confirm the new email");
     } catch {
-      setEmailMsg("Couldn't update email — try again.");
+      setEmailMsg("Couldn't update email — try again");
     } finally {
       setEmailSaving(false);
     }

@@ -450,7 +450,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       {/* Greeting */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>
-          {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Tether"}
+          {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Hello"}
         </span>
         <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
           <Settings size={18} />
@@ -470,8 +470,8 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Add row */}
       <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
-        <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add Supplement</Button>
-        <Button variant="secondary" onClick={() => setShowSchedule(true)} style={{ flex: 1, background: colors.bgModal }}>Edit Schedule</Button>
+        <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add item</Button>
+        <Button variant="secondary" onClick={() => setShowSchedule(true)} style={{ flex: 1, background: colors.bgModal }}>Edit schedule</Button>
       </div>
 
       {/* Hero card */}
@@ -490,8 +490,8 @@ function ProtocolApp({ user, token, onSignOut }) {
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
             <div style={{ fontSize: typography.display, marginBottom: spacing.md }}>💊</div>
             <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
-            <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first supplement to get started.</div>
-            <Button variant="primary" fullWidth onClick={openAdd}>Add first supplement</Button>
+            <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first item to get started.</div>
+            <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
@@ -545,10 +545,10 @@ function ProtocolApp({ user, token, onSignOut }) {
       <Modal
         open={formOpen}
         onClose={closeForm}
-        title={editingId ? "Edit supplement" : "New supplement"}
+        title={editingId ? "Edit item" : "New item"}
         footer={
           <Button variant="primary" fullWidth onClick={submitForm} disabled={!form.name?.trim()}>
-            {editingId ? "Save changes" : "Add supplement"}
+            {editingId ? "Save changes" : "Add to protocol"}
           </Button>
         }
       >
@@ -557,7 +557,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       <Modal
         open={showSchedule}
         onClose={() => setShowSchedule(false)}
-        title="Daily Schedule"
+        title="Daily schedule"
         footer={<Button variant="primary" fullWidth onClick={() => schedSaveRef.current?.()}>Save schedule</Button>}
       >
         <ScheduleModal

@@ -33,18 +33,18 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, onE
 
   if (supplements.length === 0) {
     return (
-      <Modal open={open} onClose={onClose} title="Manage supplements">
+      <Modal open={open} onClose={onClose} title="Manage protocol">
         <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
           <div style={{ fontSize: typography.display, marginBottom: spacing.md }}>💊</div>
           <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: colors.textPrimary, marginBottom: spacing.xs }}>Your protocol is empty</div>
-          <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5 }}>Add your medications and supplements. Your schedule builds from when you take your first med each morning.</div>
+          <div style={{ fontSize: typography.caption, color: colors.textSecondary, lineHeight: 1.5 }}>Add your first item to get started. Your daily schedule builds from when you take the first one each morning.</div>
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Manage supplements">
+    <Modal open={open} onClose={onClose} title="Manage protocol">
       {grouped.map(({ cat, items }) => (
         <div key={cat} style={{ marginBottom: spacing.lg }}>
           <Label style={{ marginBottom: spacing.xs }}>{cat}</Label>

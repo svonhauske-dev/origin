@@ -8,11 +8,11 @@ import Input from "./Input";
 import Label from "./Label";
 
 const ONBOARDING_MODES = [
-  { id: "none",       title: "No Schedule",          desc: "Just a checklist. No times, no notifications." },
-  { id: "wakeup",     title: "Wake Up Anchor",        desc: "Your day cascades from when you wake up." },
-  { id: "medication", title: "Medication Anchor",     desc: "Your day cascades from when you take your medication." },
-  { id: "fasting",    title: "Intermittent Fasting",  desc: "Built around your eating window." },
-  { id: "fixed",      title: "Fixed Times",           desc: "Same schedule every day, no anchor." },
+  { id: "none",       title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
+  { id: "wakeup",     title: "Wake Up Anchor",        desc: "Your day cascades from when you wake up" },
+  { id: "medication", title: "Medication Anchor",     desc: "Your day cascades from when you take your medication" },
+  { id: "fasting",    title: "Intermittent Fasting",  desc: "Built around your eating window" },
+  { id: "fixed",      title: "Fixed Times",           desc: "Same schedule every day, no anchor" },
 ];
 
 const STEP2_SUBTITLES = {
@@ -204,9 +204,9 @@ export default function Onboarding({ onComplete }) {
             </div>
             <div style={{ marginBottom: spacing.lg }}>
               <Label>Pre-meal window</Label>
-              <HelperText>Time before each meal to take pre-meal supplements</HelperText>
+              <HelperText>How early before each meal to schedule pre-meal items</HelperText>
               <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
-                <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Take pre-meal supplements</span>
+                <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal items</span>
                 <Input
                   variant="number" width={52} min="0" max="120"
                   value={config.pre_meal_window ?? 30}
@@ -240,9 +240,9 @@ export default function Onboarding({ onComplete }) {
               </div>
             </div>
             <Label>Pre-meal window</Label>
-            <HelperText>Time before each meal to take pre-meal supplements</HelperText>
+            <HelperText>How early before each meal to schedule pre-meal items</HelperText>
             <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
-              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal supplements</span>
+              <span style={{ flex: 1, fontSize: typography.caption, color: colors.textSecondary }}>Pre-meal items</span>
               <Input
                 variant="number" width={52} min="0" max="120"
                 value={config.pre_meal_window ?? 30}

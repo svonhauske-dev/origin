@@ -22,7 +22,7 @@ export default function PromptName({ onSave }) {
           What's your full name?
         </div>
         <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginBottom: spacing.xl, lineHeight: 1.5 }}>
-          We'll use it to personalize your experience.
+          We'll use it in your daily greeting.
         </div>
         <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
           <Label>Full name</Label>

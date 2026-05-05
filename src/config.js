@@ -24,9 +24,9 @@ export const FIXED_SLOTS = [
 ];
 
 export const ANCHOR_NOTES = {
-  medication: "Anchor = when you take your medication each morning",
-  fasting:    "Anchor = when your eating window opens",
-  wakeup:     "Anchor = when you wake up each morning",
+  medication: "Your anchor is when you take your medication each morning.",
+  fasting:    "Your anchor is when your eating window opens.",
+  wakeup:     "Your anchor is when you wake up each morning.",
 };
 
 export const toHrMin = (totalMins) => {
@@ -38,10 +38,10 @@ export const fromHrMin = (h, m) => (parseInt(h) || 0) * 60 + (parseInt(m) || 0);
 
 export const MODES = [
   { id: "none",       title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
-  { id: "medication", title: "Medication Anchor",    desc: "Cascades from when you take your meds" },
-  { id: "wakeup",     title: "Wake Up Anchor",       desc: "Cascades from when you wake up" },
-  { id: "fasting",    title: "Intermittent Fasting", desc: "Builds around your eating window" },
-  { id: "fixed",      title: "Fixed Times",          desc: "Same schedule every day" },
+  { id: "medication", title: "Medication Anchor",    desc: "Your day cascades from when you take your medication" },
+  { id: "wakeup",     title: "Wake Up Anchor",       desc: "Your day cascades from when you wake up" },
+  { id: "fasting",    title: "Intermittent Fasting", desc: "Built around your eating window" },
+  { id: "fixed",      title: "Fixed Times",          desc: "Same schedule every day, no anchor" },
 ];
 
 export function deriveOffsets(mode, cfg) {

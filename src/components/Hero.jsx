@@ -38,7 +38,7 @@ export default function Hero({
               <Label style={{ color: colors.textMuted, marginBottom: spacing.xxs }}>No schedule</Label>
               <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: colors.textPrimary }}>{isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long" })}</div>
               <div style={{ fontSize: typography.caption, color: colors.textMuted, marginTop: spacing.xxxs }}>{shortDate}</div>
-              {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>All done ✓</div>}
+              {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: colors.accent, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
               {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
             </div>
           ) : scheduleMode === "fixed" ? (
