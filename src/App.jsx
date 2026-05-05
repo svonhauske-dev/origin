@@ -450,7 +450,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       {/* Greeting */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: colors.textPrimary, fontFamily: typography.fontHeading }}>
-          {profile?.display_name ? `Hello, ${profile.display_name}` : "Tether"}
+          {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Tether"}
         </span>
         <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
           <Settings size={18} />

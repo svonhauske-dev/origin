@@ -33,16 +33,19 @@ function PasswordRule({ met, label }) {
 }
 
 export default function Auth({ onSignIn }) {
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName]         = useState("");
-  const [mode, setMode]         = useState("signin");
-  const [loading, setLoading]   = useState(false);
-  const [msg, setMsg]           = useState("");
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
+  const [name, setName]             = useState("");
+  const [nameTouched, setNameTouched] = useState(false);
+  const [mode, setMode]             = useState("signin");
+  const [loading, setLoading]       = useState(false);
+  const [msg, setMsg]               = useState("");
 
   const emailOk   = EMAIL_RE.test(email.trim());
   const rulesOk   = PASSWORD_RULES.every(r => r.test(password));
-  const canSubmit = !loading && (mode === "signin" ? emailOk && password.length > 0 : emailOk && rulesOk);
+  const canSubmit = !loading && (mode === "signin"
+    ? emailOk && password.length > 0
+    : name.trim().length > 0 && emailOk && rulesOk);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -91,7 +94,7 @@ export default function Auth({ onSignIn }) {
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           {mode === "signup" && (
             <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-              <Label>Name</Label>
+              <Label>Full name</Label>
               <Input
                 type="text"
                 name="name"
@@ -99,8 +102,12 @@ export default function Auth({ onSignIn }) {
                 autoCapitalize="words"
                 value={name}
                 onChange={e => { setName(e.target.value); setMsg(""); }}
-                placeholder="Your name (optional)"
+                onBlur={() => setNameTouched(true)}
+                placeholder="e.g. Sofia von Hauske"
               />
+              {nameTouched && !name.trim() && (
+                <div style={{ fontSize: typography.label, color: colors.danger, marginTop: spacing.xxxs }}>Full name is required</div>
+              )}
             </div>
           )}
 

@@ -52,7 +52,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
     try {
       await dbUpdateProfile(user.id, { display_name: displayName.trim() || null, updated_at: new Date().toISOString() }, token);
       onProfileUpdate({ ...profile, display_name: displayName.trim() || null });
-      onShowToast("Name updated");
+      onShowToast("Full name updated");
     } catch {
       onShowToast("Couldn't save — try again");
     } finally {
@@ -91,12 +91,12 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
 
   return (
     <div>
-      <Label style={{ marginBottom: spacing.xs }}>Display name</Label>
+      <Label style={{ marginBottom: spacing.xs }}>Full name</Label>
       <Input
         type="text"
         value={displayName}
         onChange={e => setDisplayName(e.target.value)}
-        placeholder="Your name"
+        placeholder="e.g. Sofia von Hauske"
         style={{ marginBottom: spacing.xs }}
       />
       <Button
@@ -106,7 +106,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         disabled={nameSaving || !nameChanged}
         style={{ marginBottom: spacing.lg }}
       >
-        {nameSaving ? "Saving…" : "Save name"}
+        {nameSaving ? "Saving…" : "Save full name"}
       </Button>
 
       <div style={{ borderTop: `1px solid ${colors.borderSubtle}`, marginBottom: spacing.lg }} />

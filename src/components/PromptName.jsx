@@ -19,19 +19,19 @@ export default function PromptName({ onSave }) {
       <div style={{ width: "100%", maxWidth: layout.signInWidth, textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: spacing.md }}>👋</div>
         <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>
-          What's your name?
+          What's your full name?
         </div>
         <div style={{ fontSize: typography.caption, color: colors.textSecondary, marginBottom: spacing.xl, lineHeight: 1.5 }}>
           We'll use it to personalize your experience.
         </div>
         <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-          <Label>Name</Label>
+          <Label>Full name</Label>
           <Input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSave()}
-            placeholder="Your name"
+            placeholder="e.g. Sofia von Hauske"
           />
         </div>
         <Button variant="primary" fullWidth onClick={handleSave} disabled={loading}>
