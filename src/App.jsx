@@ -9,7 +9,7 @@ import Input from "./components/Input";
 import Card from "./components/Card";
 import Badge from "./components/Badge";
 import Label from "./components/Label";
-import BottomSheet from "./components/BottomSheet";
+import Modal from "./components/Modal";
 import SettingsModal from "./components/SettingsModal";
 import { ToastProvider, useToast } from "./components/ToastContext";
 import Toast from "./components/Toast";
@@ -315,7 +315,7 @@ function SignIn({ onSignIn }) {
           <Input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="password" />
         </div>
         <Button variant="primary" fullWidth onClick={handleSubmit} disabled={loading}>
-          {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+          {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
         </Button>
         <button onClick={() => { setMode(m => m === "signin" ? "signup" : "signin"); setMsg(""); }} style={{ marginTop: spacing.md, background: "none", border: "none", color: colors.textMuted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent" }}>
           {mode === "signin" ? "No account? Sign up" : "Have an account? Sign in"}
@@ -330,15 +330,17 @@ function SignIn({ onSignIn }) {
 
 function Loader({ text }) {
   return (
-    <div style={{ background: BG_GRADIENT, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ fontSize: typography.caption, color: colors.textMuted }}>{text}</div>
+    <div style={{ background: BG_GRADIENT, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: spacing.md, fontFamily: typography.fontBody }}>
+      <style>{`@keyframes tetherPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.8); opacity: 0.5; } }`}</style>
+      <div style={{ width: 32, height: 32, borderRadius: radius.full, background: colors.accent, animation: "tetherPulse 1.4s ease-in-out infinite" }} />
+      <div style={{ fontSize: typography.caption, color: colors.textMuted, fontFamily: typography.fontBody, letterSpacing: typography.labelSpacingTight }}>{text}</div>
     </div>
   );
 }
 
 // ── EditForm ──────────────────────────────────────────────────────────────────
 
-function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete, onTogglePause }) {
+function EditForm({ form, setForm, editingId }) {
   const toggleSlot = (sid) => setForm(f => ({ ...f, slots: f.slots.includes(sid) ? f.slots.filter(x => x !== sid) : [...f.slots, sid] }));
   const toggleDay  = (i)   => setForm(f => ({ ...f, days:  f.days.includes(i)   ? f.days.filter(x => x !== i)   : [...f.days, i]   }));
   return (
@@ -404,7 +406,7 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete, onTo
           </div>
         </div>
       )}
-      <div style={{ marginBottom: spacing.lg }}>
+      <div style={{ marginBottom: spacing.sm }}>
         <Label>Which days</Label>
         <div style={{ display: "flex", gap: spacing.xs }}>
           {DAYS.map((d, i) => (
@@ -412,19 +414,6 @@ function EditForm({ form, setForm, editingId, onSubmit, onCancel, onDelete, onTo
           ))}
         </div>
       </div>
-      {editingId ? (
-        <>
-          <Button variant="primary" fullWidth onClick={onSubmit} style={{ marginBottom: spacing.xs }}>Save changes</Button>
-          <div style={{ display: "flex", gap: spacing.xs }}>
-            <Button variant="secondary" secondaryStyle="solid" style={{ flex: 1 }} onClick={onTogglePause}>
-              {form.paused ? "Resume" : "Pause"}
-            </Button>
-            <Button variant="destructive" style={{ flex: 1 }} onClick={onDelete}>Delete</Button>
-          </div>
-        </>
-      ) : (
-        <Button variant="primary" fullWidth onClick={onSubmit}>Add supplement</Button>
-      )}
     </div>
   );
 }
@@ -453,7 +442,7 @@ const segBtnStyle = (on) => ({
 // ── ScheduleModal ─────────────────────────────────────────────────────────────
 
 function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setScheduleConfig,
-                         anchorBehavior, consistentTime, onSave, onClose }) {
+                         anchorBehavior, consistentTime, onSave, onClose, saveFnRef }) {
   const [localMode,     setLocalMode]     = useState(scheduleMode);
   const [localConfig,   setLocalConfig]   = useState({
     ...DEFAULT_CONFIG,
@@ -473,6 +462,7 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
     setScheduleConfig(localConfig);
     onSave(localMode, localConfig, localBehavior, localTime);
   };
+  if (saveFnRef) saveFnRef.current = handleSave;
 
   const previewBase = parseHHMM("07:00");
   const derived     = localMode !== "fixed" ? deriveOffsets(localMode, localConfig) : null;
@@ -673,7 +663,6 @@ function ScheduleModal({ scheduleMode, setScheduleMode, scheduleConfig, setSched
         </div>
       </div>}
 
-      <Button variant="primary" fullWidth onClick={handleSave}>Save schedule</Button>
     </div>
   );
 }
@@ -775,7 +764,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [tmpTime, setTmpTime]               = useState("");
   const [formOpen, setFormOpen]             = useState(false);
   const [editingId, setEditingId]           = useState(null);
-  const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6], category: "Oral", timePreference: "Anytime", paused: false });
+  const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", timePreference: "Anytime", paused: false });
   const [notifStatus, setNotifStatus]       = useState(notifOK() ? Notification.permission : "unsupported");
   const [streak, setStreak]                 = useState(0);
   const [flashGreen, setFlashGreen]         = useState(false);
@@ -791,6 +780,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const [showManage, setShowManage]         = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState({});
   const saveTimer = useRef(null);
+  const schedSaveRef = useRef(null);
   const { show: showToast } = useToast();
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -963,17 +953,18 @@ function ProtocolApp({ user, token, onSignOut }) {
   });
   const pct = coreTotal > 0 ? Math.round((coreDone / coreTotal) * 100) : 0;
 
-  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [0, 1, 2, 3, 4, 5, 6], category: "Oral", timePreference: "Anytime", paused: false }); setFormOpen(true); };
+  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", timePreference: "Anytime", paused: false }); setFormOpen(true); };
   const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", timePreference: supp.timePreference || "Anytime", paused: supp.paused ?? false }); setFormOpen(true); };
   const closeForm = () => { setFormOpen(false); setEditingId(null); };
 
   const submitForm = async () => {
     if (!form.name.trim()) return;
     const cat = form.category || "Oral";
+    const finalDays = form.days.length === 0 ? [0, 1, 2, 3, 4, 5, 6] : form.days;
     if (editingId) {
       try {
-        await dbUpdateSupp({ ...form, category: cat, id: editingId }, token);
-        setSupps(s => s.map(x => x.id === editingId ? { ...form, category: cat, id: editingId } : x));
+        await dbUpdateSupp({ ...form, days: finalDays, category: cat, id: editingId }, token);
+        setSupps(s => s.map(x => x.id === editingId ? { ...form, days: finalDays, category: cat, id: editingId } : x));
         showToast(`Updated ${form.name}`);
       } catch (err) {
         showToast("Couldn't save — try again");
@@ -982,7 +973,7 @@ function ProtocolApp({ user, token, onSignOut }) {
       }
     } else {
       try {
-        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: form.days, category: cat, timePreference: form.timePreference || "Anytime", paused: false, user_id: user.id }, token);
+        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, timePreference: form.timePreference || "Anytime", paused: false, user_id: user.id }, token);
         if (rows?.[0]) setSupps(s => [...s, rows[0]]);
         showToast(`Added ${form.name}`);
       } catch (err) {
@@ -1228,10 +1219,34 @@ function ProtocolApp({ user, token, onSignOut }) {
         onDelete={requestDelete}
         onTogglePause={togglePause}
       />
-      <BottomSheet open={formOpen} onClose={closeForm} title={editingId ? "Edit supplement" : "New supplement"}>
-        <EditForm form={form} setForm={setForm} editingId={editingId} onSubmit={submitForm} onCancel={closeForm} onDelete={deleteSupp} onTogglePause={handleEditFormTogglePause} />
-      </BottomSheet>
-      <BottomSheet open={showSchedule} onClose={() => setShowSchedule(false)} title="Daily Schedule">
+      <Modal
+        open={formOpen}
+        onClose={closeForm}
+        title={editingId ? "Edit supplement" : "New supplement"}
+        footer={
+          editingId ? (
+            <>
+              <Button variant="primary" fullWidth onClick={submitForm} style={{ marginBottom: spacing.xs }}>Save changes</Button>
+              <div style={{ display: "flex", gap: spacing.xs }}>
+                <Button variant="secondary" secondaryStyle="solid" style={{ flex: 1 }} onClick={handleEditFormTogglePause}>
+                  {form.paused ? "Resume" : "Pause"}
+                </Button>
+                <Button variant="destructive" style={{ flex: 1 }} onClick={deleteSupp}>Delete</Button>
+              </div>
+            </>
+          ) : (
+            <Button variant="primary" fullWidth onClick={submitForm}>Add supplement</Button>
+          )
+        }
+      >
+        <EditForm form={form} setForm={setForm} editingId={editingId} />
+      </Modal>
+      <Modal
+        open={showSchedule}
+        onClose={() => setShowSchedule(false)}
+        title="Daily Schedule"
+        footer={<Button variant="primary" fullWidth onClick={() => schedSaveRef.current?.()}>Save schedule</Button>}
+      >
         <ScheduleModal
           key={String(showSchedule)}
           scheduleMode={scheduleMode}
@@ -1242,8 +1257,9 @@ function ProtocolApp({ user, token, onSignOut }) {
           consistentTime={consistentTime}
           onSave={saveSchedule}
           onClose={() => setShowSchedule(false)}
+          saveFnRef={schedSaveRef}
         />
-      </BottomSheet>
+      </Modal>
     </div>
   );
 }

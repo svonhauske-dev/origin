@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { colors, spacing, radius, typography } from "../design-system";
 import Button from "./Button";
 
-export default function BottomSheet({ open, onClose, title, children }) {
+export default function Modal({ open, onClose, title, children, footer }) {
   useEffect(function() {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -29,7 +29,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
         zIndex: 200,
         pointerEvents: open ? "all" : "none",
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "center",
       }}
     >
@@ -44,33 +44,24 @@ export default function BottomSheet({ open, onClose, title, children }) {
           transition: "opacity 250ms ease-out",
         }}
       />
-      {/* Sheet */}
+      {/* Modal container */}
       <div
         style={{
           position: "relative",
-          width: "100%",
+          width: `calc(100% - ${spacing.md * 2}px)`,
           maxWidth: 480,
-          maxHeight: "calc(100dvh - env(safe-area-inset-top) - 12px)",
+          maxHeight: `calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 48px)`,
           background: colors.bgModal,
-          borderTopLeftRadius: radius.lg,
-          borderTopRightRadius: radius.lg,
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
-          transform: open ? "translateY(0)" : "translateY(100%)",
-          transition: "transform 250ms ease-out",
+          borderRadius: radius.lg,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          transform: open ? "scale(1)" : "scale(0.95)",
+          opacity: open ? 1 : 0,
+          transition: "transform 250ms ease-out, opacity 250ms ease-out",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
         }}
       >
-        {/* Drag handle */}
-        <div style={{
-          width: 40,
-          height: 4,
-          borderRadius: radius.full,
-          background: colors.borderStrong,
-          margin: "8px auto 0",
-          flexShrink: 0,
-        }} />
         {/* Header */}
         <div style={{
           display: "flex",
@@ -78,6 +69,7 @@ export default function BottomSheet({ open, onClose, title, children }) {
           alignItems: "center",
           padding: `${spacing.sm}px ${spacing.md}px`,
           flexShrink: 0,
+          borderBottom: `1px solid ${colors.borderSubtle}`,
         }}>
           <span style={{
             fontSize: typography.title,
@@ -90,12 +82,22 @@ export default function BottomSheet({ open, onClose, title, children }) {
         {/* Scrollable body */}
         <div style={{
           overflowY: "auto",
-          padding: `${spacing.sm}px ${spacing.md}px 24px`,
+          padding: `${spacing.sm}px ${spacing.md}px`,
           flex: 1,
           WebkitOverflowScrolling: "touch",
         }}>
           {children}
         </div>
+        {/* Sticky footer */}
+        {footer && (
+          <div style={{
+            padding: `${spacing.sm}px ${spacing.md}px`,
+            flexShrink: 0,
+            borderTop: `1px solid ${colors.borderSubtle}`,
+          }}>
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
