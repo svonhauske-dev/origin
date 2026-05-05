@@ -30,7 +30,7 @@ export default function Button({
   if (variant === "primary") {
     v = {
       background: colors.accent,
-      color: colors.textPrimary,
+      color: colors.textOnAccent,
       border: "none",
       fontWeight: typography.semibold,
       borderRadius: radius.full,
@@ -40,12 +40,10 @@ export default function Button({
     };
   } else if (variant === "secondary") {
     v = {
-      background: colors.accentDim,
-      color: colors.accent,
-      border: secondaryStyle === "dashed"
-        ? `1px dashed ${colors.accentBorder}`
-        : `1px solid ${colors.accentBorder}`,
-      fontWeight: typography.semibold,
+      background: "transparent",
+      color: colors.textPrimary,
+      border: `1px solid ${colors.borderSubtle}`,
+      fontWeight: typography.medium,
       borderRadius: radius.full,
       minHeight: touch.min,
       padding: `${spacing.sm}px ${spacing.md}px`,
@@ -59,7 +57,7 @@ export default function Button({
       fontSize: typography.caption,
     };
     if (active && solidActive) {
-      v = { ...pillBase, background: colors.accent, color: colors.textPrimary, border: `1px solid ${colors.accent}`, fontWeight: typography.semibold };
+      v = { ...pillBase, background: colors.accent, color: colors.textOnAccent, border: `1px solid ${colors.accent}`, fontWeight: typography.semibold };
     } else if (active) {
       v = { ...pillBase, background: colors.accentDim, color: colors.accent, border: `1px solid ${colors.accent}`, fontWeight: typography.semibold };
     } else {

@@ -665,7 +665,7 @@ function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isF
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.sm}px 0`, borderBottom: i < slotSupps.length - 1 ? `1px solid ${colors.divider}` : "none", minHeight: 52 }}>
                 <div onClick={() => { if (!isFuture) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: radius.sm, flexShrink: 0, border: `1.5px solid ${done ? colors.accent : colors.borderStrong}`, background: done ? colors.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: isFuture ? "default" : "pointer" }}>
-                  {done && <span style={{ color: colors.textPrimary, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
+                  {done && <span style={{ color: colors.textOnAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: typography.body, color: done ? colors.textDone : colors.textPrimary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
@@ -1091,8 +1091,8 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Add row */}
       <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.md }}>
-        <Button variant="secondary" secondaryStyle="dashed" onClick={openAdd} style={{ flex: 1 }}>+ Add Supplement</Button>
-        <Button variant="tertiary" onClick={() => setShowSchedule(true)} style={{ flex: 1 }}>Edit Schedule</Button>
+        <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add Supplement</Button>
+        <Button variant="secondary" onClick={() => setShowSchedule(true)} style={{ flex: 1 }}>Edit Schedule</Button>
       </div>
 
       {/* Hero card */}
