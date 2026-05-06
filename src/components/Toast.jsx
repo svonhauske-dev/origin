@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { spacing, radius, typography, touch, layout, shadows, zIndex as zIndexTokens } from "../design-system";
+import { spacing, typography, touch, layout, shadows, zIndex as zIndexTokens } from "../design-system";
 import { useTheme } from "../lib/theme";
 import { ToastContext } from "./ToastContext";
 
@@ -21,9 +21,9 @@ function ToastItem({ toast, onDismiss }) {
         display: "flex",
         alignItems: "center",
         gap: spacing.sm,
-        background: theme.surface.modal,
-        border: `1px solid ${theme.border.strong}`,
-        borderRadius: radius.md,
+        background: theme.surface.canvas,
+        border: `${theme.borderWidth.default}px solid ${theme.border.strong}`,
+        borderRadius: theme.radius.surface,
         padding: `${spacing.sm}px ${spacing.md}px`,
         boxShadow: shadows.popover,
         transform: visible ? "translateY(0)" : "translateY(calc(100% + 16px))",
