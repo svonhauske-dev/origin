@@ -538,7 +538,7 @@ function ProtocolApp({ user, token, onSignOut }) {
               {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs2 }}>
               {/* Anytime block — only in no-schedule mode, for unsorted supplements */}
               {scheduleMode === "none" && anytimeSupps.length > 0 && (
                 <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />

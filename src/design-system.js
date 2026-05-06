@@ -76,6 +76,7 @@ export const spacing = {
   xxxs: 2,
   xxs:  4,
   xs:   8,
+  xs2:  6,
   sm:   12,
   md:   16,
   lg:   24,
@@ -241,16 +242,16 @@ export const themes = {
 
   dark: {
     surface: {
-      canvas:        "#0D0D0F",
-      gradientMid:   "#0D0D0F",
-      gradientEnd:   "#0D0D0F",
-      modal:         "#1A1A1F",
-      card:          "#16161A",
-      cardSubtle:    "#111114",
+      canvas:        "#050507",
+      gradientMid:   "#050507",
+      gradientEnd:   "#050507",
+      modal:         "#101015",
+      card:          "#0E0E12",
+      cardSubtle:    "#0A0A0D",
       backdrop:      "rgba(0,0,0,0.7)",
-      input:         "#16161A",
-      inputDisabled: "#111114",
-      cardHover:     "#1E1E24",
+      input:         "#0E0E12",
+      inputDisabled: "#0A0A0D",
+      cardHover:     "#141419",
       knob:          "#F5F5F7",
     },
     text: {
@@ -292,7 +293,7 @@ export const themes = {
       nowBadgeBg:       "rgba(245,245,247,0.14)",
     },
     gradients: {
-      bg: "#0D0D0F",
+      bg: "#050507",
     },
   },
 

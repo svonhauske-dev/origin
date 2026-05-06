@@ -3,7 +3,7 @@ import { themes } from "../design-system";
 
 const SWATCHES = {
   light:    ["#F4F6F8", "#1A1A1A", "#1A1A1A"],
-  dark:     ["#0D0D0F", "#F5F5F7", "#F5F5F7"],
+  dark:     ["#050507", "#F5F5F7", "#F5F5F7"],
   cosmic:   ["#0A0A0F", "#E8E9EC", "#E8E9EC"],
   warmGrey: ["#F4F1ED", "#1F1A14", "#1F1A14"],
   linear:   ["#08070D", "#E2E0EC", "#5E6AD2"],
