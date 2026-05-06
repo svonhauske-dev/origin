@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Pencil } from 'lucide-react';
-import { spacing, radius, typography, touch } from '../design-system';
+import { spacing, typography, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
@@ -21,11 +21,11 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
   const sc = SC[status];
 
   return (
-    <div style={{ borderRadius: radius.md, border: `1px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime && !isVariableSlot ? 0.38 : 1 }}>
+    <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime && !isVariableSlot ? 0.38 : 1 }}>
       <div onClick={() => setExpanded(e => !e)} style={{ padding: `${spacing.md}px`, display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flex: 1, minWidth: 0 }}>
           {allDone
-            ? <div style={{ width: 20, height: 20, borderRadius: radius.xs, background: theme.accent.default, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span></div>
+            ? <div style={{ width: 20, height: 20, borderRadius: theme.radius.surfaceInner, background: theme.accent.default, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span></div>
             : <span style={{ color: theme.slot.default, fontSize: typography.caption, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
           }
           <div style={{ minWidth: 0 }}>
@@ -42,12 +42,12 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
         </div>
       </div>
       {expanded && (
-        <div style={{ padding: `${spacing.sm}px`, borderTop: `1px solid ${sc.border}`, display: "flex", flexDirection: "column", gap: spacing.sm }}>
+        <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderTop: `${theme.borderWidth.default}px solid ${sc.border}`, display: "flex", flexDirection: "column", gap: spacing.sm }}>
           {slotSupps.map((supp, i) => {
             const done = isChecked(slot.id, supp.id);
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, minHeight: touch.row }}>
-                <div onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: radius.sm, flexShrink: 0, border: `1.5px solid ${done ? theme.accent.default : theme.border.strong}`, background: done ? theme.accent.default : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: (isFuture || isReadOnly) ? "default" : "pointer" }}>
+                <div onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} style={{ width: 24, height: 24, borderRadius: theme.radius.surfaceInner, flexShrink: 0, border: `${theme.borderWidth.accent}px solid ${done ? theme.accent.default : theme.border.strong}`, background: done ? theme.accent.default : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: (isFuture || isReadOnly) ? "default" : "pointer" }}>
                   {done && <span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
