@@ -4,6 +4,7 @@ import {
   shadows, zIndex,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
+import DevThemePicker from "./components/DevThemePicker";
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode } from "./config";
 import { Settings, Trash2, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import Button from "./components/Button";
@@ -69,6 +70,7 @@ export default function App() {
             : <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} />
         }
         <Toast />
+        {import.meta.env.DEV && <DevThemePicker />}
       </ToastProvider>
     </ThemeProvider>
   );

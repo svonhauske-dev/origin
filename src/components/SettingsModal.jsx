@@ -180,7 +180,7 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
             left: hasSubscription ? 21 : 3,
             width: 20, height: 20,
             borderRadius: "50%",
-            background: "white",
+            background: theme.surface.knob,
             transition: "left 200ms",
             display: "block",
           }} />
