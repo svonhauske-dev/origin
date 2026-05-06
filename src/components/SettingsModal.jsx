@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { spacing, typography, touch } from "../design-system";
+import { spacing, typography, touch, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
+import HelperText from "./HelperText";
 import Label from "./Label";
 import Modal from "./Modal";
 import ManageAccount from "./ManageAccount";
@@ -14,15 +15,21 @@ import {
 } from "../lib/notifications";
 import { dbUpdateScheduleField } from "../lib/api";
 
+const THEME_OPTIONS = [
+  { value: "light",  label: "Light"  },
+  { value: "dark",   label: "Dark"   },
+  { value: "system", label: "System" },
+];
+
 export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled }) {
-  const { theme } = useTheme();
+  const { theme, themePreference, setThemePreference } = useTheme();
   const { show: showToast } = useToast();
-  const [view, setView]                   = useState("main");
-  const [permission, setPermission]       = useState("default");
+  const [view, setView]                       = useState("main");
+  const [permission, setPermission]           = useState("default");
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [needsInstall, setNeedsInstall]   = useState(false);
-  const [pushSupported, setPushSupported] = useState(true);
-  const [toggling, setToggling]           = useState(false);
+  const [needsInstall, setNeedsInstall]       = useState(false);
+  const [pushSupported, setPushSupported]     = useState(true);
+  const [toggling, setToggling]               = useState(false);
 
   useEffect(() => {
     if (!open) { setView("main"); return; }
@@ -70,6 +77,21 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
       setToggling(false);
     }
   };
+
+  const themeBtnStyle = (active) => ({
+    flex: 1,
+    padding: `${spacing.sm}px`,
+    borderRadius: theme.radius.pill,
+    cursor: "pointer",
+    fontSize: typography.caption,
+    fontFamily: typography.fontBody,
+    background: active ? theme.accent.subtle : "transparent",
+    color: active ? theme.accent.onSubtle : theme.text.secondary,
+    border: `${theme.borderWidth.default}px solid ${active ? theme.accent.default : theme.border.subtle}`,
+    fontWeight: active ? typography.semibold : typography.regular,
+    minHeight: layout.segHeight,
+    WebkitTapHighlightColor: "transparent",
+  });
 
   if (view === "account") {
     return (
@@ -152,12 +174,8 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
       </div>
     );
   } else {
-    // Normal flow — toggle
     notifContent = (
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        minHeight: touch.min,
-      }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: touch.min }}>
         <span style={{ fontSize: typography.body, color: theme.text.primary }}>Reminders</span>
         {toggling ? (
           <div style={{ width: 44, height: 26, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -224,6 +242,18 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
       >
         <span style={{ fontSize: typography.body, color: theme.text.primary }}>Manage protocol</span>
         <ChevronRight size={20} color={theme.text.secondary} />
+      </div>
+
+      <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
+
+      <Label style={{ marginBottom: spacing.xxs }}>Theme</Label>
+      <HelperText style={{ marginBottom: spacing.xs }}>Choose how Origin appears.</HelperText>
+      <div style={{ display: "flex", gap: spacing.xs }}>
+        {THEME_OPTIONS.map(({ value, label }) => (
+          <button key={value} onClick={() => setThemePreference(value)} style={themeBtnStyle(themePreference === value)}>
+            {label}
+          </button>
+        ))}
       </div>
 
       <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
