@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { signInPassword, signUp, dbCreateProfile } from '../lib/api';
-import { spacing, typography, layout, touch, radius } from '../design-system';
+import { spacing, typography, layout, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Input from './Input';
@@ -22,9 +22,9 @@ function PasswordRule({ met, label }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, marginBottom: spacing.xxs }}>
       <div style={{
-        width: 16, height: 16, borderRadius: radius.full,
+        width: 16, height: 16, borderRadius: theme.radius.pill,
         background: met ? theme.accent.default : "transparent",
-        border: `1px solid ${met ? theme.accent.default : theme.border.subtle}`,
+        border: `${theme.borderWidth.default}px solid ${met ? theme.accent.default : theme.border.subtle}`,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0, transition: "background 150ms, border-color 150ms",
       }}>

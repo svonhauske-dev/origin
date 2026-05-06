@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { spacing, typography, radius } from "../design-system";
+import { spacing, typography } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 import Input from "./Input";
@@ -23,9 +23,9 @@ function PasswordRule({ met, label }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, marginBottom: spacing.xxs }}>
       <div style={{
-        width: 16, height: 16, borderRadius: radius.full,
+        width: 16, height: 16, borderRadius: theme.radius.pill,
         background: met ? theme.accent.default : "transparent",
-        border: `1px solid ${met ? theme.accent.default : theme.border.subtle}`,
+        border: `${theme.borderWidth.default}px solid ${met ? theme.accent.default : theme.border.subtle}`,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0, transition: "background 150ms, border-color 150ms",
       }}>
@@ -113,7 +113,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         {nameSaving ? <InlineLoader size="sm" /> : "Save full name"}
       </Button>
 
-      <div style={{ borderTop: `1px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
+      <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
 
       <Label style={{ marginBottom: spacing.xs }}>Email</Label>
       <HelperText style={{ marginBottom: spacing.xs }}>Changing your email will send a confirmation link.</HelperText>
@@ -136,7 +136,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         {emailSaving ? <InlineLoader size="sm" /> : "Update email"}
       </Button>
 
-      <div style={{ borderTop: `1px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
+      <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
 
       <Label style={{ marginBottom: spacing.xs }}>New password</Label>
       <Input

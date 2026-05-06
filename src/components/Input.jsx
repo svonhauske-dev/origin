@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { spacing, radius, typography } from "../design-system";
+import { spacing, typography } from "../design-system";
 import { useTheme } from "../lib/theme";
 
 export default function Input({ variant = "text", width, style, type, onFocus, onBlur, ...rest }) {
@@ -10,8 +10,8 @@ export default function Input({ variant = "text", width, style, type, onFocus, o
   const base = {
     background: theme.surface.input,
     color: theme.text.primary,
-    border: focused ? `1.5px solid ${theme.accent.default}` : `1px solid ${theme.border.subtle}`,
-    borderRadius: radius.md,
+    border: focused ? `${theme.borderWidth.accent}px solid ${theme.accent.default}` : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+    borderRadius: theme.radius.surface,
     fontSize: typography.body,
     fontFamily: typography.fontBody,
     outline: "none",
