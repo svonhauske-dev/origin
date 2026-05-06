@@ -261,7 +261,7 @@ export const themes = {
       inputDisabled: "#030507",
       cardHover:     "#0C0F16",
       knob:          "#F5F5F7",
-      toggleOff:     "rgba(255,250,245,0.30)",
+      toggleOff:     "rgba(255,250,245,0.50)",
     },
     text: {
       primary:   "#F5F5F7",
@@ -393,7 +393,7 @@ export const themes = {
       inputDisabled: "#111111",
       cardHover:     "rgba(255,255,255,0.06)",
       knob:          "#000000",
-      toggleOff:     "rgba(255,250,245,0.40)",
+      toggleOff:     "rgba(255,250,245,0.55)",
     },
     text: {
       primary:   "#FFFFFF",
