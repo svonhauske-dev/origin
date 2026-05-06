@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { spacing, radius, typography, layout, shadows, effects, zIndex as zIndexTokens } from "../design-system";
+import { spacing, typography, layout, shadows, effects, zIndex as zIndexTokens } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 
@@ -64,8 +64,8 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
             width: `calc(100% - ${spacing.md * 2}px)`,
             maxWidth: layout.maxContentWidth,
             maxHeight: `calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 48px)`,
-            background: theme.surface.canvas,
-            borderRadius: radius.md,
+            background: theme.surface.modal,
+            borderRadius: theme.radius.surface,
             boxShadow: shadows.modal,
             transform: open ? "scale(1)" : "scale(0.95)",
             opacity: open ? 1 : 0,
@@ -82,7 +82,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
             alignItems: "center",
             padding: `${spacing.sm}px ${spacing.md}px`,
             flexShrink: 0,
-            borderBottom: `1px solid ${theme.border.subtle}`,
+            borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
           }}>
             {leftAction ? (
               <>
@@ -118,7 +118,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
             <div style={{
               padding: `${spacing.sm}px ${spacing.md}px`,
               flexShrink: 0,
-              borderTop: `1px solid ${theme.border.subtle}`,
+              borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
             }}>
               {footer}
             </div>

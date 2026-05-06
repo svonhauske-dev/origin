@@ -47,8 +47,14 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, onE
 
   return (
     <Modal open={open} onClose={onClose} title="Manage protocol">
-      {grouped.map(({ cat, items }) => (
-        <div key={cat} style={{ marginBottom: spacing.lg }}>
+      {grouped.map(({ cat, items }, idx) => (
+        <div key={cat} style={{
+          ...(idx > 0 ? {
+            borderTop: `${theme.borderWidth.subtle}px solid ${theme.border.subtle}`,
+            marginTop: spacing.lg,
+            paddingTop: spacing.lg,
+          } : {}),
+        }}>
           <Label style={{ marginBottom: spacing.xs }}>{cat}</Label>
           {items.map((supp, i) => {
             const isConfirming = confirmId === supp.id;
@@ -60,7 +66,7 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, onE
                   display: "flex",
                   alignItems: "center",
                   padding: `${spacing.sm}px 0`,
-                  borderBottom: isLast ? "none" : `1px solid ${theme.border.subtle}`,
+                  borderBottom: isLast ? "none" : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
                   minHeight: touch.min,
                   opacity: supp.paused ? 0.5 : 1,
                   transition: "opacity 0.2s",

@@ -195,6 +195,7 @@ export const themes = {
       inputDisabled: "#F2F4F6",
       cardHover:     "#EEF1F4",
       knob:          "#FFFFFF",
+      toggleOff:     "rgba(0,0,0,0.15)",
     },
     text: {
       primary:   "#1A1A1A",
@@ -252,14 +253,15 @@ export const themes = {
       canvas:        "#04060A",
       gradientMid:   "#04060A",
       gradientEnd:   "#04060A",
-      modal:         "#0A0D14",
+      modal:         "#10141C",
       card:          "#06080D",
       cardSubtle:    "#030507",
-      backdrop:      "rgba(0,0,0,0.7)",
+      backdrop:      "rgba(0,0,0,0.85)",
       input:         "#06080D",
       inputDisabled: "#030507",
       cardHover:     "#0C0F16",
       knob:          "#F5F5F7",
+      toggleOff:     "rgba(255,250,245,0.18)",
     },
     text: {
       primary:   "#F5F5F7",
@@ -325,6 +327,7 @@ export const themes = {
       inputDisabled: "#F5F5F5",
       cardHover:     "rgba(0,0,0,0.04)",
       knob:          "#FFFFFF",
+      toggleOff:     "rgba(0,0,0,0.30)",
     },
     text: {
       primary:   "#000000",
@@ -390,6 +393,7 @@ export const themes = {
       inputDisabled: "#111111",
       cardHover:     "rgba(255,255,255,0.06)",
       knob:          "#000000",
+      toggleOff:     "rgba(255,255,255,0.30)",
     },
     text: {
       primary:   "#FFFFFF",

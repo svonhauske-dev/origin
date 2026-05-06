@@ -187,7 +187,7 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
             aria-label={hasSubscription ? "Turn off reminders" : "Turn on reminders"}
             style={{
               width: 44, height: 26, borderRadius: theme.radius.toggle,
-              background: hasSubscription ? theme.accent.default : theme.border.strong,
+              background: hasSubscription ? theme.accent.default : theme.surface.toggleOff,
               border: "none",
               cursor: "pointer",
               transition: "background 200ms",
