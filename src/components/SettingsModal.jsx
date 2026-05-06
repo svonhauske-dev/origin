@@ -7,6 +7,7 @@ import Label from "./Label";
 import Modal from "./Modal";
 import ManageAccount from "./ManageAccount";
 import { useToast } from "./ToastContext";
+import InlineLoader from "./InlineLoader";
 import {
   isPushSupported, needsHomeScreenInstall, getNotificationPermission,
   getCurrentSubscription, subscribeToPush, unsubscribeFromPush,
@@ -158,33 +159,37 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
         minHeight: touch.min,
       }}>
         <span style={{ fontSize: typography.body, color: theme.text.primary }}>Reminders</span>
-        <button
-          onClick={handleToggleNotifications}
-          disabled={toggling}
-          aria-label={hasSubscription ? "Turn off reminders" : "Turn on reminders"}
-          style={{
-            width: 44, height: 26, borderRadius: 13,
-            background: hasSubscription ? theme.accent.default : theme.border.strong,
-            border: "none",
-            cursor: toggling ? "default" : "pointer",
-            transition: "background 200ms",
-            position: "relative",
-            flexShrink: 0,
-            WebkitTapHighlightColor: "transparent",
-            opacity: toggling ? 0.6 : 1,
-          }}
-        >
-          <span style={{
-            position: "absolute",
-            top: 3,
-            left: hasSubscription ? 21 : 3,
-            width: 20, height: 20,
-            borderRadius: "50%",
-            background: theme.surface.knob,
-            transition: "left 200ms",
-            display: "block",
-          }} />
-        </button>
+        {toggling ? (
+          <div style={{ width: 44, height: 26, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <InlineLoader size="sm" />
+          </div>
+        ) : (
+          <button
+            onClick={handleToggleNotifications}
+            aria-label={hasSubscription ? "Turn off reminders" : "Turn on reminders"}
+            style={{
+              width: 44, height: 26, borderRadius: 13,
+              background: hasSubscription ? theme.accent.default : theme.border.strong,
+              border: "none",
+              cursor: "pointer",
+              transition: "background 200ms",
+              position: "relative",
+              flexShrink: 0,
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            <span style={{
+              position: "absolute",
+              top: 3,
+              left: hasSubscription ? 21 : 3,
+              width: 20, height: 20,
+              borderRadius: "50%",
+              background: theme.surface.knob,
+              transition: "left 200ms",
+              display: "block",
+            }} />
+          </button>
+        )}
       </div>
     );
   }

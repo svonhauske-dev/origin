@@ -19,6 +19,7 @@ import Toast from "./components/Toast";
 import ManageSupplementsSheet from "./components/ManageSupplementsSheet";
 import Onboarding from "./components/Onboarding";
 import Loader from "./components/Loader";
+import InlineLoader from "./components/InlineLoader";
 import Auth from "./components/Auth";
 import PromptName from "./components/PromptName";
 import SlotCard from "./components/SlotCard";
@@ -596,7 +597,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           <>
             {submitError && <div style={{ fontSize: typography.label, color: theme.status.danger, marginBottom: spacing.xs, textAlign: "center" }}>{submitError}</div>}
             <Button variant="primary" fullWidth onClick={submitForm} disabled={submitting || !form.name?.trim()}>
-              {submitting ? "Saving…" : (editingId ? "Save changes" : "Add to protocol")}
+              {submitting ? <InlineLoader size="sm" /> : (editingId ? "Save changes" : "Add to protocol")}
             </Button>
           </>
         }

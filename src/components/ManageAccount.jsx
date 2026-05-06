@@ -7,6 +7,7 @@ import Input from "./Input";
 import Label from "./Label";
 import { dbUpdateProfile, updateEmail, updatePassword } from "../lib/api";
 import HelperText from "./HelperText";
+import InlineLoader from "./InlineLoader";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -109,7 +110,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         disabled={nameSaving || !nameChanged}
         style={{ marginBottom: spacing.lg }}
       >
-        {nameSaving ? "Saving…" : "Save full name"}
+        {nameSaving ? <InlineLoader size="sm" /> : "Save full name"}
       </Button>
 
       <div style={{ borderTop: `1px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
@@ -132,7 +133,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         disabled={emailSaving || !newEmail.trim()}
         style={{ marginBottom: spacing.lg }}
       >
-        {emailSaving ? "Saving…" : "Update email"}
+        {emailSaving ? <InlineLoader size="sm" /> : "Update email"}
       </Button>
 
       <div style={{ borderTop: `1px solid ${theme.border.subtle}`, marginBottom: spacing.lg }} />
@@ -154,7 +155,7 @@ export default function ManageAccount({ user, token, profile, onProfileUpdate, o
         onClick={handleSavePassword}
         disabled={pwSaving || !pwRulesOk}
       >
-        {pwSaving ? "Saving…" : "Update password"}
+        {pwSaving ? <InlineLoader size="sm" /> : "Update password"}
       </Button>
     </div>
   );

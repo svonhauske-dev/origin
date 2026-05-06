@@ -6,6 +6,7 @@ import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Input from './Input';
 import Label from './Label';
+import InlineLoader from './InlineLoader';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -156,7 +157,7 @@ export default function Auth({ onSignIn }) {
           )}
 
           <Button variant="primary" fullWidth type="submit" disabled={!canSubmit}>
-            {loading ? (mode === "signin" ? "Signing in…" : "Creating account…") : (mode === "signin" ? "Sign in" : "Create account")}
+            {loading ? <InlineLoader size="sm" /> : (mode === "signin" ? "Sign in" : "Create account")}
           </Button>
 
           {msg === "EMAIL_TAKEN" ? (
