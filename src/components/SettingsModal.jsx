@@ -202,7 +202,7 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
               left: hasSubscription ? 21 : 3,
               width: 20, height: 20,
               borderRadius: theme.radius.pill,
-              background: theme.surface.knob,
+              background: hasSubscription ? theme.text.onAccent : theme.surface.knob,
               transition: "left 200ms",
               display: "block",
             }} />
@@ -214,22 +214,6 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
 
   return (
     <Modal open={open} onClose={onClose} title="Settings">
-      <Label style={{ marginBottom: spacing.xs }}>Account</Label>
-      <div
-        onClick={() => setView("account")}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: `${spacing.sm}px 0`, cursor: "pointer", userSelect: "none",
-          WebkitTapHighlightColor: "transparent", minHeight: touch.min,
-          marginBottom: spacing.xs,
-        }}
-      >
-        <span style={{ fontSize: typography.body, color: theme.text.primary }}>Manage account</span>
-        <ChevronRight size={20} color={theme.text.secondary} />
-      </div>
-
-      <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
-
       <Label style={{ marginBottom: spacing.xs }}>Protocol</Label>
       <div
         onClick={onOpenManage}
@@ -241,6 +225,22 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
         }}
       >
         <span style={{ fontSize: typography.body, color: theme.text.primary }}>Manage protocol</span>
+        <ChevronRight size={20} color={theme.text.secondary} />
+      </div>
+
+      <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
+
+      <Label style={{ marginBottom: spacing.xs }}>Account</Label>
+      <div
+        onClick={() => setView("account")}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: `${spacing.sm}px 0`, cursor: "pointer", userSelect: "none",
+          WebkitTapHighlightColor: "transparent", minHeight: touch.min,
+          marginBottom: spacing.xs,
+        }}
+      >
+        <span style={{ fontSize: typography.body, color: theme.text.primary }}>Manage account</span>
         <ChevronRight size={20} color={theme.text.secondary} />
       </div>
 
