@@ -98,8 +98,9 @@ export default function Auth({ onSignIn }) {
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
           {mode === "signup" && (
             <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-              <Label>Full name</Label>
+              <Label htmlFor="auth-name">Full name</Label>
               <Input
+                id="auth-name"
                 type="text"
                 name="name"
                 autoComplete="name"
@@ -116,8 +117,9 @@ export default function Auth({ onSignIn }) {
           )}
 
           <div style={{ marginBottom: spacing.md, textAlign: "left" }}>
-            <Label>Email</Label>
+            <Label htmlFor="auth-email">Email</Label>
             <Input
+              id="auth-email"
               type="email"
               name="email"
               autoComplete="email"
@@ -132,8 +134,9 @@ export default function Auth({ onSignIn }) {
           </div>
 
           <div style={{ marginBottom: mode === "signup" ? spacing.xs : spacing.md, textAlign: "left" }}>
-            <Label>Password</Label>
+            <Label htmlFor="auth-password">Password</Label>
             <Input
+              id="auth-password"
               type="password"
               name="password"
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
