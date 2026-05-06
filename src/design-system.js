@@ -176,8 +176,10 @@ export const segBtnStyle = (on) => ({
 
 // ── Theme tokens ───────────────────────────────────────────────────────────────
 
-const SLOTS_LIGHT = { default: "#5C5C5C" };
-const SLOTS_DARK  = { default: "#9A9AA0" };
+const SLOTS_LIGHT        = { default: "#5C5C5C" };
+const SLOTS_DARK         = { default: "#9A9AA0" };
+const SLOTS_BRUTAL_LIGHT = { default: "#000000" };
+const SLOTS_BRUTAL_DARK  = { default: "#FFFFFF" };
 
 export const themes = {
   light: {
@@ -293,6 +295,122 @@ export const themes = {
     },
     gradients: {
       bg: "#04060A",
+    },
+  },
+
+  brutalLight: {
+    surface: {
+      canvas:        "#FFFFFF",
+      gradientMid:   "#FFFFFF",
+      gradientEnd:   "#FFFFFF",
+      modal:         "#FFFFFF",
+      card:          "#FFFFFF",
+      cardSubtle:    "#FFFFFF",
+      backdrop:      "rgba(0,0,0,0.85)",
+      input:         "#FFFFFF",
+      inputDisabled: "#F5F5F5",
+      cardHover:     "rgba(0,0,0,0.04)",
+      knob:          "#FFFFFF",
+    },
+    text: {
+      primary:   "#000000",
+      secondary: "#000000",
+      muted:     "#666666",
+      disabled:  "#999999",
+      onAccent:  "#FFFFFF",
+      onDanger:  "#FFFFFF",
+      faint:     "rgba(0,0,0,0.3)",
+    },
+    accent: {
+      default: "#000000",
+      hover:   "#000000",
+      subtle:  "rgba(0,0,0,0.06)",
+      border:  "#000000",
+    },
+    border: {
+      subtle: "#000000",
+      strong: "#000000",
+      focus:  "#000000",
+    },
+    slot: SLOTS_BRUTAL_LIGHT,
+    status: {
+      success:          "#000000",
+      danger:           "#000000",
+      dangerSubtle:     "rgba(0,0,0,0.06)",
+      dangerBorder:     "#000000",
+      warning:          "#000000",
+      warningSubtle:    "rgba(0,0,0,0.08)",
+      warningBorder:    "#000000",
+      missedBorder:     "#000000",
+      missedBg:         "rgba(0,0,0,0.04)",
+      missedHover:      "rgba(0,0,0,0.08)",
+      missedBadgeBg:    "rgba(0,0,0,0.08)",
+      missedBadgeColor: "#000000",
+      nowBorder:        "#000000",
+      nowBg:            "rgba(0,0,0,0.04)",
+      nowHover:         "rgba(0,0,0,0.08)",
+      nowBadgeBg:       "#000000",
+    },
+    gradients: {
+      bg: "#FFFFFF",
+    },
+  },
+
+  brutalDark: {
+    surface: {
+      canvas:        "#000000",
+      gradientMid:   "#000000",
+      gradientEnd:   "#000000",
+      modal:         "#000000",
+      card:          "#000000",
+      cardSubtle:    "#000000",
+      backdrop:      "rgba(255,255,255,0.85)",
+      input:         "#000000",
+      inputDisabled: "#111111",
+      cardHover:     "rgba(255,255,255,0.06)",
+      knob:          "#000000",
+    },
+    text: {
+      primary:   "#FFFFFF",
+      secondary: "#FFFFFF",
+      muted:     "#999999",
+      disabled:  "#666666",
+      onAccent:  "#000000",
+      onDanger:  "#000000",
+      faint:     "rgba(255,255,255,0.3)",
+    },
+    accent: {
+      default: "#FFFFFF",
+      hover:   "#FFFFFF",
+      subtle:  "rgba(255,255,255,0.06)",
+      border:  "#FFFFFF",
+    },
+    border: {
+      subtle: "#FFFFFF",
+      strong: "#FFFFFF",
+      focus:  "#FFFFFF",
+    },
+    slot: SLOTS_BRUTAL_DARK,
+    status: {
+      success:          "#FFFFFF",
+      danger:           "#FFFFFF",
+      dangerSubtle:     "rgba(255,255,255,0.06)",
+      dangerBorder:     "#FFFFFF",
+      warning:          "#FFFFFF",
+      warningSubtle:    "rgba(255,255,255,0.10)",
+      warningBorder:    "#FFFFFF",
+      missedBorder:     "#FFFFFF",
+      missedBg:         "rgba(255,255,255,0.04)",
+      missedHover:      "rgba(255,255,255,0.10)",
+      missedBadgeBg:    "rgba(255,255,255,0.10)",
+      missedBadgeColor: "#FFFFFF",
+      nowBorder:        "#FFFFFF",
+      nowBg:            "rgba(255,255,255,0.04)",
+      nowHover:         "rgba(255,255,255,0.10)",
+      nowBadgeBg:       "#FFFFFF",
+    },
+    gradients: {
+      bg: "#000000",
     },
   },
 };

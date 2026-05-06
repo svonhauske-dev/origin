@@ -2,8 +2,17 @@ import { useTheme, THEME_NAMES } from "../lib/theme";
 import { themes } from "../design-system";
 
 const SWATCHES = {
-  light: ["#F4F6F8", "#1A1A1A", "#1A1A1A"],
-  dark:  ["#04060A", "#F5F5F7", "#F5F5F7"],
+  light:       ["#F4F6F8", "#1A1A1A", "#1A1A1A"],
+  dark:        ["#04060A", "#F5F5F7", "#F5F5F7"],
+  brutalLight: ["#FFFFFF", "#000000", "#000000"],
+  brutalDark:  ["#000000", "#FFFFFF", "#FFFFFF"],
+};
+
+const LABELS = {
+  light:       "Light",
+  dark:        "Dark",
+  brutalLight: "Brutal Light",
+  brutalDark:  "Brutal Dark",
 };
 
 export default function DevThemePicker() {
@@ -51,7 +60,7 @@ export default function DevThemePicker() {
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: fg }} />
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: ac }} />
             </div>
-            <span style={{ fontSize: 11, color: active ? "#fff" : "rgba(255,255,255,0.55)", fontFamily: "monospace", whiteSpace: "nowrap" }}>{name}</span>
+            <span style={{ fontSize: 11, color: active ? "#fff" : "rgba(255,255,255,0.55)", fontFamily: "monospace", whiteSpace: "nowrap" }}>{LABELS[name] ?? name}</span>
           </button>
         );
       })}
