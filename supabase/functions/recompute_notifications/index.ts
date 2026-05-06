@@ -110,6 +110,7 @@ Deno.serve(async (req: Request) => {
   type QueueRow = {
     user_id: string;
     fire_at: string;
+    scheduled_for_date: string;
     title: string;
     body: string;
     slot_id: string;
@@ -144,13 +145,14 @@ Deno.serve(async (req: Request) => {
         if (!slotSupps.length) continue;
 
         rows.push({
-          user_id: userId,
-          fire_at: fireAt.toISOString(),
-          title:   `Time for ${SLOT_LABELS[slotId] ?? slotId}`,
-          body:    slotSupps.map((s) => s.name).join(", "),
-          slot_id: slotId,
-          tag:     `${dateStr}_${slotId}`,
-          fired:   false,
+          user_id:             userId,
+          fire_at:             fireAt.toISOString(),
+          scheduled_for_date:  fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+          title:               `Time for ${SLOT_LABELS[slotId] ?? slotId}`,
+          body:                slotSupps.map((s) => s.name).join(", "),
+          slot_id:             slotId,
+          tag:                 `${dateStr}_${slotId}`,
+          fired:               false,
         });
       }
       continue; // done with this day for fixed mode
@@ -178,13 +180,14 @@ Deno.serve(async (req: Request) => {
     );
     if (rxSupps.length > 0 && anchorDate > now) {
       rows.push({
-        user_id: userId,
-        fire_at: anchorDate.toISOString(),
-        title:   getAnchorTitle(mode),
-        body:    rxSupps.map((s) => s.name).join(", "),
-        slot_id: "rx",
-        tag:     `${dateStr}_rx`,
-        fired:   false,
+        user_id:             userId,
+        fire_at:             anchorDate.toISOString(),
+        scheduled_for_date:  anchorDate.toLocaleDateString("sv-SE", { timeZone: tz }),
+        title:               getAnchorTitle(mode),
+        body:                rxSupps.map((s) => s.name).join(", "),
+        slot_id:             "rx",
+        tag:                 `${dateStr}_rx`,
+        fired:               false,
       });
     }
 
@@ -208,12 +211,13 @@ Deno.serve(async (req: Request) => {
       if (!slotSupps.length) continue;
 
       rows.push({
-        user_id: userId,
-        fire_at: fireAt.toISOString(),
-        title:   `Time for ${getModeSlotLabel(slotId, mode)}`,
-        body:    slotSupps.map((s) => s.name).join(", "),
-        slot_id: slotId,
-        tag:     `${dateStr}_${slotId}`,
+        user_id:             userId,
+        fire_at:             fireAt.toISOString(),
+        scheduled_for_date:  fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+        title:               `Time for ${getModeSlotLabel(slotId, mode)}`,
+        body:                slotSupps.map((s) => s.name).join(", "),
+        slot_id:             slotId,
+        tag:                 `${dateStr}_${slotId}`,
         fired:   false,
       });
     }
