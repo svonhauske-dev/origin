@@ -1,23 +1,22 @@
 // src/lib/notifications.js — Web Push notifications client API
 
 import { supa, getSession } from "./api";
-import { colors } from "../design-system";
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 // ── Slot definitions — used by SlotCard / App.jsx for slot rendering ──────────
 
 export const SLOTS = [
-  { id: "rx",            label: "Anchor Medication", sublabel: "Empty stomach · first thing", icon: "★", color: colors.slotAnchor },
-  { id: "pre_breakfast", label: "Before Breakfast",  sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreBreakfast },
-  { id: "breakfast",     label: "With Breakfast",    sublabel: "With food",                   icon: "●", color: colors.slotBreakfast },
-  { id: "pre_lunch",     label: "Before Lunch",      sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreLunch },
-  { id: "lunch",         label: "With Lunch",        sublabel: "With food",                   icon: "●", color: colors.slotLunch },
-  { id: "pre_dinner",    label: "Before Dinner",     sublabel: "30 min before eating",        icon: "◎", color: colors.slotPreDinner },
-  { id: "dinner",        label: "With Dinner",       sublabel: "With food",                   icon: "●", color: colors.slotDinner },
-  { id: "after_dinner",  label: "Evening",           sublabel: "Before bed",                  icon: "◑", color: colors.slotEvening },
-  { id: "injectable",    label: "Injectables",       sublabel: "Subcutaneous",                icon: "⊕", color: colors.slotInjectable },
-  { id: "topical",       label: "Topicals",          sublabel: "Skin & external",             icon: "◐", color: colors.slotTopical },
+  { id: "rx",            label: "Anchor Medication", sublabel: "Empty stomach · first thing", icon: "★" },
+  { id: "pre_breakfast", label: "Before Breakfast",  sublabel: "30 min before eating",        icon: "◎" },
+  { id: "breakfast",     label: "With Breakfast",    sublabel: "With food",                   icon: "●" },
+  { id: "pre_lunch",     label: "Before Lunch",      sublabel: "30 min before eating",        icon: "◎" },
+  { id: "lunch",         label: "With Lunch",        sublabel: "With food",                   icon: "●" },
+  { id: "pre_dinner",    label: "Before Dinner",     sublabel: "30 min before eating",        icon: "◎" },
+  { id: "dinner",        label: "With Dinner",       sublabel: "With food",                   icon: "●" },
+  { id: "after_dinner",  label: "Evening",           sublabel: "Before bed",                  icon: "◑" },
+  { id: "injectable",    label: "Injectables",       sublabel: "Subcutaneous",                icon: "⊕" },
+  { id: "topical",       label: "Topicals",          sublabel: "Skin & external",             icon: "◐" },
 ];
 
 // ── Service worker registration ───────────────────────────────────────────────

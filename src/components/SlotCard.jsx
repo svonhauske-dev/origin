@@ -26,7 +26,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flex: 1, minWidth: 0 }}>
           {allDone
             ? <div style={{ width: 20, height: 20, borderRadius: radius.xs, background: theme.accent.default, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span></div>
-            : <span style={{ color: slot.color, fontSize: typography.caption, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
+            : <span style={{ color: theme.slot.default, fontSize: typography.caption, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
           }
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: allDone ? theme.text.muted : theme.text.primary, display: "flex", alignItems: "center", gap: spacing.xs }}>
@@ -37,7 +37,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? slot.color : theme.text.muted, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
+          {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? theme.slot.default : theme.text.muted, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
           <span style={{ fontSize: typography.caption, color: theme.text.muted, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
         </div>
       </div>
