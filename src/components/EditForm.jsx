@@ -284,7 +284,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onDelete })
         <div style={{ marginTop: spacing.lg, display: "flex", flexDirection: "column", gap: spacing.xs }}>
           {onStop && (
             <Button variant="secondary" fullWidth onClick={() => setShowStopConfirm(true)}>
-              Stop taking
+              Stop
             </Button>
           )}
           {onDelete && (
