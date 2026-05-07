@@ -19,7 +19,7 @@ const TREATMENT_MODES = [
 ];
 const UNITS = ["days", "weeks", "months"];
 
-export default function EditForm({ form, setForm, editingId, onStop, onDelete }) {
+export default function EditForm({ form, setForm, editingId, onStop, onResume, onDelete }) {
   const { theme } = useTheme();
   const [nameTouched, setNameTouched] = useState(false);
   const [touched, setTouched] = useState({});
@@ -75,9 +75,10 @@ export default function EditForm({ form, setForm, editingId, onStop, onDelete })
         }}>
           This supplement is in your archive. Restart it to make changes.
         </div>
-        {onDelete && (
-          <Button variant="destructive" fullWidth onClick={onDelete}>Delete</Button>
-        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs, marginTop: spacing.sm }}>
+          {onResume && <Button variant="primary" fullWidth onClick={onResume}>Resume</Button>}
+          {onDelete && <Button variant="destructive" fullWidth onClick={onDelete}>Delete</Button>}
+        </div>
       </div>
     );
   }
@@ -280,16 +281,11 @@ export default function EditForm({ form, setForm, editingId, onStop, onDelete })
         </div>
       )}
 
-      {editingId && (onStop || onDelete) && (
-        <div style={{ marginTop: spacing.lg, display: "flex", flexDirection: "column", gap: spacing.xs }}>
-          {onStop && (
-            <Button variant="secondary" fullWidth onClick={() => setShowStopConfirm(true)}>
-              Stop
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="destructive" fullWidth onClick={onDelete}>Delete</Button>
-          )}
+      {editingId && onStop && (
+        <div style={{ marginTop: spacing.lg }}>
+          <Button variant="secondary" fullWidth onClick={() => setShowStopConfirm(true)}>
+            Stop
+          </Button>
         </div>
       )}
 

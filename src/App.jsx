@@ -401,6 +401,36 @@ function ProtocolApp({ user, token, onSignOut }) {
     }
   };
 
+  const resumeSupp = async (supp) => {
+    try {
+      const updated = { ...supp, status: 'active', stopped_at: null };
+      await dbUpdateSupp(updated, token);
+      setSupps(s => s.map(x => x.id === supp.id ? updated : x));
+      setShowManage(false);
+      openEdit(updated);
+      showToast(`${supp.name} resumed`);
+    } catch (err) {
+      showToast(`Couldn't resume ${supp.name}. Try again.`);
+      console.error(err);
+    }
+  };
+
+  const resumeSuppFromForm = async () => {
+    if (!editingId) return;
+    const supp = supps.find(s => s.id === editingId);
+    if (!supp) return;
+    try {
+      const updated = { ...supp, status: 'active', stopped_at: null };
+      await dbUpdateSupp(updated, token);
+      setSupps(s => s.map(x => x.id === editingId ? updated : x));
+      setForm(f => ({ ...f, status: 'active', stopped_at: null }));
+      showToast(`${supp.name} resumed`);
+    } catch (err) {
+      showToast(`Couldn't resume ${supp.name}. Try again.`);
+      console.error(err);
+    }
+  };
+
   const saveSchedule = async (mode, config, behavior, cTime) => {
     const offsets = { ...config, _anchor_behavior: behavior, _consistent_time: cTime };
     try {
@@ -642,10 +672,12 @@ function ProtocolApp({ user, token, onSignOut }) {
       <ManageSupplementsSheet
         open={showManage}
         onClose={() => setShowManage(false)}
-        supplements={visibleSupps.filter(s => !isStoppedSupp(s))}
+        supplements={visibleSupps}
+        token={token}
         onEdit={(supp) => { setShowManage(false); openEdit(supp); }}
         onDelete={requestDelete}
         onTogglePause={togglePause}
+        onResume={resumeSupp}
       />
       <Modal
         open={formOpen}
@@ -662,7 +694,7 @@ function ProtocolApp({ user, token, onSignOut }) {
           ) : null
         }
       >
-        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onDelete={deleteSupp} />
+        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} />
       </Modal>
       <Modal
         open={showSchedule}

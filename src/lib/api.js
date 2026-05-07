@@ -160,6 +160,21 @@ export const dbSaveSchedule = (data, t) => supa("POST",   "/rest/v1/user_schedul
 export const dbUpdateScheduleField = (field, value, userId, token) =>
   supa("PATCH", `/rest/v1/user_schedule?user_id=eq.${userId}`, { [field]: value }, token);
 
+export async function dbGetAdherenceCounts(suppIds, token) {
+  if (!suppIds.length) return {};
+  const rows = await supa("GET", "/rest/v1/daily_logs?select=checked", null, token);
+  const counts = Object.fromEntries(suppIds.map(id => [id, 0]));
+  for (const row of (rows || [])) {
+    for (const [key, val] of Object.entries(row.checked || {})) {
+      if (!val) continue;
+      // key format: "${slot_id}_${suppId}" — UUID (36 chars, no underscores) is always last
+      const suppId = key.slice(key.lastIndexOf('_') + 1);
+      if (suppId in counts) counts[suppId]++;
+    }
+  }
+  return counts;
+}
+
 export async function recomputeNotifications(token) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   try {
