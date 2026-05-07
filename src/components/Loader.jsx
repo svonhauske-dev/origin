@@ -23,7 +23,6 @@ export default function Loader({ text }) {
         }
         .origin-wave {
           transform-origin: 60px 60px;
-          transform-box: fill-box;
         }
         @keyframes originDot {
           0%, 100% { opacity: 1; }
@@ -32,20 +31,23 @@ export default function Loader({ text }) {
       `}</style>
       <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
         {WAVES.map((delay, i) => (
-          <circle
+          <g
             key={i}
-            cx="60"
-            cy="60"
-            r="14"
-            strokeWidth="1.2"
-            stroke={theme.text.primary}
-            fill="none"
             className="origin-wave"
             style={{
               animation: `originWave 3s ${delay}s ease-out infinite`,
               opacity: 0,
             }}
-          />
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="14"
+              stroke={theme.text.primary}
+              strokeWidth="1.2"
+              fill="none"
+            />
+          </g>
         ))}
         <circle
           cx="60"
