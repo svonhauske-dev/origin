@@ -13,7 +13,8 @@ import Card from "./components/Card";
 import Badge from "./components/Badge";
 import Label from "./components/Label";
 import Modal from "./components/Modal";
-import SettingsModal from "./components/SettingsModal";
+import SettingsScreen from "./components/SettingsScreen";
+import { NavigationProvider, useNavigation } from "./lib/navigation";
 import { ToastProvider, useToast } from "./components/ToastContext";
 import Toast from "./components/Toast";
 import ManageSupplementsSheet from "./components/ManageSupplementsSheet";
@@ -64,14 +65,16 @@ export default function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        {authLoading
-          ? <Loader text="Loading…" />
-          : !user
-            ? <Auth onSignIn={u => setUser(u)} />
-            : <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} />
-        }
-        <Toast />
-        {import.meta.env.DEV && <DevThemePicker />}
+        <NavigationProvider>
+          {authLoading
+            ? <Loader text="Loading…" />
+            : !user
+              ? <Auth onSignIn={u => setUser(u)} />
+              : <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} />
+          }
+          <Toast />
+          {import.meta.env.DEV && <DevThemePicker />}
+        </NavigationProvider>
       </ToastProvider>
     </ThemeProvider>
   );
@@ -81,6 +84,7 @@ export default function App() {
 
 function ProtocolApp({ user, token, onSignOut }) {
   const { theme, syncFromDB } = useTheme();
+  const { currentScreen, pushScreen, popScreen } = useNavigation();
 
   // Sync theme from DB once on auth — DB wins over localStorage for cross-device consistency
   useEffect(() => { syncFromDB(user.id, token); }, []);
@@ -106,7 +110,6 @@ function ProtocolApp({ user, token, onSignOut }) {
   });
   const [anchorBehavior, setAnchorBehavior] = useState("flexible");
   const [consistentTime, setConsistentTime] = useState("07:00");
-  const [showSettings, setShowSettings]     = useState(false);
   const [showManage, setShowManage]         = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState({});
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -576,7 +579,7 @@ function ProtocolApp({ user, token, onSignOut }) {
         <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading }}>
           {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Hello"}
         </span>
-        <Button variant="icon" aria-label="Settings" onClick={() => setShowSettings(true)}>
+        <Button variant="icon" aria-label="Settings" onClick={() => pushScreen('settings')}>
           <Settings size={18} />
         </Button>
       </div>
@@ -657,11 +660,11 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       </div>{/* end opacity wrapper */}
 
-      {/* Modals */}
-      <SettingsModal
-        open={showSettings}
-        onClose={() => setShowSettings(false)}
-        onOpenManage={() => { setShowSettings(false); setShowManage(true); }}
+      {/* Screens */}
+      <SettingsScreen
+        isOpen={currentScreen.name === 'settings'}
+        onBack={popScreen}
+        onOpenManage={() => { popScreen(); setShowManage(true); }}
         onSignOut={handleSignOut}
         user={user}
         token={token}
