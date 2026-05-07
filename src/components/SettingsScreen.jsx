@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { spacing, typography, touch, layout } from '../design-system';
 import { useTheme } from '../lib/theme';
+import { useNavigation } from '../lib/navigation';
 import { useToast } from './ToastContext';
 import Button from './Button';
 import Input from './Input';
@@ -49,8 +50,9 @@ function PasswordRule({ met, label }) {
   );
 }
 
-export default function SettingsScreen({ isOpen, onBack, onOpenManage, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled }) {
+export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled }) {
   const { theme, themePreference, setThemePreference } = useTheme();
+  const { pushScreen } = useNavigation();
   const { show: showToast } = useToast();
 
   // Notification state
@@ -355,7 +357,7 @@ export default function SettingsScreen({ isOpen, onBack, onOpenManage, onSignOut
             {/* ── Protocol ── */}
             <Label style={{ marginBottom: spacing.xs }}>Protocol</Label>
             <div
-              onClick={onOpenManage}
+              onClick={() => pushScreen('manage_protocol')}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: `${spacing.sm}px 0`, cursor: 'pointer', userSelect: 'none',

@@ -17,7 +17,7 @@ import SettingsScreen from "./components/SettingsScreen";
 import { NavigationProvider, useNavigation } from "./lib/navigation";
 import { ToastProvider, useToast } from "./components/ToastContext";
 import Toast from "./components/Toast";
-import ManageSupplementsSheet from "./components/ManageSupplementsSheet";
+import ManageProtocolScreen from "./components/ManageProtocolScreen";
 import Onboarding from "./components/Onboarding";
 import Loader from "./components/Loader";
 import InlineLoader from "./components/InlineLoader";
@@ -84,7 +84,7 @@ export default function App() {
 
 function ProtocolApp({ user, token, onSignOut }) {
   const { theme, syncFromDB } = useTheme();
-  const { currentScreen, pushScreen, popScreen } = useNavigation();
+  const { screenStack, pushScreen, popScreen } = useNavigation();
 
   // Sync theme from DB once on auth — DB wins over localStorage for cross-device consistency
   useEffect(() => { syncFromDB(user.id, token); }, []);
@@ -110,7 +110,6 @@ function ProtocolApp({ user, token, onSignOut }) {
   });
   const [anchorBehavior, setAnchorBehavior] = useState("flexible");
   const [consistentTime, setConsistentTime] = useState("07:00");
-  const [showManage, setShowManage]         = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState({});
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [profile, setProfile]               = useState(null);
@@ -409,7 +408,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       const updated = { ...supp, status: 'active', stopped_at: null };
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));
-      setShowManage(false);
       openEdit(updated);
       showToast(`${supp.name} resumed`);
     } catch (err) {
@@ -662,9 +660,8 @@ function ProtocolApp({ user, token, onSignOut }) {
 
       {/* Screens */}
       <SettingsScreen
-        isOpen={currentScreen.name === 'settings'}
+        isOpen={screenStack.some(s => s.name === 'settings')}
         onBack={popScreen}
-        onOpenManage={() => { popScreen(); setShowManage(true); }}
         onSignOut={handleSignOut}
         user={user}
         token={token}
@@ -672,12 +669,12 @@ function ProtocolApp({ user, token, onSignOut }) {
         onProfileUpdate={(updated) => setProfile(updated)}
         onNotificationsEnabled={() => recomputeNotifications(token)}
       />
-      <ManageSupplementsSheet
-        open={showManage}
-        onClose={() => setShowManage(false)}
+      <ManageProtocolScreen
+        isOpen={screenStack.some(s => s.name === 'manage_protocol')}
+        onBack={popScreen}
         supplements={visibleSupps}
         token={token}
-        onEdit={(supp) => { setShowManage(false); openEdit(supp); }}
+        onEdit={openEdit}
         onDelete={requestDelete}
         onTogglePause={togglePause}
         onResume={resumeSupp}
