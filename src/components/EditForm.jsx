@@ -19,7 +19,7 @@ const TREATMENT_MODES = [
 ];
 const UNITS = ["days", "weeks", "months"];
 
-export default function EditForm({ form, setForm, editingId, onStop, onResume, onDelete }) {
+export default function EditForm({ form, setForm, editingId, onStop, onResume, onDelete, scheduleMode }) {
   const { theme } = useTheme();
   const [nameTouched, setNameTouched] = useState(false);
   const [touched, setTouched] = useState({});
@@ -258,7 +258,23 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
         <div style={{ marginBottom: spacing.md }}>
           <Label>When to take it</Label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-            {SLOTS.filter(s => s.id !== "injectable" && s.id !== "topical").map(slot => {
+            {SLOTS.filter(s => {
+              if (s.id === "injectable" || s.id === "topical") return false;
+              if (s.id === "rx") return scheduleMode === "medication" || form.slots.includes("rx");
+              return true;
+            }).map(slot => {
+              if (slot.id === "rx" && scheduleMode !== "medication" && form.slots.includes("rx")) {
+                return (
+                  <div key="rx" style={{ width: "100%" }}>
+                    <Button variant="pill" active style={{ opacity: 0.45, pointerEvents: "none" }}>
+                      {slot.label}
+                    </Button>
+                    <HelperText style={{ marginTop: spacing.xxxs }}>
+                      Not available in your current schedule mode
+                    </HelperText>
+                  </div>
+                );
+              }
               const on = form.slots.includes(slot.id);
               return (
                 <Button key={slot.id} variant="pill" active={on} onClick={() => toggleSlot(slot.id)}>

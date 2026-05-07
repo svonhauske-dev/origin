@@ -478,7 +478,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         setPillTimes(pt => ({ ...pt, [dk]: cTime }));
       }
 
-      showToast("Schedule updated");
       recomputeNotifications(token);
     } catch (err) {
       showToast("Couldn't save — try again");
@@ -720,7 +719,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           ) : null
         }
       >
-        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} />
+        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} />
       </Modal>
     </div>
   );
