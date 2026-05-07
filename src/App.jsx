@@ -55,7 +55,7 @@ const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "p
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const appStartTime = useRef(Date.now());
+  const loaderRenderTime = useRef(null);
   const [user, setUser]                         = useState(null);
   const [authLoading, setAuthLoading]           = useState(true);
   const [protocolLoading, setProtocolLoading]   = useState(false);
@@ -63,30 +63,34 @@ export default function App() {
 
   const isLoading = authLoading || protocolLoading;
 
+  const onLoaderMount = () => {
+    if (loaderRenderTime.current === null) loaderRenderTime.current = Date.now();
+  };
+
+  const computeRemaining = () =>
+    loaderRenderTime.current ? Math.max(0, 3000 - (Date.now() - loaderRenderTime.current)) : 3000;
+
   useEffect(() => {
     getSession().then(u => {
       if (u) {
-        // Batch all three: user set, protocol loading begins, auth done — single render, Loader stays mounted
         setUser(u);
         setProtocolLoading(true);
         setAuthLoading(false);
       } else {
-        const remaining = Math.max(0, 1200 - (Date.now() - appStartTime.current));
-        setTimeout(() => setAuthLoading(false), remaining);
+        setTimeout(() => setAuthLoading(false), computeRemaining());
       }
     });
   }, []);
 
   const handleProtocolLoadEnd = () => {
-    const remaining = Math.max(0, 1200 - (Date.now() - appStartTime.current));
-    setTimeout(() => setProtocolLoading(false), remaining);
+    setTimeout(() => setProtocolLoading(false), computeRemaining());
   };
 
   return (
     <ThemeProvider>
       <ToastProvider>
         <NavigationProvider>
-          {isLoading && <Loader />}
+          {isLoading && <Loader onMount={onLoaderMount} />}
           {!authLoading && !user && <Auth onSignIn={u => { setUser(u); setProtocolLoading(true); }} />}
           {user && <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
           <Toast />

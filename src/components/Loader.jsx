@@ -1,12 +1,22 @@
+import { useState, useEffect } from 'react';
 import { useTheme } from '../lib/theme';
 
 const WAVES = [0, 0.6, 1.2, 1.8];
 
-export default function Loader() {
+export default function Loader({ onMount }) {
   const { theme } = useTheme();
+  const [frozenColors] = useState(() => ({
+    bg: theme.gradients.bg,
+    primary: theme.text.primary,
+  }));
+
+  useEffect(() => {
+    if (onMount) onMount();
+  }, []);
+
   return (
     <div style={{
-      background: theme.gradients.bg,
+      background: frozenColors.bg,
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
@@ -39,7 +49,7 @@ export default function Loader() {
               cx="60"
               cy="60"
               r="14"
-              stroke={theme.text.primary}
+              stroke={frozenColors.primary}
               strokeWidth="1.2"
               fill="none"
             />
@@ -49,7 +59,7 @@ export default function Loader() {
           cx="60"
           cy="60"
           r="3.5"
-          fill={theme.text.primary}
+          fill={frozenColors.primary}
           style={{ animation: "originDot 3s ease-in-out infinite" }}
         />
       </svg>
