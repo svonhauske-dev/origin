@@ -59,20 +59,14 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const token = () => localStorage.getItem("sb_token") || "";
 
-  useEffect(() => {
-    const t0 = Date.now();
-    getSession().then(u => {
-      const remaining = Math.max(0, 1200 - (Date.now() - t0));
-      setTimeout(() => { setUser(u); setAuthLoading(false); }, remaining);
-    });
-  }, []);
+  useEffect(() => { getSession().then(u => { setUser(u); setAuthLoading(false); }); }, []);
 
   return (
     <ThemeProvider>
       <ToastProvider>
         <NavigationProvider>
           {authLoading
-            ? <Loader text="Loading…" />
+            ? <Loader />
             : !user
               ? <Auth onSignIn={u => setUser(u)} />
               : <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} />
@@ -150,7 +144,6 @@ function ProtocolApp({ user, token, onSignOut }) {
   // Initial load
   useEffect(() => {
     (async () => {
-      const t0 = Date.now();
       setLoading(true);
       try {
         const [s, log, sched, prof] = await Promise.all([
@@ -204,8 +197,6 @@ function ProtocolApp({ user, token, onSignOut }) {
       } catch (e) {
         console.error("Initial load failed:", e);
       } finally {
-        const remaining = Math.max(0, 1200 - (Date.now() - t0));
-        if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
         setLoading(false);
       }
     })();
@@ -537,7 +528,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const dayLabel  = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-  if (loading) return <Loader text="Loading your protocol…" />;
+  if (loading) return <Loader />;
   if (needsNamePrompt) return (
     <PromptName onSave={async (name) => {
       try {

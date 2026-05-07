@@ -1,25 +1,21 @@
-import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
 
 const WAVES = [0, 0.6, 1.2, 1.8];
 
-export default function Loader({ text }) {
+export default function Loader() {
   const { theme } = useTheme();
   return (
     <div style={{
       background: theme.gradients.bg,
       minHeight: "100vh",
       display: "flex",
-      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      gap: spacing.md,
-      fontFamily: typography.fontBody,
     }}>
       <style>{`
         @keyframes originWave {
-          0%   { transform: scale(1); opacity: 1; }
-          100% { transform: scale(4); opacity: 0; }
+          0%   { transform: scale(1); opacity: 1; stroke-width: 1.2; }
+          100% { transform: scale(4); opacity: 0; stroke-width: 0.3; }
         }
         .origin-wave {
           transform-origin: 60px 60px;
@@ -57,16 +53,6 @@ export default function Loader({ text }) {
           style={{ animation: "originDot 3s ease-in-out infinite" }}
         />
       </svg>
-      {text && (
-        <div style={{
-          fontSize: typography.caption,
-          color: theme.text.muted,
-          fontFamily: typography.fontBody,
-          letterSpacing: typography.labelSpacingTight,
-        }}>
-          {text}
-        </div>
-      )}
     </div>
   );
 }
