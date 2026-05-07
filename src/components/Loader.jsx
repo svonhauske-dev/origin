@@ -18,8 +18,12 @@ export default function Loader({ text }) {
     }}>
       <style>{`
         @keyframes originWave {
-          0%   { r: 14; opacity: 1;   stroke-width: 1.2; }
-          100% { r: 56; opacity: 0;   stroke-width: 0.3; }
+          0%   { transform: scale(1); opacity: 1; }
+          100% { transform: scale(4); opacity: 0; }
+        }
+        .origin-wave {
+          transform-origin: 60px 60px;
+          transform-box: fill-box;
         }
         @keyframes originDot {
           0%, 100% { opacity: 1; }
@@ -33,8 +37,10 @@ export default function Loader({ text }) {
             cx="60"
             cy="60"
             r="14"
+            strokeWidth="1.2"
             stroke={theme.text.primary}
             fill="none"
+            className="origin-wave"
             style={{
               animation: `originWave 3s ${delay}s ease-out infinite`,
               opacity: 0,
