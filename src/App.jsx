@@ -55,28 +55,40 @@ const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "p
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [user, setUser]               = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const appStartTime = useRef(Date.now());
+  const [user, setUser]                         = useState(null);
+  const [authLoading, setAuthLoading]           = useState(true);
+  const [protocolLoading, setProtocolLoading]   = useState(false);
   const token = () => localStorage.getItem("sb_token") || "";
 
+  const isLoading = authLoading || protocolLoading;
+
   useEffect(() => {
-    const t0 = Date.now();
     getSession().then(u => {
-      const remaining = Math.max(0, 1200 - (Date.now() - t0));
-      setTimeout(() => { setUser(u); setAuthLoading(false); }, remaining);
+      if (u) {
+        // Batch all three: user set, protocol loading begins, auth done — single render, Loader stays mounted
+        setUser(u);
+        setProtocolLoading(true);
+        setAuthLoading(false);
+      } else {
+        const remaining = Math.max(0, 1200 - (Date.now() - appStartTime.current));
+        setTimeout(() => setAuthLoading(false), remaining);
+      }
     });
   }, []);
+
+  const handleProtocolLoadEnd = () => {
+    const remaining = Math.max(0, 1200 - (Date.now() - appStartTime.current));
+    setTimeout(() => setProtocolLoading(false), remaining);
+  };
 
   return (
     <ThemeProvider>
       <ToastProvider>
         <NavigationProvider>
-          {authLoading
-            ? <Loader />
-            : !user
-              ? <Auth onSignIn={u => setUser(u)} />
-              : <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} />
-          }
+          {isLoading && <Loader />}
+          {!authLoading && !user && <Auth onSignIn={u => { setUser(u); setProtocolLoading(true); }} />}
+          {user && <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
           <Toast />
           {import.meta.env.DEV && <DevThemePicker />}
         </NavigationProvider>
@@ -87,7 +99,7 @@ export default function App() {
 
 // ── ProtocolApp ───────────────────────────────────────────────────────────────
 
-function ProtocolApp({ user, token, onSignOut }) {
+function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const { theme, syncFromDB } = useTheme();
   const { screenStack, pushScreen, popScreen } = useNavigation();
 
@@ -150,7 +162,6 @@ function ProtocolApp({ user, token, onSignOut }) {
   // Initial load
   useEffect(() => {
     (async () => {
-      const t0 = Date.now();
       setLoading(true);
       try {
         const [s, log, sched, prof] = await Promise.all([
@@ -204,9 +215,8 @@ function ProtocolApp({ user, token, onSignOut }) {
       } catch (e) {
         console.error("Initial load failed:", e);
       } finally {
-        const remaining = Math.max(0, 1200 - (Date.now() - t0));
-        if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
         setLoading(false);
+        onProtocolLoadEnd();
       }
     })();
   }, [token]);
@@ -537,7 +547,7 @@ function ProtocolApp({ user, token, onSignOut }) {
   const dayLabel  = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-  if (loading) return <Loader />;
+  if (loading) return null;
   if (needsNamePrompt) return (
     <PromptName onSave={async (name) => {
       try {
