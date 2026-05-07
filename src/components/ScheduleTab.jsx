@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { spacing, typography, layout, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { parseHHMM, fmtTime, addMins } from '../lib/time';
-import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets, toHrMin, fromHrMin } from '../config';
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets } from '../config';
 import { SLOTS } from '../lib/notifications';
 import Button from './Button';
 import Card from './Card';
@@ -10,19 +10,45 @@ import HelperText from './HelperText';
 import Input from './Input';
 import Label from './Label';
 
+// Recompute breakfast/lunch/dinner from cascade fields and merge back into config.
+const applyCascade = (cfg) => {
+  const firstMeal = (cfg.first_meal_offset_hours ?? 1) * 60 + (cfg.first_meal_offset_minutes ?? 0);
+  const interval  = (cfg.meal_interval_hours ?? 4) * 60 + (cfg.meal_interval_minutes ?? 0);
+  return { ...cfg, breakfast: firstMeal, lunch: firstMeal + interval, dinner: firstMeal + 2 * interval };
+};
+
+// For legacy configs (no first_meal_offset_hours), infer cascade fields from existing offsets.
+const migrateConfig = (merged) => {
+  if (merged.first_meal_offset_hours !== undefined) return merged;
+  const bfast    = merged.breakfast ?? 60;
+  const interval = Math.max(0, (merged.lunch ?? 300) - bfast);
+  return {
+    ...merged,
+    first_meal_offset_hours:   Math.floor(bfast / 60),
+    first_meal_offset_minutes: bfast % 60,
+    meal_interval_hours:       Math.floor(interval / 60),
+    meal_interval_minutes:     interval % 60,
+    evening_mode:              null,
+  };
+};
+
 export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSave }) {
   const { theme } = useTheme();
+  const needsMigration = useRef(scheduleConfig.first_meal_offset_hours === undefined);
+  const debounceRef = useRef(null);
 
   const [localMode,     setLocalMode]     = useState(scheduleMode);
-  const [localConfig,   setLocalConfig]   = useState({
-    ...DEFAULT_CONFIG,
-    ...scheduleConfig,
-    fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(scheduleConfig.fixed_times || {}) },
+  const [localConfig,   setLocalConfig]   = useState(() => {
+    const merged = {
+      ...DEFAULT_CONFIG,
+      ...scheduleConfig,
+      fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(scheduleConfig.fixed_times || {}) },
+    };
+    return migrateConfig(merged);
   });
   const [localBehavior, setLocalBehavior] = useState(anchorBehavior);
   const [localTime,     setLocalTime]     = useState(consistentTime);
   const [saveError,     setSaveError]     = useState(null);
-  const debounceRef = useRef(null);
 
   const scheduleSave = (mode, config, behavior, time, delay = 500) => {
     setSaveError(null);
@@ -33,8 +59,29 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
     }, delay);
   };
 
+  // Persist migrated config on first mount for legacy users
+  useEffect(() => {
+    if (needsMigration.current) {
+      scheduleSave(localMode, localConfig, localBehavior, localTime, 0);
+      needsMigration.current = false;
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const updateConfig = (key, value) => {
     const next = { ...localConfig, [key]: value };
+    setLocalConfig(next);
+    scheduleSave(localMode, next, localBehavior, localTime);
+  };
+
+  // Update a cascade input field and recompute breakfast/lunch/dinner.
+  const updateCascade = (key, value) => {
+    const next = applyCascade({ ...localConfig, [key]: value });
+    setLocalConfig(next);
+    scheduleSave(localMode, next, localBehavior, localTime);
+  };
+
+  const updateEvening = (updates) => {
+    const next = { ...localConfig, ...updates };
     setLocalConfig(next);
     scheduleSave(localMode, next, localBehavior, localTime);
   };
@@ -78,26 +125,35 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
   const previewBase = parseHHMM('07:00');
   const derived     = localMode !== 'fixed' ? deriveOffsets(localMode, localConfig) : null;
 
-  const previewRows = localMode === 'fixed'
-    ? FIXED_SLOTS
+  const previewRows = (() => {
+    if (localMode === 'fixed') {
+      return FIXED_SLOTS
         .filter(fs => localConfig.fixed_times?.[fs.key])
         .map(fs => ({ label: fs.label, timeStr: localConfig.fixed_times[fs.key] }))
-        .sort((a, b) => a.timeStr.localeCompare(b.timeStr))
-    : [
-        { label: MODES.find(m => m.id === localMode)?.title ?? 'Anchor', offset: 0 },
-        ...Object.entries(derived || {})
-          .filter(([, v]) => v !== null && v !== undefined)
-          .map(([sid, offset]) => ({ label: SLOTS.find(s => s.id === sid)?.label ?? sid, offset })),
-      ].sort((a, b) => a.offset - b.offset);
-
-  const mealRows = [
-    { key: 'breakfast',    label: 'Breakfast' },
-    { key: 'lunch',        label: 'Lunch' },
-    { key: 'dinner',       label: 'Dinner' },
-    { key: 'after_dinner', label: 'Evening' },
-  ];
+        .sort((a, b) => a.timeStr.localeCompare(b.timeStr));
+    }
+    const isOffset = localMode === 'medication' || localMode === 'wakeup';
+    const rows = [
+      { label: MODES.find(m => m.id === localMode)?.title ?? 'Anchor', offset: 0 },
+      ...Object.entries(derived || {})
+        // In offset modes, hide after_dinner — it's handled by the evening section below
+        .filter(([sid, v]) => v !== null && v !== undefined && !(isOffset && sid === 'after_dinner'))
+        .map(([sid, offset]) => ({ label: SLOTS.find(s => s.id === sid)?.label ?? sid, offset })),
+    ].sort((a, b) => a.offset - b.offset);
+    if (isOffset) {
+      const em = localConfig.evening_mode;
+      if (em === 'fixed' && localConfig.evening_time) {
+        rows.push({ label: 'Evening', timeStr: localConfig.evening_time });
+      } else if (em === 'before_sleep' && localConfig.sleep_time) {
+        const offsetMins = (localConfig.evening_offset_hours ?? 1) * 60 + (localConfig.evening_offset_minutes ?? 0);
+        rows.push({ label: 'Evening', timeStr: fmtTime(addMins(parseHHMM(localConfig.sleep_time), -offsetMins)) });
+      }
+    }
+    return rows;
+  })();
 
   const isOffsetMode = localMode === 'medication' || localMode === 'wakeup';
+  const em = localConfig.evening_mode; // null | "fixed" | "before_sleep"
 
   return (
     <div>
@@ -150,33 +206,35 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         </div>
       )}
 
-      {/* Medication / Wakeup: offset editor */}
+      {/* Medication / Wakeup: cascade rule editor + evening bucket */}
       {isOffsetMode && (
         <>
           <div style={{ marginBottom: spacing.md }}>
             <Label>Meal schedule</Label>
             <HelperText>Times relative to your anchor</HelperText>
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-              {mealRows.map(({ key, label }) => {
-                const total   = localConfig[key];
-                const isEmpty = total === null || total === undefined;
-                const { h, m } = toHrMin(isEmpty ? 0 : total);
+              {[
+                { key_h: 'first_meal_offset_hours', key_m: 'first_meal_offset_minutes', label: 'First meal' },
+                { key_h: 'meal_interval_hours',     key_m: 'meal_interval_minutes',     label: 'Meal interval' },
+              ].map(({ key_h, key_m, label }) => {
+                const h = localConfig[key_h] ?? 0;
+                const m = localConfig[key_m] ?? 0;
                 return (
-                  <Card key={key} style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                  <Card key={key_h} style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
                     <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>{label}</span>
                     <Input
                       variant="number" width={52} min="0" max="23"
                       inputMode="numeric" pattern="[0-9]*"
-                      value={isEmpty ? '' : h}
-                      onChange={e => updateConfig(key, e.target.value === '' ? 0 : fromHrMin(e.target.value, isEmpty ? 0 : m))}
+                      value={h === 0 ? '' : h}
+                      onChange={e => updateCascade(key_h, parseInt(e.target.value) || 0)}
                       placeholder="0"
                     />
                     <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
                     <Input
                       variant="number" width={52} min="0" max="59"
                       inputMode="numeric" pattern="[0-9]*"
-                      value={isEmpty ? '' : m}
-                      onChange={e => updateConfig(key, e.target.value === '' ? 0 : fromHrMin(isEmpty ? 0 : h, e.target.value))}
+                      value={m === 0 ? '' : m}
+                      onChange={e => updateCascade(key_m, parseInt(e.target.value) || 0)}
                       placeholder="0"
                     />
                     <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
@@ -185,7 +243,8 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
               })}
             </div>
           </div>
-          <div style={{ marginBottom: spacing.lg }}>
+
+          <div style={{ marginBottom: spacing.md }}>
             <Label>Pre-meal window</Label>
             <HelperText>How early before each meal to schedule pre-meal items</HelperText>
             <Card style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
@@ -198,6 +257,71 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
               />
               <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
             </Card>
+          </div>
+
+          <div style={{ marginBottom: spacing.lg }}>
+            <Label>Evening</Label>
+            <HelperText>A fixed slot independent of your anchor</HelperText>
+            <div style={{ display: 'flex', gap: spacing.xs, marginBottom: spacing.sm }}>
+              {([
+                [null,           'Off'],
+                ['fixed',        'Fixed time'],
+                ['before_sleep', 'Before sleep'],
+              ]).map(([val, label]) => (
+                <button
+                  key={String(val)}
+                  onClick={() => updateEvening({ evening_mode: val })}
+                  style={segBtnStyle(em === val)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {em === 'fixed' && (
+              <Card style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Evening time</span>
+                <Input
+                  variant="time"
+                  value={localConfig.evening_time || ''}
+                  onChange={e => updateEvening({ evening_mode: 'fixed', evening_time: e.target.value || null })}
+                  style={{ width: 'auto' }}
+                />
+              </Card>
+            )}
+
+            {em === 'before_sleep' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+                <Card style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                  <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Bedtime</span>
+                  <Input
+                    variant="time"
+                    value={localConfig.sleep_time || ''}
+                    onChange={e => updateEvening({ evening_mode: 'before_sleep', sleep_time: e.target.value || null })}
+                    style={{ width: 'auto' }}
+                  />
+                </Card>
+                <Card style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                  <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Before bedtime</span>
+                  <Input
+                    variant="number" width={52} min="0" max="23"
+                    inputMode="numeric" pattern="[0-9]*"
+                    value={(localConfig.evening_offset_hours ?? 1) || ''}
+                    onChange={e => updateEvening({ evening_mode: 'before_sleep', evening_offset_hours: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                  />
+                  <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                  <Input
+                    variant="number" width={52} min="0" max="59"
+                    inputMode="numeric" pattern="[0-9]*"
+                    value={(localConfig.evening_offset_minutes ?? 0) || ''}
+                    onChange={e => updateEvening({ evening_mode: 'before_sleep', evening_offset_minutes: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                  />
+                  <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                </Card>
+              </div>
+            )}
           </div>
         </>
       )}

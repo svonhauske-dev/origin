@@ -279,6 +279,16 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const ft = scheduleConfig.fixed_times?.[sid];
       return ft ? parseHHMM(ft) : null;
     }
+    // Evening bucket — absolute time, independent of anchor (medication/wakeup only)
+    if (sid === "after_dinner" && (scheduleMode === "medication" || scheduleMode === "wakeup") && scheduleConfig.evening_mode !== undefined) {
+      const em = scheduleConfig.evening_mode;
+      if (em === "fixed" && scheduleConfig.evening_time) return parseHHMM(scheduleConfig.evening_time);
+      if (em === "before_sleep" && scheduleConfig.sleep_time) {
+        const offsetMins = (scheduleConfig.evening_offset_hours ?? 1) * 60 + (scheduleConfig.evening_offset_minutes ?? 0);
+        return addMins(parseHHMM(scheduleConfig.sleep_time), -offsetMins);
+      }
+      return null;
+    }
     if (!effectivePillTime) return null;
     if (sid === "rx") return parseHHMM(effectivePillTime);
     const offset = slotOffsets?.[sid];

@@ -212,6 +212,39 @@ Deno.serve(async (req: Request) => {
     for (const slotId of TIMED_SLOT_IDS) {
       if (slotId === "rx") continue; // already handled above
 
+      // Evening bucket: after_dinner is an absolute-time slot in medication/wakeup modes
+      // when evening_mode is set. Intercept before using anchor-relative offsets.
+      if (slotId === "after_dinner" && (mode === "medication" || mode === "wakeup") && cfg.evening_mode !== undefined) {
+        let fireAt: Date | null = null;
+        const em = cfg.evening_mode;
+        if (em === "fixed" && cfg.evening_time) {
+          fireAt = parseLocalHHMM(dateStr, cfg.evening_time as string, tz);
+        } else if (em === "before_sleep" && cfg.sleep_time) {
+          const offsetMins = ((cfg.evening_offset_hours as number) ?? 1) * 60 + ((cfg.evening_offset_minutes as number) ?? 0);
+          fireAt = addMins(parseLocalHHMM(dateStr, cfg.sleep_time as string, tz), -offsetMins);
+        }
+        if (fireAt && fireAt > now) {
+          const slotSupps = supps.filter(
+            (s) => Array.isArray(s.slots) && s.slots.includes("after_dinner") &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
+          if (slotSupps.length) {
+            rows.push({
+              user_id:             userId,
+              fire_at:             fireAt.toISOString(),
+              scheduled_for_date:  fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+              title:               "Time for Evening",
+              body:                slotSupps.map((s) => s.name).join(", "),
+              slot_id:             "after_dinner",
+              tag:                 `${dateStr}_after_dinner`,
+              fired:               false,
+            });
+          }
+        }
+        continue; // skip anchor-relative path for this slot
+      }
+
       const offset = offsets[slotId];
       if (offset === null || offset === undefined) continue;
 
