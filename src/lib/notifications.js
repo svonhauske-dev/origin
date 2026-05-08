@@ -15,8 +15,6 @@ export const SLOTS = [
   { id: "pre_dinner",    label: "Before Dinner",     sublabel: "30 min before eating",        icon: "◎" },
   { id: "dinner",        label: "With Dinner",       sublabel: "With food",                   icon: "●" },
   { id: "after_dinner",  label: "Evening",           sublabel: "Before bed",                  icon: "◑" },
-  { id: "injectable",    label: "Injectables",       sublabel: "Subcutaneous",                icon: "⊕" },
-  { id: "topical",       label: "Topicals",          sublabel: "Skin & external",             icon: "◐" },
 ];
 
 // ── Service worker registration ───────────────────────────────────────────────

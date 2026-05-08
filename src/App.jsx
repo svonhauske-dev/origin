@@ -120,7 +120,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [tmpTime, setTmpTime]               = useState("");
   const [formOpen, setFormOpen]             = useState(false);
   const [editingId, setEditingId]           = useState(null);
-  const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", timePreference: "Anytime", paused: false });
+  const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false });
   const [streak, setStreak]                 = useState(0);
   const [flashGreen, setFlashGreen]         = useState(false);
   const [scheduleMode, setScheduleMode]     = useState("none");
@@ -183,8 +183,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           if (out.slots?.includes("fasted")) {
             out = { ...out, slots: out.slots.map(sl => sl === "fasted" ? "pre_breakfast" : sl) };
           }
-          if ((out.category === "Injectable" || out.category === "Topical") && !out.timePreference) {
-            out = { ...out, timePreference: "Anytime" };
+          if (out.slots?.some(sl => sl === "injectable" || sl === "topical")) {
+            out = { ...out, slots: out.slots.filter(sl => sl !== "injectable" && sl !== "topical") };
           }
           migrated.push(out);
           if (out !== supp) toWrite.push(out);
@@ -274,7 +274,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   };
 
   const getSlotTime = (sid) => {
-    if (sid === "injectable" || sid === "topical") return null;
     if (scheduleMode === "fixed") {
       // Pre-meal slots derive from their meal time minus the global window.
       if (sid === "pre_breakfast" || sid === "pre_lunch" || sid === "pre_dinner") {
@@ -335,7 +334,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   let coreTotal = anytimeSupps.length, coreDone = 0;
   anytimeSupps.forEach(s => { if (isChecked("anytime", s.id)) coreDone++; });
   CORE_SLOTS.forEach(sid => {
-    const sl = getSuppsForSlot(sid).filter(s => (s.category || "Oral") !== "Injectable" && (s.category || "Oral") !== "Topical");
+    const sl = getSuppsForSlot(sid);
     coreTotal += sl.length;
     sl.forEach(s => { if (isChecked(sid, s.id)) coreDone++; });
   });
@@ -359,8 +358,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }
   }
 
-  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", timePreference: "Anytime", paused: false, status: 'active', treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null }); setSubmitError(null); setFormOpen(true); };
-  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", timePreference: supp.timePreference || "Anytime", paused: supp.paused ?? false, status: supp.status ?? 'active', treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
+  const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null }); setSubmitError(null); setFormOpen(true); };
+  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
   const closeForm = () => { setFormOpen(false); setEditingId(null); };
 
   const submitForm = async () => {
@@ -395,7 +394,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         setSupps(s => s.map(x => x.id === editingId ? { ...form, days: finalDays, category: cat, id: editingId, ...txFields } : x));
         showToast(`Updated ${form.name}`);
       } else {
-        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, timePreference: form.timePreference || "Anytime", paused: false, status: 'active', stopped_at: null, user_id: user.id, ...txFields }, token);
+        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, paused: false, status: 'active', stopped_at: null, user_id: user.id, ...txFields }, token);
         if (rows?.[0]) setSupps(s => [...s, rows[0]]);
         showToast(`Added ${form.name}`);
       }
@@ -670,20 +669,15 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
               )}
               {SLOTS.map(slot => {
-                const slotSupps = slot.id === "injectable"
-                  ? getSuppsForSlot(slot.id).filter(s => s.category === "Injectable")
-                  : slot.id === "topical"
-                    ? getSuppsForSlot(slot.id).filter(s => s.category === "Topical")
-                    : getSuppsForSlot(slot.id).filter(s => s.category !== "Injectable" && s.category !== "Topical");
+                const slotSupps = getSuppsForSlot(slot.id);
                 if (!slotSupps.length) return null;
-                const isVarSlot = slot.id === "injectable" || slot.id === "topical";
                 const hasOffset = scheduleMode === "fixed"
-                  ? !isVarSlot && !!scheduleConfig.fixed_times?.[slot.id]
+                  ? !!scheduleConfig.fixed_times?.[slot.id]
                   : slot.id === "rx"
                     ? !!pillTime
-                    : !isVarSlot && slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
+                    : slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
                 const noSched = scheduleMode === "none";
-                const timeLabel = noSched ? "" : isVarSlot ? "variable" : (hasOffset ? slotTimeStr(slot.id) : "variable");
+                const timeLabel = noSched ? "" : (hasOffset ? slotTimeStr(slot.id) : "variable");
                 const status = noSched ? "future" : slotStatus(slot.id);
                 const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
                 const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, Trash2, Pause, Play } from "lucide-react";
+import { ChevronLeft, Trash2, Pause, Play, Pill, Syringe, Droplet } from "lucide-react";
 import { spacing, typography, touch, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
@@ -10,6 +10,13 @@ import { isPausedSupp, isStoppedSupp } from "../lib/time";
 import { dbGetAdherenceCounts } from "../lib/api";
 
 const CATEGORY_ORDER = ["Oral", "Rx", "Injectable", "Topical"];
+
+function CategoryIcon({ category, color }) {
+  if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
+  if (category === "Injectable") return <Syringe  size={14} color={color} style={{ flexShrink: 0 }} />;
+  if (category === "Topical")    return <Droplet  size={14} color={color} style={{ flexShrink: 0 }} />;
+  return null;
+}
 
 function formatStoppedDate(dateStr) {
   if (!dateStr) return "";
@@ -177,8 +184,9 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                           <>
                             <div
                               onClick={() => onEdit(supp)}
-                              style={{ flex: 1, cursor: "pointer", userSelect: "none", WebkitTapHighlightColor: "transparent", paddingRight: spacing.sm, display: "flex", alignItems: "center", gap: spacing.xs, minWidth: 0 }}
+                              style={{ flex: 1, cursor: "pointer", userSelect: "none", WebkitTapHighlightColor: "transparent", paddingRight: spacing.sm, display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}
                             >
+                              <CategoryIcon category={supp.category} color={theme.text.muted} />
                               <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
                                 {supp.name}
                               </span>
@@ -240,7 +248,8 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                       ) : (
                         <div style={{ display: "flex", alignItems: "flex-start", gap: spacing.sm }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs }}>
+                            <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs, display: "flex", alignItems: "center", gap: "6px" }}>
+                              <CategoryIcon category={supp.category} color={theme.text.muted} />
                               {supp.name}
                             </div>
                             {supp.dose && (

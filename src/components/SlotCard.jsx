@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Pill, Syringe, Droplet } from 'lucide-react';
 import { spacing, typography, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
+
+function CategoryIcon({ category, color }) {
+  if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
+  if (category === "Injectable") return <Syringe  size={14} color={color} style={{ flexShrink: 0 }} />;
+  if (category === "Topical")    return <Droplet  size={14} color={color} style={{ flexShrink: 0 }} />;
+  return null;
+}
 
 export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, toggleCheck, openEdit, noSchedule, isReadOnly, isPast }) {
   const { theme } = useTheme();
   const allDone = slotSupps.every(s => isChecked(slot.id, s.id));
   const [expanded, setExpanded] = useState(!allDone);
   useEffect(() => { setExpanded(!allDone); }, [allDone]);
-  const isVariableSlot = slot.id === "injectable" || slot.id === "topical";
 
   const SC = {
     done:   { border: theme.border.subtle,          bg: theme.surface.cardSubtle,        hbg: "transparent",                badge: null },
@@ -21,7 +27,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
   const sc = SC[status];
 
   return (
-    <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime && !isVariableSlot ? 0.38 : 1 }}>
+    <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime ? 0.38 : 1 }}>
       <div onClick={() => setExpanded(e => !e)} style={{ padding: `${spacing.md}px`, display: "flex", justifyContent: "space-between", alignItems: "center", background: sc.hbg, cursor: "pointer", userSelect: "none" }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flex: 1, minWidth: 0 }}>
           {allDone
@@ -51,9 +57,9 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                   {done && <span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: typography.body, color: done ? theme.text.muted : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xxs }}>
+                  <div style={{ fontSize: typography.body, color: done ? theme.text.muted : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: "6px" }}>
+                    <CategoryIcon category={supp.category} color={theme.text.muted} />
                     {supp.name}
-                    {supp.category === "Rx" && <Badge variant="category">Rx</Badge>}
                   </div>
                   <div style={{ fontSize: typography.label, color: theme.text.muted, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
                 </div>

@@ -113,13 +113,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
             const on = form.category === cat;
             return (
               <Button key={cat} variant="pill" active={on} style={{ flex: 1 }} onClick={() => {
-                if (cat === "Injectable") {
-                  setForm(f => ({ ...f, category: cat, slots: ["injectable"], timePreference: f.timePreference || "Anytime" }));
-                } else if (cat === "Topical") {
-                  setForm(f => ({ ...f, category: cat, slots: ["topical"], timePreference: f.timePreference || "Anytime" }));
-                } else {
-                  setForm(f => ({ ...f, category: cat, slots: [], timePreference: "Anytime" }));
-                }
+                setForm(f => ({ ...f, category: cat, slots: [] }));
               }}>
                 {cat}
               </Button>
@@ -240,51 +234,34 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
         )}
       </div>
 
-      {(form.category === "Injectable" || form.category === "Topical") ? (
-        <div style={{ marginBottom: spacing.md }}>
-          <Label>When to take it</Label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-            {["Morning", "Midday", "Evening", "Before Bed", "Anytime"].map(pref => {
-              const on = form.timePreference === pref;
+      <div style={{ marginBottom: spacing.md }}>
+        <Label>When to take it</Label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
+          {SLOTS.filter(s => {
+            if (s.id === "rx") return scheduleMode === "medication" || form.slots.includes("rx");
+            return true;
+          }).map(slot => {
+            if (slot.id === "rx" && scheduleMode !== "medication" && form.slots.includes("rx")) {
               return (
-                <Button key={pref} variant="pill" active={on} onClick={() => setForm(f => ({ ...f, timePreference: pref }))}>
-                  {pref}
-                </Button>
+                <div key="rx" style={{ width: "100%" }}>
+                  <Button variant="pill" active style={{ opacity: 0.45, pointerEvents: "none" }}>
+                    {slot.label}
+                  </Button>
+                  <HelperText style={{ marginTop: spacing.xxxs }}>
+                    Not available in your current schedule mode
+                  </HelperText>
+                </div>
               );
-            })}
-          </div>
+            }
+            const on = form.slots.includes(slot.id);
+            return (
+              <Button key={slot.id} variant="pill" active={on} onClick={() => toggleSlot(slot.id)}>
+                {slot.label}
+              </Button>
+            );
+          })}
         </div>
-      ) : (
-        <div style={{ marginBottom: spacing.md }}>
-          <Label>When to take it</Label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing.xs }}>
-            {SLOTS.filter(s => {
-              if (s.id === "injectable" || s.id === "topical") return false;
-              if (s.id === "rx") return scheduleMode === "medication" || form.slots.includes("rx");
-              return true;
-            }).map(slot => {
-              if (slot.id === "rx" && scheduleMode !== "medication" && form.slots.includes("rx")) {
-                return (
-                  <div key="rx" style={{ width: "100%" }}>
-                    <Button variant="pill" active style={{ opacity: 0.45, pointerEvents: "none" }}>
-                      {slot.label}
-                    </Button>
-                    <HelperText style={{ marginTop: spacing.xxxs }}>
-                      Not available in your current schedule mode
-                    </HelperText>
-                  </div>
-                );
-              }
-              const on = form.slots.includes(slot.id);
-              return (
-                <Button key={slot.id} variant="pill" active={on} onClick={() => toggleSlot(slot.id)}>
-                  {slot.label}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      </div>
 
       {mode !== "cycled" && (
         <div style={{ marginBottom: spacing.md }}>
