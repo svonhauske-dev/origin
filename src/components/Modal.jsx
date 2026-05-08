@@ -1,11 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, createContext, useContext } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { spacing, typography, radius, shadows, effects, zIndex as zIndexTokens } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 
+// Tracks nesting depth so each nested modal gets a higher z-index tier.
+const ModalDepthCtx = createContext(0);
+
 export default function Modal({ open, onClose, title, children, footer, leftAction }) {
   const { theme } = useTheme();
+  const depth = useContext(ModalDepthCtx);
+  const zBackdrop = zIndexTokens.backdrop + depth * 100;
+  const zSheet    = zIndexTokens.modal    + depth * 100;
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const touchStartY = useRef(0);
@@ -54,8 +61,10 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
 
   const sheetTransition = isDragging ? "none" : "transform 0.3s ease-out";
 
-  return (
-    <>
+  // Portal to document.body so position:fixed is never constrained by a
+  // transformed ancestor (e.g. the outer sheet's translateY animation).
+  return createPortal(
+    <ModalDepthCtx.Provider value={depth + 1}>
       {/* Full-screen backdrop — negative top/bottom extend past safe-area zones */}
       <div
         onClick={onClose}
@@ -71,7 +80,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
           opacity: open ? 1 : 0,
           transition: "opacity 250ms ease-out",
           pointerEvents: open ? "all" : "none",
-          zIndex: zIndexTokens.backdrop,
+          zIndex: zBackdrop,
         }}
       />
 
@@ -93,7 +102,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
           flexDirection: "column",
           overflow: "hidden",
           paddingBottom: "env(safe-area-inset-bottom)",
-          zIndex: zIndexTokens.modal,
+          zIndex: zSheet,
           pointerEvents: open ? "all" : "none",
         }}
       >
@@ -177,6 +186,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
           </div>
         )}
       </div>
-    </>
+    </ModalDepthCtx.Provider>,
+    document.body
   );
 }
