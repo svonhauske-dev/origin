@@ -140,7 +140,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
   const segBtnStyle = (on) => ({
     flex: 1,
     padding: `${spacing.sm}px`,
-    borderRadius: theme.radius.pill,
+    borderRadius: theme.radius.button,
     cursor: 'pointer',
     fontSize: typography.caption,
     fontFamily: typography.fontBody,

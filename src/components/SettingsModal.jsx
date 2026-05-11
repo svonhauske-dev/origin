@@ -81,7 +81,7 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
   const themeBtnStyle = (active) => ({
     flex: 1,
     padding: `${spacing.sm}px`,
-    borderRadius: theme.radius.pill,
+    borderRadius: theme.radius.button,
     cursor: "pointer",
     fontSize: typography.caption,
     fontFamily: typography.fontBody,

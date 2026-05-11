@@ -48,7 +48,7 @@ export default function Button({
       color: isFuture ? theme.text.muted : theme.text.onAccent,
       border: "none",
       fontWeight: typography.semibold,
-      borderRadius: theme.radius.pill,
+      borderRadius: theme.radius.button,
       minHeight: spacing.xxl,
       padding: `${spacing.sm}px ${spacing.md}px`,
       fontSize: typography.body,
@@ -67,7 +67,7 @@ export default function Button({
     };
   } else if (variant === "pill") {
     const pillBase = {
-      borderRadius: theme.radius.pill,
+      borderRadius: theme.radius.button,
       minHeight: touch.min,
       padding: `${spacing.xs}px ${spacing.sm}px`,
       fontSize: typography.caption,
@@ -117,7 +117,7 @@ export default function Button({
     v = {
       width: 36,
       height: 36,
-      borderRadius: theme.radius.pill,
+      borderRadius: theme.radius.button,
       fontSize: typography.label,
       flexShrink: 0,
       padding: 0,
