@@ -5,6 +5,7 @@ import { SLOTS } from '../lib/notifications';
 import { dateKey, isPausedSupp } from '../lib/time';
 import Button from './Button';
 import Input from './Input';
+import SupplementNameAutocomplete from './SupplementNameAutocomplete';
 import Label from './Label';
 import Badge from './Badge';
 import HelperText from './HelperText';
@@ -19,7 +20,7 @@ const TREATMENT_MODES = [
 ];
 const UNITS = ["days", "weeks", "months"];
 
-export default function EditForm({ form, setForm, editingId, onStop, onResume, onDelete, scheduleMode }) {
+export default function EditForm({ form, setForm, editingId, onStop, onResume, onDelete, scheduleMode, supplementHistory = [] }) {
   const { theme } = useTheme();
   const [nameTouched, setNameTouched] = useState(false);
   const [touched, setTouched] = useState({});
@@ -91,18 +92,28 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
         </div>
       )}
 
-      {[["Name", "name", "e.g. Magnesium Glycinate"], ["Dose", "dose", "e.g. 2 caps (300 mg)"], ["Notes", "notes", "e.g. Thorne · with food"]].map(([lbl, key, ph]) => (
+      <div style={{ marginBottom: spacing.md }}>
+        <Label>Name</Label>
+        <SupplementNameAutocomplete
+          value={form.name}
+          placeholder="e.g. Magnesium Glycinate"
+          history={supplementHistory}
+          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+          onBlur={() => setNameTouched(true)}
+        />
+        {nameTouched && !form.name?.trim() && (
+          <div style={errStyle}>Name is required</div>
+        )}
+      </div>
+
+      {[["Dose", "dose", "e.g. 2 caps (300 mg)"], ["Notes", "notes", "e.g. Thorne · with food"]].map(([lbl, key, ph]) => (
         <div key={key} style={{ marginBottom: spacing.md }}>
           <Label>{lbl}</Label>
           <Input
             value={form[key]}
             placeholder={ph}
             onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-            {...(key === "name" ? { onBlur: () => setNameTouched(true) } : {})}
           />
-          {key === "name" && nameTouched && !form.name?.trim() && (
-            <div style={errStyle}>Name is required</div>
-          )}
         </div>
       ))}
 

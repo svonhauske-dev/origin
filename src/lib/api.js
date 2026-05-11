@@ -192,6 +192,9 @@ export async function recomputeNotifications(token) {
   }
 }
 
+export const dbGetSupplementHistory  = (t)         => supa("GET",  "/rest/v1/user_supplement_history?select=name&order=created_at.desc", null, t);
+export const dbAddSupplementHistory  = (name, t)   => supa("POST", "/rest/v1/user_supplement_history?on_conflict=user_id,name", { name }, t);
+
 export const dbGetProfile    = (userId, t)       => supa("GET",   `/rest/v1/user_profiles?id=eq.${userId}&select=*`, null, t).then(r => r?.[0] || null);
 export const dbCreateProfile = (data, t)         => supa("POST",  "/rest/v1/user_profiles", data, t);
 export const dbUpdateProfile = (userId, data, t) => supa("PATCH", `/rest/v1/user_profiles?id=eq.${userId}`, data, t);

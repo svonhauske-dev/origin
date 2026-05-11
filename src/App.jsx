@@ -34,6 +34,7 @@ import {
   dbUpdateScheduleField,
   dbGetProfile, dbCreateProfile,
   recomputeNotifications,
+  dbGetSupplementHistory, dbAddSupplementHistory,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isStoppedSupp } from './lib/time';
 import { SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
@@ -138,6 +139,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [needsNotificationPrompt, setNeedsNotificationPrompt] = useState(false);
   const [submitting, setSubmitting]           = useState(false);
   const [submitError, setSubmitError]         = useState(null);
+  const [supplementHistory, setSupplementHistory] = useState([]);
   const saveTimer = useRef(null);
   const lastTzRef = useRef(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const { show: showToast } = useToast();
@@ -183,12 +185,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     (async () => {
       setLoading(true);
       try {
-        const [s, log, sched, prof] = await Promise.all([
+        const [s, log, sched, prof, histRows] = await Promise.all([
           dbGetSupps(token),
           dbGetLog(dk, token),
           dbGetSchedule(token),
           dbGetProfile(user.id, token).catch(() => null),
+          dbGetSupplementHistory(token).catch(() => []),
         ]);
+        setSupplementHistory((histRows || []).map(r => r.name));
         setProfile(prof);
         if (prof === null) setNeedsNamePrompt(true);
         const migrated = [];
@@ -413,6 +417,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, paused: false, status: 'active', stopped_at: null, user_id: user.id, ...txFields }, token);
         if (rows?.[0]) setSupps(s => [...s, rows[0]]);
         showToast(`Added ${form.name}`);
+        const savedName = form.name.trim();
+        if (savedName) {
+          setSupplementHistory(h => h.includes(savedName) ? h : [savedName, ...h]);
+          dbAddSupplementHistory(savedName, token).catch(() => {});
+        }
       }
       recomputeNotifications(token);
       closeForm();
@@ -746,7 +755,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           ) : null
         }
       >
-        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} />
+        <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} supplementHistory={supplementHistory} />
       </Modal>
     </div>
   );
