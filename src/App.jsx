@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   spacing, typography, touch, layout,
-  shadows, zIndex,
+  shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
 import DevThemePicker from "./components/DevThemePicker";
@@ -142,6 +142,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [supplementHistory, setSupplementHistory] = useState([]);
   const saveTimer = useRef(null);
   const lastTzRef = useRef(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth >= breakpoints.desktop
+  );
   const { show: showToast } = useToast();
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -179,6 +182,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [token]);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= breakpoints.desktop);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -630,6 +639,148 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     />
   );
 
+  const slotCardsContent = (
+    <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs2 }}>
+      {SLOTS.map(slot => {
+        const slotSupps = getSuppsForSlot(slot.id);
+        if (!slotSupps.length) return null;
+        const hasOffset = scheduleMode === "fixed"
+          ? !!scheduleConfig.fixed_times?.[slot.id]
+          : slot.id === "rx"
+            ? !!pillTime
+            : slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
+        const noSched = scheduleMode === "none";
+        const timeLabel = noSched ? "" : (hasOffset ? slotTimeStr(slot.id) : "variable");
+        const status = noSched ? "future" : slotStatus(slot.id);
+        const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
+        const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
+        return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
+      })}
+      {anytimeSupps.length > 0 && (
+        <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
+      )}
+    </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <div style={{ fontFamily: typography.fontBody, color: theme.text.primary, background: BG_GRADIENT, minHeight: "100dvh", WebkitFontSmoothing: "antialiased" }}>
+        <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: spacing.xl, maxWidth: 1200, margin: "0 auto", padding: spacing.lg }}>
+
+          {/* Left column — sticky context */}
+          <div style={{ width: 400, position: "sticky", top: spacing.lg, flexShrink: 0, display: "flex", flexDirection: "column", gap: spacing.md }}>
+
+            {/* Greeting */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading }}>
+                {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Hello"}
+              </span>
+              <Button variant="icon" aria-label="Settings" onClick={() => pushScreen('settings')}>
+                <Settings size={18} />
+              </Button>
+            </div>
+
+            {/* Date nav */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)}><ChevronLeft size={24} color={theme.text.secondary} style={{ marginRight: spacing.xxxs }} /></Button>
+              <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
+                <div style={{ fontSize: typography.label, color: theme.text.muted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
+                <button onClick={() => { if (!isToday) { setViewDate(TODAY); setPastDayEditing(false); } }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? theme.text.primary : theme.accent.default, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
+                <div style={{ fontSize: typography.caption2, color: theme.text.faint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
+              </div>
+              <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)}><ChevronRight size={24} color={theme.text.secondary} style={{ marginLeft: spacing.xxxs }} /></Button>
+            </div>
+
+            {/* Hero */}
+            <div style={{ opacity: isReadOnly ? 0.6 : 1, transition: "opacity 200ms ease-out" }}>
+              <Hero
+                scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
+                pct={pct} coreTotal={coreTotal} coreDone={coreDone}
+                pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
+                editPillTime={editPillTime} setEditPillTime={setEditPillTime}
+                tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
+                isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}
+                isPast={isPast} isReadOnly={isReadOnly}
+                pastDayEditing={pastDayEditing} setPastDayEditing={setPastDayEditing}
+                nextFixedSlot={nextFixedSlot}
+              />
+            </div>
+
+            {/* Add/Manage */}
+            {!isPast && (
+              <div style={{ display: "flex", gap: spacing.xs }}>
+                <Button variant="primary" onClick={openAdd} style={{ flex: 1 }}>+ Add item</Button>
+                <Button variant="secondary" onClick={() => pushScreen('manage_protocol')} style={{ flex: 1, background: theme.surface.modal }}>Manage</Button>
+              </div>
+            )}
+          </div>
+
+          {/* Right column — scrollable slot cards */}
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: spacing.md }}>
+            <div style={{ maxWidth: 600 }}>
+              <div style={{ opacity: isReadOnly ? 0.6 : 1, transition: "opacity 200ms ease-out" }}>
+                {homeSupps.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px`, color: theme.text.muted }}>
+                    <div style={{ fontSize: typography.body, marginBottom: spacing.xs }}>No supplements yet.</div>
+                    <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5 }}>Tap "+ Add item" on the left to get started.</div>
+                  </div>
+                ) : (
+                  <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md }}>
+                    {slotCardsContent}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <SettingsScreen
+          isOpen={screenStack.some(s => s.name === 'settings')}
+          onBack={popScreen}
+          onSignOut={handleSignOut}
+          user={user}
+          token={token}
+          profile={profile}
+          onProfileUpdate={(updated) => setProfile(updated)}
+          onNotificationsEnabled={() => recomputeNotifications(token)}
+        />
+        <ManageProtocolScreen
+          isOpen={screenStack.some(s => s.name === 'manage_protocol')}
+          onBack={popScreen}
+          supplements={visibleSupps}
+          token={token}
+          onEdit={openEdit}
+          onDelete={requestDelete}
+          onTogglePause={togglePause}
+          onResume={resumeSupp}
+          scheduleMode={scheduleMode}
+          scheduleConfig={scheduleConfig}
+          anchorBehavior={anchorBehavior}
+          consistentTime={consistentTime}
+          onSaveSchedule={saveSchedule}
+        />
+        <Modal
+          open={formOpen}
+          onClose={closeForm}
+          title={editingId ? "Edit item" : "New item"}
+          footer={
+            form.status !== 'stopped' ? (
+              <>
+                {submitError && <div style={{ fontSize: typography.label, color: theme.status.danger, marginBottom: spacing.xs, textAlign: "center" }}>{submitError}</div>}
+                <Button variant="primary" fullWidth onClick={submitForm} disabled={submitting || !form.name?.trim()}>
+                  {submitting ? <InlineLoader size="sm" /> : (editingId ? "Save changes" : "Add to protocol")}
+                </Button>
+              </>
+            ) : null
+          }
+        >
+          <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} supplementHistory={supplementHistory} />
+        </Modal>
+      </div>
+    );
+  }
+
   return (
     <div style={{ fontFamily: typography.fontBody, color: theme.text.primary, maxWidth: layout.maxContentWidth, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: BG_GRADIENT, minHeight: "100vh" }}>
 
@@ -687,29 +838,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first item to get started.</div>
               {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs2 }}>
-              {SLOTS.map(slot => {
-                const slotSupps = getSuppsForSlot(slot.id);
-                if (!slotSupps.length) return null;
-                const hasOffset = scheduleMode === "fixed"
-                  ? !!scheduleConfig.fixed_times?.[slot.id]
-                  : slot.id === "rx"
-                    ? !!pillTime
-                    : slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
-                const noSched = scheduleMode === "none";
-                const timeLabel = noSched ? "" : (hasOffset ? slotTimeStr(slot.id) : "variable");
-                const status = noSched ? "future" : slotStatus(slot.id);
-                const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
-                const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
-                return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
-              })}
-              {/* Anytime block — supplements with no slots, all schedule modes */}
-              {anytimeSupps.length > 0 && (
-                <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
-              )}
-            </div>
-          )}
+          ) : slotCardsContent}
         </div>
 
       </div>{/* end opacity wrapper */}

@@ -446,3 +446,7 @@ export const themes = {
     borderWidth: { subtle: 2, default: 2, accent: 3 },
   },
 };
+
+export const breakpoints = {
+  desktop: 1024,
+};
