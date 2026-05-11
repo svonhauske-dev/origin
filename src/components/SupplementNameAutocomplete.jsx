@@ -10,7 +10,6 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
   const [suggestions, setSuggestions] = useState([]);
   const debounceRef = useRef(null);
   const blurTimerRef = useRef(null);
-  const containerRef = useRef(null);
 
   const computeSuggestions = useCallback((text) => {
     if (!text || text.length < 3) {
@@ -48,16 +47,6 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
     return () => clearTimeout(debounceRef.current);
   }, [value, computeSuggestions]);
 
-  // Lock modal body scroll while dropdown is visible so only the dropdown scrolls
-  useEffect(() => {
-    if (!open) return;
-    const modalBody = containerRef.current?.closest('[data-modal-body]');
-    if (!modalBody) return;
-    const prev = modalBody.style.overflowY;
-    modalBody.style.overflowY = 'hidden';
-    return () => { modalBody.style.overflowY = prev; };
-  }, [open]);
-
   const handleSelect = (name) => {
     onChange({ target: { value: name } });
     setOpen(false);
@@ -79,7 +68,7 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       <Input
         value={value}
         onChange={onChange}
