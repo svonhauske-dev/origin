@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Pencil, Pill, Syringe, Droplet } from 'lucide-react';
+import { Pencil, Pill, Syringe, Droplet, Tablet } from 'lucide-react';
 import { spacing, typography, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
 
 function CategoryIcon({ category, color }) {
+  if (category === "Oral")       return <Tablet   size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Injectable") return <Syringe  size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Topical")    return <Droplet  size={14} color={color} style={{ flexShrink: 0 }} />;
@@ -58,8 +59,8 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: typography.body, color: done ? theme.text.muted : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: "6px" }}>
-                    <CategoryIcon category={supp.category} color={theme.text.muted} />
                     {supp.name}
+                    <CategoryIcon category={supp.category} color={theme.text.muted} />
                   </div>
                   <div style={{ fontSize: typography.label, color: theme.text.muted, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
                 </div>
