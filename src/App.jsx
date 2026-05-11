@@ -29,6 +29,7 @@ import Hero from "./components/Hero";
 import Sidebar, { AccountAvatar } from "./components/Sidebar";
 import WeekStrip from "./components/WeekStrip";
 import TodayPanel from "./components/TodayPanel";
+import InsightsPanel from "./components/InsightsPanel";
 import {
   supa, getSession, signInPassword, signUp, signOut, refreshSession,
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
@@ -176,6 +177,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   );
   const [weekLogs, setWeekLogs] = useState([]);
   const [viewedWeekEnd, setViewedWeekEnd] = useState(() => startOfDay(TODAY));
+  const [manageProtocolDefaultTab, setManageProtocolDefaultTab] = useState('active');
   const { show: showToast } = useToast();
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -473,6 +475,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       };
     }
   }
+
+  const openManageSchedule = () => { setManageProtocolDefaultTab('schedule'); pushScreen('manage_protocol'); };
+  const openManageProtocol = () => { setManageProtocolDefaultTab('active');   pushScreen('manage_protocol'); };
 
   const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null }); setSubmitError(null); setFormOpen(true); };
   const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
@@ -801,7 +806,19 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 openEdit={openEdit}
               />
             </div>
-            <PlaceholderSection title="INSIGHTS" style={{ flex: 1, minHeight: 200 }} />
+            <div style={{ flex: 1 }}>
+              <InsightsPanel
+                supplements={supps}
+                weekDates={weekDates}
+                weekLogs={weekLogs}
+                streak={streak}
+                scheduleMode={scheduleMode}
+                anchorBehavior={anchorBehavior}
+                consistentTime={consistentTime}
+                onConfigureSchedule={openManageSchedule}
+                onManageProtocol={openManageProtocol}
+              />
+            </div>
           </div>
         </main>
 
@@ -829,6 +846,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           anchorBehavior={anchorBehavior}
           consistentTime={consistentTime}
           onSaveSchedule={saveSchedule}
+          defaultTab={manageProtocolDefaultTab}
         />
         <Modal
           open={formOpen}

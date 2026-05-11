@@ -29,7 +29,7 @@ function formatStoppedDate(dateStr) {
   return date.toLocaleDateString("en-US", opts);
 }
 
-export default function ManageProtocolScreen({ isOpen, onBack, supplements, token, onEdit, onDelete, onTogglePause, onResume, scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSaveSchedule }) {
+export default function ManageProtocolScreen({ isOpen, onBack, supplements, token, onEdit, onDelete, onTogglePause, onResume, scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSaveSchedule, defaultTab }) {
   const { theme } = useTheme();
   const [viewMode, setViewMode]             = useState("active");
   const [confirmStopId, setConfirmStopId]   = useState(null);
@@ -49,8 +49,9 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
 
   useEffect(() => {
     if (!isOpen) {
-      setViewMode("active");
       setConfirmStopId(null);
+    } else {
+      setViewMode(defaultTab || "active");
     }
   }, [isOpen]);
 

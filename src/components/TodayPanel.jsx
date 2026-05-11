@@ -43,7 +43,7 @@ export default function TodayPanel({
 
   const getDefaultExpanded = () => {
     if (activeSlots.length === 0) return new Set();
-    if (isPast) return new Set(activeSlots.map(s => s.id));
+    if (isPast) return new Set();
     if (isToday) {
       for (const slot of activeSlots) {
         if (slotStatus(slot.id) === 'now') return new Set([slot.id]);
