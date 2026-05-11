@@ -19,6 +19,7 @@ function formatWeekRange(start, end) {
 function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClick }) {
   const { theme } = useTheme();
   const pct = isFuture ? null : calculateAdherenceForDate(date, supplements, log);
+  const dayName = DAYS_SHORT[date.getDay()];
 
   return (
     <button
@@ -27,42 +28,79 @@ function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClic
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: spacing.xs,
-        padding: `${spacing.sm}px ${spacing.xxs}px`,
-        background: isSelected ? theme.surface.cardSubtle : 'transparent',
-        border: `${theme.borderWidth.default}px solid ${isSelected ? theme.border.subtle : 'transparent'}`,
+        padding: spacing.md,
+        background: isToday ? theme.surface.cardSubtle : theme.surface.card,
+        border: isToday
+          ? `${theme.borderWidth.accent}px solid ${theme.accent.default}`
+          : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
         borderRadius: theme.radius.surface,
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
         width: '100%',
         boxSizing: 'border-box',
+        transition: 'background 150ms ease',
       }}
     >
-      <span style={{
-        fontSize: typography.caption,
-        color: isToday ? theme.accent.default : theme.text.secondary,
-        fontWeight: isToday ? typography.semibold : typography.regular,
-        fontFamily: typography.fontBody,
-      }}>
-        {DAYS_SHORT[date.getDay()]}
-      </span>
+      {/* Day label section */}
+      {isToday ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: spacing.xxxs,
+          marginBottom: spacing.xxs,
+        }}>
+          <span style={{
+            fontSize: typography.label,
+            fontWeight: typography.semibold,
+            color: theme.text.primary,
+            fontFamily: typography.fontBody,
+            letterSpacing: typography.labelSpacing,
+            textTransform: 'uppercase',
+          }}>
+            TODAY
+          </span>
+          <span style={{
+            fontSize: typography.caption,
+            color: theme.text.secondary,
+            fontFamily: typography.fontBody,
+          }}>
+            {dayName}
+          </span>
+        </div>
+      ) : (
+        <span style={{
+          fontSize: typography.label,
+          color: theme.text.muted,
+          fontFamily: typography.fontBody,
+          marginBottom: spacing.xxs,
+        }}>
+          {dayName}
+        </span>
+      )}
+
+      {/* Date number */}
       <span style={{
         fontSize: typography.body,
         color: theme.text.primary,
         fontWeight: isSelected ? typography.semibold : typography.regular,
         fontFamily: typography.fontBody,
+        marginBottom: spacing.md,
       }}>
         {date.getDate()}
       </span>
+
+      {/* Adherence ring */}
       {pct !== null ? (
-        <AdherenceRing percentage={pct} size={40} />
+        <AdherenceRing percentage={pct} size={56} />
       ) : (
         <div style={{
-          width: 40,
-          height: 40,
+          width: 56,
+          height: 56,
           borderRadius: '50%',
           border: `2px solid ${theme.border.subtle}`,
           flexShrink: 0,
+          opacity: 0.35,
         }} />
       )}
     </button>
@@ -105,12 +143,8 @@ export default function WeekStrip({
   });
 
   return (
-    <div style={{
-      background: theme.surface.card,
-      border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-      borderRadius: theme.radius.surface,
-      padding: spacing.md,
-    }}>
+    <div>
+      {/* Nav header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -135,10 +169,11 @@ export default function WeekStrip({
         </button>
       </div>
 
+      {/* 7-cell grid — each cell is its own card */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: spacing.xs,
+        gap: spacing.sm,
       }}>
         {weekDates.map(date => {
           const dk = dateKey(date);
