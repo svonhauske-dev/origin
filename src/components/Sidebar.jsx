@@ -101,27 +101,6 @@ export default function Sidebar({ pushScreen, displayName }) {
 
       {/* Settings */}
       <SidebarNavItem icon={Settings} label="Settings" onClick={() => pushScreen('settings')} />
-
-      {/* Account row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: spacing.sm,
-        paddingTop: spacing.md,
-        borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-      }}>
-        <AccountAvatar displayName={displayName} small />
-        <span style={{
-          fontSize: typography.body,
-          color: theme.text.primary,
-          fontFamily: typography.fontBody,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {displayName || 'You'}
-        </span>
-      </div>
     </aside>
   );
 }
