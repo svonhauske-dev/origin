@@ -171,7 +171,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
         </div>
 
         {/* Scrollable body */}
-        <div ref={bodyRef} style={{
+        <div ref={bodyRef} data-modal-body style={{
           overflowY: "auto",
           padding: `${spacing.sm}px ${spacing.md}px`,
           flex: 1,
