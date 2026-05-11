@@ -28,6 +28,7 @@ import EditForm from "./components/EditForm";
 import Hero from "./components/Hero";
 import Sidebar, { AccountAvatar } from "./components/Sidebar";
 import WeekStrip from "./components/WeekStrip";
+import TodayPanel from "./components/TodayPanel";
 import {
   supa, getSession, signInPassword, signUp, signOut, refreshSession,
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
@@ -175,7 +176,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   );
   const [weekLogs, setWeekLogs] = useState([]);
   const [viewedWeekEnd, setViewedWeekEnd] = useState(() => startOfDay(TODAY));
-  const [selectedDesktopDate, setSelectedDesktopDate] = useState(() => startOfDay(TODAY));
   const { show: showToast } = useToast();
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -303,12 +303,22 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }).catch(e => console.error(e));
   }, [dk]);
 
-  // Load week logs for desktop adherence rings
+  // Load week logs for desktop adherence rings + pre-populate past day state
   useEffect(() => {
     if (loading || !isDesktop) return;
     const start = dateKey(viewedWeekStart);
     const end = dateKey(viewedWeekEnd);
-    dbGetDailyLogsRange(start, end, token).then(rows => setWeekLogs(rows || [])).catch(e => console.error('Week logs fetch failed:', e));
+    dbGetDailyLogsRange(start, end, token).then(rows => {
+      setWeekLogs(rows || []);
+      const mergedChecked = {};
+      const mergedPillTimes = {};
+      for (const row of (rows || [])) {
+        if (row.checked) Object.assign(mergedChecked, row.checked);
+        if (row.pill_time) mergedPillTimes[row.log_date] = row.pill_time.slice(0, 5);
+      }
+      if (Object.keys(mergedChecked).length > 0) setChecked(c => ({ ...c, ...mergedChecked }));
+      if (Object.keys(mergedPillTimes).length > 0) setPillTimes(pt => ({ ...pt, ...mergedPillTimes }));
+    }).catch(e => console.error('Week logs fetch failed:', e));
   }, [viewedWeekEnd, loading, isDesktop]);
 
   // Auto-save
@@ -738,18 +748,43 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             weekDates={weekDates}
             weekLogs={weekLogs}
             supplements={supps}
-            selectedDate={selectedDesktopDate}
-            onSelectDate={setSelectedDesktopDate}
+            selectedDate={viewDate}
+            onSelectDate={(date) => { setViewDate(startOfDay(date)); setPastDayEditing(false); }}
             onPrev={handlePrevWeek}
             onNext={handleNextWeek}
             canNavigateNext={canNavigateNext}
           />
-          <div style={{ display: "flex", flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl }}>
-            <PlaceholderSection
-              title={dateKey(selectedDesktopDate) === dateKey(TODAY) ? 'TODAY' : selectedDesktopDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              style={{ flex: 1 }}
-            />
-            <PlaceholderSection title="INSIGHTS" style={{ flex: 1 }} />
+          <div style={{ display: "flex", flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl, alignItems: "flex-start" }}>
+            <div style={{ flex: 1 }}>
+              <TodayPanel
+                viewDate={viewDate}
+                isToday={isToday}
+                isPast={isPast}
+                isFuture={isFuture}
+                homeSupps={homeSupps}
+                anytimeSupps={anytimeSupps}
+                getSuppsForSlot={getSuppsForSlot}
+                isChecked={isChecked}
+                toggleCheck={toggleCheck}
+                slotTimeStr={slotTimeStr}
+                slotStatus={slotStatus}
+                scheduleMode={scheduleMode}
+                pillTime={pillTime}
+                anchorBehavior={anchorBehavior}
+                consistentTime={consistentTime}
+                isReadOnly={isReadOnly}
+                pastDayEditing={pastDayEditing}
+                setPastDayEditing={setPastDayEditing}
+                startDay={startDay}
+                editPillTime={editPillTime}
+                setEditPillTime={setEditPillTime}
+                tmpTime={tmpTime}
+                setTmpTime={setTmpTime}
+                setPillForDay={setPillForDay}
+                openEdit={openEdit}
+              />
+            </div>
+            <PlaceholderSection title="INSIGHTS" style={{ flex: 1, minHeight: 200 }} />
           </div>
         </main>
 
