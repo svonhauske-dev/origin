@@ -192,6 +192,8 @@ export async function recomputeNotifications(token) {
   }
 }
 
+export const dbGetDailyLogsRange     = (start, end, t) => supa("GET", `/rest/v1/daily_logs?select=*&log_date=gte.${start}&log_date=lte.${end}`, null, t);
+
 export const dbGetSupplementHistory  = (t)         => supa("GET",  "/rest/v1/user_supplement_history?select=name&order=created_at.desc", null, t);
 export const dbAddSupplementHistory  = (name, t)   => supa("POST", "/rest/v1/user_supplement_history?on_conflict=user_id,name", { name }, t);
 

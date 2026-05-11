@@ -27,6 +27,7 @@ import SlotCard from "./components/SlotCard";
 import EditForm from "./components/EditForm";
 import Hero from "./components/Hero";
 import Sidebar, { AccountAvatar } from "./components/Sidebar";
+import WeekStrip from "./components/WeekStrip";
 import {
   supa, getSession, signInPassword, signUp, signOut, refreshSession,
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
@@ -36,6 +37,7 @@ import {
   dbGetProfile, dbCreateProfile,
   recomputeNotifications,
   dbGetSupplementHistory, dbAddSupplementHistory,
+  dbGetDailyLogsRange,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isStoppedSupp } from './lib/time';
 import { SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
@@ -171,6 +173,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth >= breakpoints.desktop
   );
+  const [weekLogs, setWeekLogs] = useState([]);
+  const [viewedWeekEnd, setViewedWeekEnd] = useState(() => startOfDay(TODAY));
+  const [selectedDesktopDate, setSelectedDesktopDate] = useState(() => startOfDay(TODAY));
   const { show: showToast } = useToast();
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -298,6 +303,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }).catch(e => console.error(e));
   }, [dk]);
 
+  // Load week logs for desktop adherence rings
+  useEffect(() => {
+    if (loading || !isDesktop) return;
+    const start = dateKey(viewedWeekStart);
+    const end = dateKey(viewedWeekEnd);
+    dbGetDailyLogsRange(start, end, token).then(rows => setWeekLogs(rows || [])).catch(e => console.error('Week logs fetch failed:', e));
+  }, [viewedWeekEnd, loading, isDesktop]);
+
   // Auto-save
   useEffect(() => {
     if (loading) return;
@@ -323,6 +336,27 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }
     setStreak(s);
   }, [checked, pillTimes, supps, scheduleMode, anchorBehavior]);
+
+  const viewedWeekStart = new Date(viewedWeekEnd);
+  viewedWeekStart.setDate(viewedWeekStart.getDate() - 6);
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(viewedWeekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const canNavigateNext = dateKey(viewedWeekEnd) < dateKey(TODAY);
+
+  const handlePrevWeek = () => setViewedWeekEnd(prev => {
+    const d = new Date(prev);
+    d.setDate(d.getDate() - 7);
+    return d;
+  });
+  const handleNextWeek = () => setViewedWeekEnd(prev => {
+    const d = new Date(prev);
+    d.setDate(d.getDate() + 7);
+    const todayCap = startOfDay(TODAY);
+    return d > todayCap ? todayCap : d;
+  });
 
   const goDay         = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); setPastDayEditing(false); };
   const setPillForDay = (t) => {
@@ -700,12 +734,22 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             </span>
             <AccountAvatar displayName={profile?.display_name?.trim().split(" ")[0] || null} />
           </div>
-          {/* Week strip placeholder */}
-          <PlaceholderSection title="WEEK STRIP" />
-          {/* Today + Insights two-column */}
+          <WeekStrip
+            weekDates={weekDates}
+            weekLogs={weekLogs}
+            supplements={supps}
+            selectedDate={selectedDesktopDate}
+            onSelectDate={setSelectedDesktopDate}
+            onPrev={handlePrevWeek}
+            onNext={handleNextWeek}
+            canNavigateNext={canNavigateNext}
+          />
           <div style={{ display: "flex", flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl }}>
-            <PlaceholderSection title="TODAY PANEL" style={{ flex: 1 }} />
-            <PlaceholderSection title="INSIGHTS PANEL" style={{ flex: 1 }} />
+            <PlaceholderSection
+              title={dateKey(selectedDesktopDate) === dateKey(TODAY) ? 'TODAY' : selectedDesktopDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              style={{ flex: 1 }}
+            />
+            <PlaceholderSection title="INSIGHTS" style={{ flex: 1 }} />
           </div>
         </main>
 

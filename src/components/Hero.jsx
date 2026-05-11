@@ -5,6 +5,7 @@ import Button from './Button';
 import Input from './Input';
 import Label from './Label';
 import Card from './Card';
+import AdherenceRing from './AdherenceRing';
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -32,7 +33,6 @@ export default function Hero({
   const isConsistent    = anchorBehavior === "consistent";
   const heroHasTime     = pillTime != null || isConsistent;
   const heroDisplayTime = pillTime || consistentTime;
-  const r = 30, circ = 2 * Math.PI * r, dash = circ * (pct / 100);
 
   const viewingLabel = isPast
     ? `Viewing ${viewDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}`
@@ -131,11 +131,7 @@ export default function Hero({
             </div>
           )}
         </div>
-        <svg width="72" height="72" viewBox="0 0 72 72" style={{ flexShrink: 0, width: 72, height: 72, display: "block" }}>
-          <circle cx="36" cy="36" r={r} fill="none" stroke={theme.accent.track} strokeWidth="5" />
-          <circle cx="36" cy="36" r={r} fill="none" stroke={theme.accent.default} strokeWidth="5" strokeDasharray={circ} strokeDashoffset={circ - dash} strokeLinecap="round" transform="rotate(-90 36 36)" style={{ transition: "stroke-dashoffset 0.5s ease" }} />
-          <text x="36" y="36" textAnchor="middle" dominantBaseline="middle" fill={theme.text.primary} fontSize={typography.caption} fontWeight={typography.bold} fontFamily={typography.fontHeading}>{pct}%</text>
-        </svg>
+        <AdherenceRing percentage={pct} size={72} />
       </div>
     </Card>
   );
