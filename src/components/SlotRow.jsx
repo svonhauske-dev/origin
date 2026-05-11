@@ -57,7 +57,7 @@ export default function SlotRow({
             <span style={{
               fontSize: typography.caption,
               color: theme.text.muted,
-              fontFamily: typography.fontBody,
+              fontFamily: typography.fontData,
             }}>
               {slotTime}
             </span>

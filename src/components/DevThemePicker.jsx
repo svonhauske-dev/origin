@@ -1,18 +1,21 @@
 import { useTheme, THEME_NAMES } from "../lib/theme";
-import { themes } from "../design-system";
 
 const SWATCHES = {
-  light:       ["#F4F6F8", "#1A1A1A", "#1A1A1A"],
-  dark:        ["#04060A", "#F5F5F7", "#F5F5F7"],
-  brutalLight: ["#FFFFFF", "#000000", "#000000"],
-  brutalDark:  ["#000000", "#FFFFFF", "#FFFFFF"],
+  light:               ["#F4F6F8", "#1A1A1A", "#1A1A1A"],
+  dark:                ["#04060A", "#F5F5F7", "#F5F5F7"],
+  clinicalInstrument:  ["#F5F7F9", "#1A2530", "#5E7B8B"],
+  editorialMaterial:   ["#F8F5F0", "#1A1815", "#2C2926"],
+  softFuturism:        ["#0A0E1A", "#E8EBF0", "#7FB8E8"],
+  terminalPrecision:   ["#0D0D0D", "#E8E2D6", "#FFB000"],
 };
 
 const LABELS = {
-  light:       "Light",
-  dark:        "Dark",
-  brutalLight: "Brutal Light",
-  brutalDark:  "Brutal Dark",
+  light:               "Light",
+  dark:                "Dark",
+  clinicalInstrument:  "Clinical",
+  editorialMaterial:   "Editorial",
+  softFuturism:        "Soft Futurism",
+  terminalPrecision:   "Terminal",
 };
 
 export default function DevThemePicker() {

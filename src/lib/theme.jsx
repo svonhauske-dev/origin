@@ -108,6 +108,11 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.body.style.background = theme.surface.canvas;
+    const GEIST = '"Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif';
+    const t = theme.typography ?? {};
+    document.documentElement.style.setProperty('--font-body',    t.fontBody    ?? GEIST);
+    document.documentElement.style.setProperty('--font-heading', t.fontHeading ?? GEIST);
+    document.documentElement.style.setProperty('--font-data',    t.fontData    ?? GEIST);
   }, [theme]);
 
   return (

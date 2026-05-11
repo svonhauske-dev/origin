@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100vh; height: 100dvh; }
@@ -27,7 +28,7 @@
   <body>
     <script>
       (function(){
-        var CANVAS={dark:'#04060A',brutalDark:'#000000',light:'#F4F6F8',brutalLight:'#FFFFFF'};
+        var CANVAS={dark:'#04060A',light:'#F4F6F8',clinicalInstrument:'#F5F7F9',editorialMaterial:'#F8F5F0',softFuturism:'#0A0E1A',terminalPrecision:'#0D0D0D'};
         try{
           var pref=localStorage.getItem('origin_theme_preference')||'system';
           var name=pref==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):pref;

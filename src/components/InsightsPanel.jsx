@@ -63,7 +63,7 @@ function WeeklyAdherenceDisplay({ percentage, dailyValues }) {
         fontSize: typography.display,
         fontWeight: typography.bold,
         color: theme.text.primary,
-        fontFamily: typography.fontHeading,
+        fontFamily: typography.fontData,
         lineHeight: 1,
       }}>
         {Math.round(percentage)}%

@@ -35,7 +35,7 @@ export default function AdherenceRing({ percentage, size = 56 }) {
         fill={theme.text.primary}
         fontSize={textSize}
         fontWeight={typography.bold}
-        fontFamily={typography.fontHeading}
+        fontFamily={typography.fontData}
       >
         {percentage}%
       </text>
