@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Trash2, Pause, Play, Pill, Syringe, Droplet, Tablet } from "lucide-react";
+import { ChevronLeft, Trash2, Pause, Play, Pill, Syringe, Droplet } from "lucide-react";
 import { spacing, typography, touch, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
@@ -12,7 +12,6 @@ import { dbGetAdherenceCounts } from "../lib/api";
 const CATEGORY_ORDER = ["Oral", "Rx", "Injectable", "Topical"];
 
 function CategoryIcon({ category, color }) {
-  if (category === "Oral")       return <Tablet   size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Injectable") return <Syringe  size={14} color={color} style={{ flexShrink: 0 }} />;
   if (category === "Topical")    return <Droplet  size={14} color={color} style={{ flexShrink: 0 }} />;
@@ -38,8 +37,8 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTo(0, 0);
-  }, []);
+    if (isOpen && scrollRef.current) scrollRef.current.scrollTo(0, 0);
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTo(0, 0);
