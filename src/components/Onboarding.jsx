@@ -139,20 +139,22 @@ export default function Onboarding({ onComplete }) {
           </div>
 
           <div style={{ flex: 1 }}>
-            {DISPLAY_MODES.map(m => {
-              const on = selectedCard === m.id;
-              return (
-                <Card
-                  key={m.id}
-                  variant={on ? "selected" : "default"}
-                  onClick={() => handleCardClick(m.id)}
-                  style={{ display: "flex", flexDirection: "column", gap: spacing.xxs }}
-                >
-                  <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
-                  <span style={{ fontSize: typography.caption, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
-                </Card>
-              );
-            })}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: spacing.xs }}>
+              {DISPLAY_MODES.map(m => {
+                const on = selectedCard === m.id;
+                return (
+                  <Card
+                    key={m.id}
+                    variant={on ? "selected" : "default"}
+                    onClick={() => handleCardClick(m.id)}
+                    style={{ display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight, marginBottom: 0, ...(m.id === "none" ? { gridColumn: "1 / -1" } : {}) }}
+                  >
+                    <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
+                    <span style={{ fontSize: typography.caption, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
+                  </Card>
+                );
+              })}
+            </div>
 
             {/* Anchor sub-selector — appears below grid when Anchor card is selected */}
             {selectedCard === "anchor" && (
