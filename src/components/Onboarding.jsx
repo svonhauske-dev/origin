@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { spacing, typography, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
-import { DEFAULT_CONFIG, FIXED_SLOTS, MODES, toHrMin, fromHrMin } from "../config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, MODES, DISPLAY_MODES, ANCHOR_SUB_MODES, toHrMin, fromHrMin } from "../config";
 import Button from "./Button";
 import Card from "./Card";
 import HelperText from "./HelperText";
@@ -43,7 +43,8 @@ function ProgressDots({ step }) {
 export default function Onboarding({ onComplete }) {
   const { theme } = useTheme();
   const [step, setStep]         = useState(1);
-  const [selectedMode, setMode] = useState(null);
+  const [selectedMode, setMode] = useState(null); // actual DB value: medication | wakeup | fasting | fixed | none
+  const [selectedCard, setCard] = useState(null); // display card: anchor | fasting | fixed | none
   const [config, setConfig]     = useState({ ...DEFAULT_CONFIG, fixed_times: { ...DEFAULT_CONFIG.fixed_times } });
   const [behavior, setBehavior] = useState("flexible");
   const [cTime, setCTime]       = useState("07:00");
@@ -51,6 +52,20 @@ export default function Onboarding({ onComplete }) {
 
   const updateConfig = (key, value) => setConfig(c => ({ ...c, [key]: value }));
   const updateFixed  = (key, value) => setConfig(c => ({ ...c, fixed_times: { ...c.fixed_times, [key]: value || null } }));
+
+  const handleCardClick = (cardId) => {
+    setCard(cardId);
+    if (cardId !== "anchor") {
+      setMode(cardId);
+    } else {
+      // Reset sub-mode until user explicitly picks one
+      setMode(null);
+    }
+  };
+
+  const handleSubModeClick = (subModeId) => {
+    setMode(subModeId);
+  };
 
   const handleContinue = () => {
     if (!selectedMode) return;
@@ -113,13 +128,13 @@ export default function Onboarding({ onComplete }) {
           </div>
 
           <div style={{ flex: 1 }}>
-            {MODES.map(m => {
-              const on = selectedMode === m.id;
+            {DISPLAY_MODES.map(m => {
+              const on = selectedCard === m.id;
               return (
                 <Card
                   key={m.id}
                   variant={on ? "selected" : "default"}
-                  onClick={() => setMode(m.id)}
+                  onClick={() => handleCardClick(m.id)}
                   style={{ display: "flex", flexDirection: "column", gap: spacing.xxs }}
                 >
                   <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
@@ -127,6 +142,26 @@ export default function Onboarding({ onComplete }) {
                 </Card>
               );
             })}
+
+            {/* Anchor sub-selector — appears below grid when Anchor card is selected */}
+            {selectedCard === "anchor" && (
+              <div style={{ marginTop: spacing.sm }}>
+                <Label>Anchor type</Label>
+                <div style={{ display: "flex", gap: spacing.xs }}>
+                  {ANCHOR_SUB_MODES.map(sub => (
+                    <Button
+                      key={sub.id}
+                      variant="selector"
+                      active={selectedMode === sub.id}
+                      style={{ flex: 1 }}
+                      onClick={() => handleSubModeClick(sub.id)}
+                    >
+                      {sub.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ paddingTop: spacing.lg }}>

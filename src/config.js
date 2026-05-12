@@ -44,6 +44,20 @@ export const MODES = [
   { id: "fixed",      title: "Fixed Times",          desc: "Same schedule every day, no anchor" },
 ];
 
+// 4-card UI grouping: medication + wakeup collapsed under "Anchor".
+// DB still stores 'medication' or 'wakeup' — this is presentation only.
+export const DISPLAY_MODES = [
+  { id: "none",    title: "No Schedule",          desc: "Just a checklist — no times, no notifications" },
+  { id: "anchor",  title: "Anchor",               desc: "Cascade from when you take your medication or wake up" },
+  { id: "fasting", title: "Intermittent Fasting", desc: "Built around your eating window" },
+  { id: "fixed",   title: "Fixed Times",          desc: "Same schedule every day, no anchor" },
+];
+
+export const ANCHOR_SUB_MODES = [
+  { id: "medication", label: "Medication" },
+  { id: "wakeup",     label: "Wake Up" },
+];
+
 export function getSlotLabelForMode(slotId, mode) {
   if (slotId === "rx") {
     if (mode === "wakeup")   return "Empty Stomach";

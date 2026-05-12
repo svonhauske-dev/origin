@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { spacing, typography, layout, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { parseHHMM, fmtTime, addMins } from '../lib/time';
-import { DEFAULT_CONFIG, ANCHOR_NOTES, MODES, deriveOffsets } from '../config';
+import { DEFAULT_CONFIG, ANCHOR_NOTES, MODES, DISPLAY_MODES, ANCHOR_SUB_MODES, deriveOffsets } from '../config';
 import { SLOTS } from '../lib/notifications';
 import Button from './Button';
 import Card from './Card';
@@ -40,6 +40,10 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
   const debounceRef = useRef(null);
 
   const [localMode,     setLocalMode]     = useState(scheduleMode);
+  // Which display card is visually selected (anchor = medication|wakeup grouped)
+  const [selectedCard,  setSelectedCard]  = useState(
+    scheduleMode === 'medication' || scheduleMode === 'wakeup' ? 'anchor' : scheduleMode
+  );
   const [localConfig,   setLocalConfig]   = useState(() => {
     const merged = {
       ...DEFAULT_CONFIG,
@@ -211,16 +215,44 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
           <HelperText>{ANCHOR_NOTES[localMode]}</HelperText>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.xs }}>
-          {MODES.map(m => {
-            const on = localMode === m.id;
+          {DISPLAY_MODES.map(m => {
+            const on = selectedCard === m.id;
             return (
-              <Card key={m.id} onClick={() => handleModeChange(m.id)} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0, ...(m.id === 'none' ? { gridColumn: '1 / -1' } : {}) }}>
+              <Card
+                key={m.id}
+                onClick={() => {
+                  setSelectedCard(m.id);
+                  if (m.id !== 'anchor') handleModeChange(m.id);
+                  // anchor: show sub-selector, wait for sub-mode pick before saving
+                }}
+                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0, ...(m.id === 'none' ? { gridColumn: '1 / -1' } : {}) }}
+              >
                 <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
                 <span style={{ fontSize: typography.label, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
               </Card>
             );
           })}
         </div>
+
+        {/* Anchor sub-selector — appears below grid when Anchor card is selected */}
+        {selectedCard === 'anchor' && (
+          <div style={{ marginTop: spacing.sm }}>
+            <Label>Anchor type</Label>
+            <div style={{ display: 'flex', gap: spacing.xs }}>
+              {ANCHOR_SUB_MODES.map(sub => (
+                <Button
+                  key={sub.id}
+                  variant="selector"
+                  active={localMode === sub.id}
+                  style={{ flex: 1 }}
+                  onClick={() => handleModeChange(sub.id)}
+                >
+                  {sub.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Flexible / Consistent toggle */}
