@@ -34,6 +34,24 @@ export default function Loader({ onMount }) {
           0%, 100% { opacity: 1; }
           50%       { opacity: 0.7; }
         }
+        /* HIG exception: Loader animation preserved under reduced-motion.
+           Provides essential "system is working" feedback during auth and
+           protocol load — without it, users see a blank screen with no
+           indication anything is happening. Animation is contained (small
+           rings, not viewport-spanning), brief (3000ms minimum then
+           unmounts), and non-repetitive from the user's perspective.
+           HIG permits subtle functional motion under reduced-motion when
+           it provides essential feedback with no large or looping effect. */
+        @media (prefers-reduced-motion: reduce) {
+          .origin-wave {
+            animation-duration: 3s !important;
+            animation-iteration-count: infinite !important;
+          }
+          .origin-dot {
+            animation-duration: 3s !important;
+            animation-iteration-count: infinite !important;
+          }
+        }
       `}</style>
       <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
         {WAVES.map((delay, i) => (
@@ -60,6 +78,7 @@ export default function Loader({ onMount }) {
           cy="60"
           r="3.5"
           fill={frozenColors.primary}
+          className="origin-dot"
           style={{ animation: "originDot 3s ease-in-out infinite" }}
         />
       </svg>

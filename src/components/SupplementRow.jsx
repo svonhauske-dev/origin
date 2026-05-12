@@ -9,6 +9,7 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
 
   return (
     <div
+      className="supp-row"
       onMouseEnter={() => !isReadOnly && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={!isReadOnly ? onToggle : undefined}
@@ -26,7 +27,7 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
       }}
     >
       {/* Inline checkbox */}
-      <div style={{
+      <div className="supp-checkbox" style={{
         width: 18,
         height: 18,
         borderRadius: theme.radius.surfaceInner,

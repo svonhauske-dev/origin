@@ -117,4 +117,19 @@ Foundation sections auto-render from `design-system.js` — no registry update n
 
 ---
 
-*End of CLAUDE.md. Last updated: May 11, 2026.*
+## prefers-reduced-motion exceptions
+
+Origin preserves four animations under `prefers-reduced-motion: reduce` as HIG-compliant exceptions:
+**Loader**, **Checkbox check (SupplementRow)**, **Toast appearance**, **Row hover (desktop)**.
+
+These provide essential functional feedback. Default behavior for new animations is to honor reduced-motion (the global CSS rule in `index.html` handles it automatically — no extra code needed).
+
+Only add to the exception list for new functional feedback animations that are small, contained, and non-repetitive. When adding an exception:
+1. Add a CSS class to the animated element
+2. Add the override rule inside the `@media (prefers-reduced-motion: reduce)` block in `index.html` (or the component's own `<style>` block for Loader-style inline keyframes)
+3. Add a rationale comment at the override site
+4. Add it to `ORIGIN-DESIGN-RULES.md` Category 9
+
+---
+
+*End of CLAUDE.md. Last updated: May 12, 2026.*

@@ -23,6 +23,7 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
 
   return (
     <button
+      className="day-cell"
       onClick={onClick}
       style={{
         display: 'flex',

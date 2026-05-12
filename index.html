@@ -29,6 +29,21 @@
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
         }
+        /* HIG exception: Toast appearance preserved — essential "something happened"
+           feedback. Brief slide-in from bottom, contained to viewport edge,
+           non-repetitive. Without it, users with reduced-motion have no
+           confirmation that their action registered. */
+        .toast-item { transition: transform 250ms ease-out, opacity 200ms ease-out !important; }
+        /* HIG exception: Checkbox state transition preserved — tap-registered feedback.
+           Brief 150ms in-place color change communicates a state toggle occurred.
+           In-place (not moving), single occurrence per action, essential confirmation. */
+        .supp-checkbox { transition: background 150ms ease, border-color 150ms ease !important; }
+        /* HIG exception: Row hover transitions preserved — interactivity affordance
+           on desktop. Subtle 150ms background change indicates a surface is
+           hoverable/interactive. Without it, desktop rows appear inert. */
+        .supp-row { transition: background 150ms ease !important; }
+        .sidebar-nav-item { transition: background 150ms ease, color 150ms ease !important; }
+        .day-cell { transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease !important; }
       }
       :focus-visible { outline: 1px solid #FFFFFF; outline-offset: 2px; }
     </style>

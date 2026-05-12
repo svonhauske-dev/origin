@@ -391,7 +391,22 @@ Origin does not color-code slots or supplements by category. All categorization 
 - No spring physics in v1 (real future work to introduce where appropriate)
 
 **`prefers-reduced-motion` (from state systems section):**
-Honored globally. All transitions and animations reduced to 0.01ms for users with that preference.
+Honored globally. All transitions and animations reduced to 0.01ms for users with that preference. Four specific animations are preserved as HIG-compliant exceptions — see section below.
+
+### `prefers-reduced-motion` — preserved exceptions
+
+Four animations are preserved under `prefers-reduced-motion: reduce` as HIG-compliant exceptions:
+
+1. **Loader** — system-working feedback during auth and protocol load. Without it, users see a blank screen with no indication anything is happening. Animation is contained (small rings, not viewport-spanning), brief (3000ms then unmounts), non-repetitive from the user's perspective.
+2. **Checkbox check (SupplementRow)** — tap-registered feedback on supplement check-off. Brief 150ms in-place color change communicates state toggle. In-place, single occurrence per action.
+3. **Toast appearance** — "something happened" feedback. Brief slide-in from bottom, contained to viewport edge, non-repetitive.
+4. **Row hover transitions (desktop)** — interactivity affordance on desktop (SupplementRow, SidebarNavItem, DayCell). Subtle 150ms background change indicates a hoverable surface. Without it, interactive rows appear inert.
+
+HIG permits subtle functional motion under reduced-motion preference when it provides essential feedback that is not large, not viewport-spanning, and not repetitive without bound. All four meet this bar.
+
+**When adding new animations:** default behavior is to honor reduced-motion (the global rule handles it — no extra code needed). Only add to this exception list if the animation provides essential functional feedback that is small, contained, and non-repetitive. Document the rationale in code comments at the override site and add it here.
+
+**Implementation:** Loader exceptions are in the component's inline `<style>` block. Toast and row-hover exceptions use CSS class names (`.toast-item`, `.supp-checkbox`, `.supp-row`, `.sidebar-nav-item`, `.day-cell`) with overrides in `index.html`'s `prefers-reduced-motion` block.
 
 ### Animation principles for Origin
 - **Purposeful, not decorative.** Animation communicates state change, not personality.

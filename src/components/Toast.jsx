@@ -16,6 +16,7 @@ function ToastItem({ toast, onDismiss }) {
 
   return (
     <div
+      className="toast-item"
       style={{
         fontFamily: typography.fontBody,
         display: "flex",

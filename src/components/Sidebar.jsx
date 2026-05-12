@@ -8,6 +8,7 @@ function SidebarNavItem({ icon: Icon, label, active, onClick }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
+      className="sidebar-nav-item"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
