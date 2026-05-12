@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 11, 2026 (late evening — desktop responsive Home shipped through Phase 4, Achromatic locked as production identity, HIG audit document drafted, Treatment field documented, comprehensive diagnostic completed, handoff doc committed to repo, queue cleaned up for next session)*
+*Last updated: May 11, 2026 (full day — desktop responsive Home + Phase 4 Insights shipped, Achromatic locked as production identity, design system reference page shipped at /design-system (public, portfolio-linked), Vercel SPA fallback added, modal unmount screenshot bug fixed)*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -253,6 +253,18 @@ Insights panel (desktop) shows "Upcoming" section with supplements ending in nex
 - Travel timezone auto-fix: `visibilitychange` listener triggers recompute when timezone changes
 - 2 of 4 users currently subscribed, 68 notifications in queue as of May 11
 
+**Design system reference page (`/design-system` — public, portfolio-linked):**
+- Publicly accessible at `origin-protocol.vercel.app/design-system`
+- Foundation sections auto-rendered from `design-system.js`: Palette (all 7 themes), Typography scale, Spacing scale, Radius tokens, Shadow tokens
+- Component registry in `src/components/design-system-page/registry.js`: all primitives (Button 14 variants, Input 5, Card 4, Badge 4, Label 2, AdherenceRing 6) and all composed components (Hero 5, SlotCard 5, SlotRow 4, SupplementRow 5, DayCell 5, InsightsPanel 2)
+- Playgrounds for interactive primitives: Button, Input, AdherenceRing — live theme-aware rendering
+- DevThemePicker always shown on this route (even in production) for portfolio theme exploration
+- Full-width IntroHeader band: "Origin Design System" heading + description + "← Back to Origin" link
+- Mobile: sidebar collapses to sticky horizontal scroll nav strip (1024px breakpoint, same as app)
+- `noindex` meta tag (not search-indexed but portfolio-visible)
+- `/design` redirects to `/design-system` (legacy URL)
+- Stub data: all generic (Vitamin D3, Magnesium Glycinate, Metformin, Tirzepatide) — no personal data
+
 **Loader animation:**
 - Full-screen wave-ring loader for auth and protocol load states
 - Minimum 3000ms display time (commit 3c38e6a) prevents jarring flashes on fast loads
@@ -348,6 +360,8 @@ Locked direction: responsive (same content, broader layout on desktop). Hard bre
 - **Selected day visual hierarchy inverted** — slate blue tint was too subtle against white-elevated cells, making selected cell look recessed. Fixed by strengthening opacity values.
 - **Past day expansion locked in read-only mode** — chevron click toggle was gated on `!isReadOnly`. Fixed by removing that gate (only checkbox/edit are gated, expansion is always available).
 - **Week strip adherence ring stale after past-day edit** — week strip read from snapshot `weekLogs` not updated by checkbox toggle. Fixed by updating `weekLogs` state alongside `loggedSupps` on toggle.
+- **`/design-system` 404 in production** — Vite SPA outputs static files; Vercel returned 404 for any path without a matching file. `/design-system` is the only URL-based route in the app (all other screens use in-app state, no URL changes). Fixed by adding `vercel.json` with `/(.*) → /index.html` rewrite rule. Commit `361007c`.
+- **Modal residue in full-page screenshots** — Modal.jsx always portaled to `document.body` regardless of `open` state. When closed, the sheet sat at `transform: translateY(100%)` — off-screen but still in the DOM. Arc's full-page screenshot tool (and similar) captured it at the bottom of the document. Fixed: added `mounted` state with 300ms delayed unmount after `open → false`, matching the CSS exit animation duration. Portal is removed from DOM after animation completes. Commit `5d177fc`.
 
 ---
 
@@ -399,6 +413,15 @@ Round 1 didn't catch pill variants and day-of-week picker. Category pills, Treat
 **Document update — Comprehensive diagnostic (May 11 late evening)**
 Ran full state diagnostic via Claude Code: schema verification, component inventory, API helper inventory, recent commits, production user count. Surfaced: Treatment mode column structure (treatment_mode + cycle_on/off_value/unit), status column replacing legacy `paused` boolean, 4th user account (dra.orozcobp, abandoned onboarding), Loader minimum 3000ms behavior, 22 API helpers, multiple legacy/stale items worth tracking. Handoff document updated to match actual production state.
 
+**Pass — Design system reference page (May 11 evening, second block)**
+Built `src/components/design-system-page/DesignSystemPage.jsx` and `registry.js`. Foundation sections auto-render from design-system.js tokens. Component registry catalogs all primitives and composed components with generic stub data. Playgrounds for Button, Input, AdherenceRing. Route: `/design-system` (public, portfolio-linked). `/design` redirects. IntroHeader with "← Back to Origin" link. Sidebar → horizontal scroll nav strip below 1024px. DevThemePicker always shown. `noindex` meta via useEffect. `DayCell` named export added to WeekStrip for registry import. CLAUDE.md updated with public-page maintenance rules. Commits: `70a8de3` (initial dev route), `7731a6c` (public release).
+
+**Fix — Vercel SPA fallback (May 11 evening)**
+`/design-system` returned Vercel 404 in production because no `vercel.json` existed. All other app screens use in-app state (no URL changes) — this was the first real URL-based route. Added `vercel.json` with `/(.*) → /index.html` catch-all rewrite. Commit `361007c`.
+
+**Fix — Modal unmount after exit animation (May 11 evening)**
+Modal.jsx kept its portal mounted at `translateY(100%)` when closed, making it visible in full-page screenshot tools. Added `mounted` state with 300ms delayed unmount (matching `transform 0.3s ease-out`). Entry animation unaffected; exit animation plays in full before DOM removal. Audit confirmed all other overlays (Toast, SupplementNameAutocomplete) already unmount cleanly. Commit `5d177fc`.
+
 ---
 
 ## Codebase Health
@@ -421,6 +444,7 @@ Ran full state diagnostic via Claude Code: schema verification, component invent
   - Home (desktop): Sidebar, WeekStrip, DayCell, AdherenceRing, TodayPanel, SlotRow, SupplementRow, InsightsPanel
   - Modals & screens: EditForm, ScheduleTab, SettingsScreen, ManageProtocolScreen, ManageAccount
   - Shared: HelperText, SupplementNameAutocomplete, DevThemePicker, ToastContext
+  - Design system page (dev + portfolio): `design-system-page/DesignSystemPage.jsx`, `design-system-page/registry.js`
 
 **API Helpers Reference (`src/lib/api.js`, 22 functions):**
 
@@ -499,10 +523,7 @@ None of these are blocking. All are real debt.
 
 ### Highest priority
 
-**1. Save handoff + design rules documents to repo.**
-This file (`origin-handoff.md`) and the drafted HIG rules document (`ORIGIN-DESIGN-RULES.md`) need to be committed to the repo root. Future sessions reference both.
-
-**2. Apple HIG bulk fix pass.**
+**1. Apple HIG bulk fix pass.**
 The HIG document is drafted but no fixes have shipped. Real engineering work to apply rules to existing components:
 - Touch target audit: scan all interactive elements for sub-44pt mobile hit areas
 - State coverage: verify all components implement required states (focus states most critical)
@@ -515,7 +536,7 @@ Estimated: 2-3 sessions of focused engineering.
 
 ### Medium priority
 
-**3. Protocol library / sharing feature (Phase 1 of clinician roadmap).**
+**2. Protocol library / sharing feature (Phase 1 of clinician roadmap).**
 Locked use cases from earlier conversations:
 - Save current setup as a template, restart later
 - Share protocol with friend / clinician
@@ -523,10 +544,10 @@ Locked use cases from earlier conversations:
 
 Multi-session work. Fresh design conversation needed at start. Real architectural question: unified system or three separate features. Real data model decisions ahead (protocols table, sharing table, layering semantics).
 
-**4. Web Push notifications — SHIPPED** (moved from pending — confirmed via DB diagnostic May 11)
+**3. Web Push notifications — SHIPPED** (moved from pending — confirmed via DB diagnostic May 11)
 Service Worker, VAPID subscription flow, `recompute_notifications` + `process_notifications_queue` edge functions all live. `push_subscriptions` table exists, 2 users have `notifications_enabled = true`, 68 notifications currently queued. Commits: `1983728` (sub flow Pass 2), `a0ff155` (edge function + frontend), `4a25934` (process queue). Remaining work: verify notification delivery reliability for real users (OVH and Bego), any UX gaps discovered from real use.
 
-**5. Configurable meal count.**
+**4. Configurable meal count.**
 Parked. Unified `meals` array decision (or keep IF's `meals_per_day` separate from cascade modes' configurable count). Needs fresh design thinking.
 
 ### Lower priority (parked from various sessions)
