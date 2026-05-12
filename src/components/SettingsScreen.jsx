@@ -253,6 +253,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                   value={displayName}
                   onChange={handleDisplayNameChange}
                   placeholder="e.g. Sofia von Hauske"
+                  autoComplete="name"
                 />
                 {nameSaving && (
                   <div style={{ position: 'absolute', right: spacing.sm, top: '50%', transform: 'translateY(-50%)' }}>
@@ -262,7 +263,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               </div>
             </div>
 
-            <div style={{ marginBottom: spacing.md }}>
+            <form onSubmit={e => { e.preventDefault(); handleSaveEmail(); }} style={{ marginBottom: spacing.md }}>
               <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.muted }}>
                 Email
               </Label>
@@ -274,6 +275,11 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                 value={newEmail}
                 onChange={e => { setNewEmail(e.target.value); setEmailMsg(''); }}
                 placeholder="New email address"
+                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
                 style={{ marginBottom: spacing.xs }}
               />
               {emailMsg && (
@@ -284,14 +290,14 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               <Button
                 variant="secondary"
                 fullWidth
-                onClick={handleSaveEmail}
+                type="submit"
                 disabled={emailSaving || !newEmail.trim()}
               >
                 {emailSaving ? <InlineLoader size="sm" /> : 'Update email'}
               </Button>
-            </div>
+            </form>
 
-            <div>
+            <form onSubmit={e => { e.preventDefault(); handleSavePassword(); }}>
               <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.muted }}>
                 Password
               </Label>
@@ -300,6 +306,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
                 placeholder="New password"
+                autoComplete="new-password"
                 style={{ marginBottom: spacing.xs }}
               />
               <Input
@@ -307,6 +314,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                 value={confirmPw}
                 onChange={e => setConfirmPw(e.target.value)}
                 placeholder="Confirm new password"
+                autoComplete="new-password"
                 style={{ marginBottom: spacing.xs }}
               />
               {confirmPw && !pwMatch && (
@@ -322,12 +330,12 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               <Button
                 variant="secondary"
                 fullWidth
-                onClick={handleSavePassword}
+                type="submit"
                 disabled={pwSaving || !pwRulesOk || !pwMatch}
               >
                 {pwSaving ? <InlineLoader size="sm" /> : 'Update password'}
               </Button>
-            </div>
+            </form>
 
             {divider}
 

@@ -113,6 +113,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
             value={form[key]}
             placeholder={ph}
             onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+            autoComplete="off"
           />
         </div>
       ))}
@@ -196,6 +197,8 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
                   value={form.cycle_on_value || ""}
                   placeholder="0"
                   min="1"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   onChange={e => setForm(f => ({ ...f, cycle_on_value: e.target.value ? Number(e.target.value) : null }))}
                   onBlur={() => touch("cycle_on_value")}
                 />
@@ -218,6 +221,8 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
                   value={form.cycle_off_value || ""}
                   placeholder="0"
                   min="1"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   onChange={e => setForm(f => ({ ...f, cycle_off_value: e.target.value ? Number(e.target.value) : null }))}
                   onBlur={() => touch("cycle_off_value")}
                 />
