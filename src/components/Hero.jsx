@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react';
-import { spacing, typography, effects } from '../design-system';
+import { spacing, typography, touch, effects } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Input from './Input';
@@ -109,7 +109,7 @@ export default function Hero({
                 <div style={{ display: "flex", alignItems: "baseline", gap: spacing.xs }}>
                   <span style={{ fontSize: typography.display, fontWeight: typography.bold, letterSpacing: typography.displayLetterSpacing, color: theme.accent.default, fontFamily: typography.fontHeading }}>{heroDisplayTime}</span>
                   {pillTime && !isReadOnly && (
-                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: theme.text.muted, background: "none", border: "none", cursor: "pointer", padding: 0 }}>edit</button>
+                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: theme.text.muted, background: "none", border: "none", cursor: "pointer", padding: `0 ${spacing.xs}px`, minHeight: touch.min, display: "inline-flex", alignItems: "center", lineHeight: 1 }}>edit</button>
                   )}
                 </div>
               )}

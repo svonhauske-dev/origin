@@ -19,6 +19,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
   const [isDragging, setIsDragging] = useState(false);
   const touchStartY = useRef(0);
   const bodyRef = useRef(null);
+  const sheetRef = useRef(null);
 
   // Stay mounted long enough for the exit animation to finish, then unmount.
   // This prevents the off-screen modal from appearing in full-page screenshots.
@@ -53,6 +54,37 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
       setDragOffset(0);
       setIsDragging(false);
     }
+  }, [open]);
+
+  // Escape to close + Tab focus trap
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab' || !sheetRef.current) return;
+      const focusable = sheetRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last  = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last)  { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  // Auto-focus first focusable element when modal opens
+  useEffect(() => {
+    if (!open || !sheetRef.current) return;
+    const focusable = sheetRef.current.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length > 0) setTimeout(() => focusable[0].focus(), 50);
   }, [open]);
 
   const handleDragStart = (e) => {
@@ -107,6 +139,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
 
       {/* Bottom sheet card */}
       <div
+        ref={sheetRef}
         style={{
           fontFamily: typography.fontBody,
           position: "fixed",

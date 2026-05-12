@@ -80,6 +80,8 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
             cursor: 'pointer',
             color: theme.text.muted,
             padding: `${spacing.xxs}px`,
+            minWidth: 32,
+            minHeight: 32,
             display: 'flex',
             alignItems: 'center',
             borderRadius: theme.radius.surfaceInner,
