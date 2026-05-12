@@ -19,9 +19,9 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100vh; height: 100dvh; }
       body { color: #1A1A1A; }
-      /* Width-lock: invisible bold ghost prevents layout shift when pill weight changes */
-      .pill-label { position: relative; display: inline-block; }
-      .pill-label::before { content: attr(data-text); font-weight: 600; visibility: hidden; height: 0; display: block; overflow: hidden; pointer-events: none; }
+      /* Width-lock: invisible bold ghost prevents layout shift when selector weight changes */
+      .selector-label { position: relative; display: inline-block; }
+      .selector-label::before { content: attr(data-text); font-weight: 600; visibility: hidden; height: 0; display: block; overflow: hidden; pointer-events: none; }
       button:active { opacity: 0.75; transition: opacity 60ms ease-out; }
     </style>
   </head>

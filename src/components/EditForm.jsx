@@ -123,7 +123,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
           {CATEGORIES.map(cat => {
             const on = form.category === cat;
             return (
-              <Button key={cat} variant="pill" active={on} style={{ flex: 1 }} onClick={() => {
+              <Button key={cat} variant="selector" active={on} style={{ flex: 1 }} onClick={() => {
                 setForm(f => ({ ...f, category: cat, slots: [] }));
               }}>
                 {cat}
@@ -138,7 +138,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
         <Label>Treatment</Label>
         <div style={{ display: "flex", gap: spacing.xs }}>
           {TREATMENT_MODES.map(({ value, label }) => (
-            <Button key={value} variant="pill" active={mode === value} style={{ flex: 1 }} onClick={() => handleModeChange(value)}>
+            <Button key={value} variant="selector" active={mode === value} style={{ flex: 1 }} onClick={() => handleModeChange(value)}>
               {label}
             </Button>
           ))}
@@ -201,7 +201,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
                 />
                 <div style={{ display: "flex", gap: spacing.xs, flex: 1 }}>
                   {UNITS.map(u => (
-                    <Button key={u} variant="pill" active={form.cycle_on_unit === u} style={{ flex: 1 }} onClick={() => setForm(f => ({ ...f, cycle_on_unit: u }))}>
+                    <Button key={u} variant="selector" active={form.cycle_on_unit === u} style={{ flex: 1 }} onClick={() => setForm(f => ({ ...f, cycle_on_unit: u }))}>
                       {u}
                     </Button>
                   ))}
@@ -223,7 +223,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
                 />
                 <div style={{ display: "flex", gap: spacing.xs, flex: 1 }}>
                   {UNITS.map(u => (
-                    <Button key={u} variant="pill" active={form.cycle_off_unit === u} style={{ flex: 1 }} onClick={() => setForm(f => ({ ...f, cycle_off_unit: u }))}>
+                    <Button key={u} variant="selector" active={form.cycle_off_unit === u} style={{ flex: 1 }} onClick={() => setForm(f => ({ ...f, cycle_off_unit: u }))}>
                       {u}
                     </Button>
                   ))}
@@ -255,7 +255,7 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
             if (slot.id === "rx" && scheduleMode !== "medication" && form.slots.includes("rx")) {
               return (
                 <div key="rx" style={{ width: "100%" }}>
-                  <Button variant="pill" active style={{ opacity: 0.45, pointerEvents: "none" }}>
+                  <Button variant="selector" active style={{ opacity: 0.45, pointerEvents: "none" }}>
                     {slot.label}
                   </Button>
                   <HelperText style={{ marginTop: spacing.xxxs }}>
@@ -266,14 +266,14 @@ export default function EditForm({ form, setForm, editingId, onStop, onResume, o
             }
             const on = form.slots.includes(slot.id);
             return (
-              <Button key={slot.id} variant="pill" active={on} onClick={() => toggleSlot(slot.id)}>
+              <Button key={slot.id} variant="selector" active={on} onClick={() => toggleSlot(slot.id)}>
                 {slot.label}
               </Button>
             );
           })}
         </div>
         <div style={{ marginTop: spacing.sm }}>
-          <Button variant="pill" active={form.slots.length === 0} onClick={() => setForm(f => ({ ...f, slots: [] }))}>
+          <Button variant="selector" active={form.slots.length === 0} onClick={() => setForm(f => ({ ...f, slots: [] }))}>
             Anytime
           </Button>
         </div>

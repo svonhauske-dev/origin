@@ -65,19 +65,19 @@ export default function Button({
       padding: `${spacing.sm}px ${spacing.md}px`,
       fontSize: typography.caption,
     };
-  } else if (variant === "pill") {
-    const pillBase = {
+  } else if (variant === "selector") {
+    const selectorBase = {
       borderRadius: theme.radius.button,
       minHeight: touch.min,
       padding: `${spacing.xs}px ${spacing.sm}px`,
       fontSize: typography.caption,
     };
     if (active && solidActive) {
-      v = { ...pillBase, background: theme.accent.default, color: theme.text.onAccent, border: `${theme.borderWidth.default}px solid ${theme.accent.default}`, fontWeight: typography.semibold };
+      v = { ...selectorBase, background: theme.accent.default, color: theme.text.onAccent, border: `${theme.borderWidth.default}px solid ${theme.accent.default}`, fontWeight: typography.semibold };
     } else if (active) {
-      v = { ...pillBase, background: theme.accent.subtle, color: theme.accent.onSubtle, border: `${theme.borderWidth.default}px solid ${theme.accent.default}`, fontWeight: typography.semibold };
+      v = { ...selectorBase, background: theme.accent.subtle, color: theme.accent.onSubtle, border: `${theme.borderWidth.default}px solid ${theme.accent.default}`, fontWeight: typography.semibold };
     } else {
-      v = { ...pillBase, background: "transparent", color: theme.text.secondary, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, fontWeight: typography.regular };
+      v = { ...selectorBase, background: "transparent", color: theme.text.secondary, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, fontWeight: typography.regular };
     }
   } else if (variant === "tertiary") {
     v = {
@@ -136,8 +136,8 @@ export default function Button({
 
   return (
     <button type={type} disabled={disabled} style={{ ...base, ...v, ...compact, ...style }} {...rest}>
-      {variant === "pill" && typeof children === "string"
-        ? <span className="pill-label" data-text={children}>{children}</span>
+      {variant === "selector" && typeof children === "string"
+        ? <span className="selector-label" data-text={children}>{children}</span>
         : children}
     </button>
   );
