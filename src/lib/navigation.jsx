@@ -13,10 +13,14 @@ export function NavigationProvider({ children }) {
     setScreenStack(s => s.length > 1 ? s.slice(0, -1) : s);
   }, []);
 
+  const resetStack = useCallback(() => {
+    setScreenStack([{ name: 'home', props: {} }]);
+  }, []);
+
   const currentScreen = screenStack[screenStack.length - 1];
 
   return (
-    <NavigationContext.Provider value={{ screenStack, currentScreen, pushScreen, popScreen }}>
+    <NavigationContext.Provider value={{ screenStack, currentScreen, pushScreen, popScreen, resetStack }}>
       {children}
     </NavigationContext.Provider>
   );

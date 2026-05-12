@@ -151,10 +151,14 @@ export default function App() {
 
 function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const { theme, syncFromDB } = useTheme();
-  const { screenStack, pushScreen, popScreen } = useNavigation();
+  const { screenStack, pushScreen, popScreen, resetStack } = useNavigation();
 
   // Sync theme from DB once on auth — DB wins over localStorage for cross-device consistency
   useEffect(() => { syncFromDB(user.id, token); }, []);
+
+  // Reset nav stack to home on every sign-in (NavigationProvider survives sign-out,
+  // so stale stack would otherwise persist and reopen the last screen)
+  useEffect(() => { resetStack(); }, []);
   const ANYTIME_SLOT = { id: "anytime", label: "Anytime", sublabel: "No specific time", icon: "◦", color: theme.text.muted };
   const BG_GRADIENT = theme.gradients.bg;
   const [supps, setSupps]                   = useState([]);
