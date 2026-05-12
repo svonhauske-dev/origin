@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { spacing, typography, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
-import { DEFAULT_CONFIG, FIXED_SLOTS, MODES, DISPLAY_MODES, ANCHOR_SUB_MODES, toHrMin, fromHrMin } from "../config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, DISPLAY_MODES, ANCHOR_SUB_MODES } from "../config";
 import Button from "./Button";
 import Card from "./Card";
 import HelperText from "./HelperText";
@@ -9,19 +9,18 @@ import Input from "./Input";
 import Label from "./Label";
 
 
+const applyCascade = (cfg) => {
+  const firstMeal = (cfg.first_meal_offset_hours ?? 1) * 60 + (cfg.first_meal_offset_minutes ?? 0);
+  const interval  = (cfg.meal_interval_hours ?? 4) * 60 + (cfg.meal_interval_minutes ?? 0);
+  return { ...cfg, breakfast: firstMeal, lunch: firstMeal + interval, dinner: firstMeal + 2 * interval };
+};
+
 const STEP2_SUBTITLES = {
-  wakeup:     "Set your meal offsets. You can change these anytime.",
-  medication: "Set your meal offsets. You can change these anytime.",
+  wakeup:     "Set your meal timing. You can change these anytime.",
+  medication: "Set your meal timing. You can change these anytime.",
   fasting:    "Set your eating window. You can change these anytime.",
   fixed:      "Set your daily times. You can change these anytime.",
 };
-
-const MEAL_ROWS = [
-  { key: "breakfast",    label: "Breakfast" },
-  { key: "lunch",        label: "Lunch" },
-  { key: "dinner",       label: "Dinner" },
-  { key: "after_dinner", label: "Evening" },
-];
 
 function ProgressDots({ step }) {
   const { theme } = useTheme();
@@ -45,13 +44,25 @@ export default function Onboarding({ onComplete }) {
   const [step, setStep]         = useState(1);
   const [selectedMode, setMode] = useState(null); // actual DB value: medication | wakeup | fasting | fixed | none
   const [selectedCard, setCard] = useState(null); // display card: anchor | fasting | fixed | none
-  const [config, setConfig]     = useState({ ...DEFAULT_CONFIG, fixed_times: { ...DEFAULT_CONFIG.fixed_times } });
+  const [config, setConfig]     = useState(() => applyCascade({
+    ...DEFAULT_CONFIG,
+    fixed_times: { ...DEFAULT_CONFIG.fixed_times },
+    first_meal_offset_hours:   1,
+    first_meal_offset_minutes: 0,
+    meal_interval_hours:       4,
+    meal_interval_minutes:     0,
+    evening_mode:              null,
+  }));
   const [behavior, setBehavior] = useState("flexible");
   const [cTime, setCTime]       = useState("07:00");
   const [saving, setSaving]     = useState(false);
 
-  const updateConfig = (key, value) => setConfig(c => ({ ...c, [key]: value }));
-  const updateFixed  = (key, value) => setConfig(c => ({ ...c, fixed_times: { ...c.fixed_times, [key]: value || null } }));
+  const updateConfig   = (key, value) => setConfig(c => ({ ...c, [key]: value }));
+  const updateCascade  = (key, value) => setConfig(c => applyCascade({ ...c, [key]: value }));
+  const updateEvening  = (updates)   => setConfig(c => ({ ...c, ...updates }));
+  const updateFixed    = (key, value) => setConfig(c => ({ ...c, fixed_times: { ...c.fixed_times, [key]: value || null } }));
+
+  const em = config.evening_mode;
 
   const handleCardClick = (cardId) => {
     setCard(cardId);
@@ -214,42 +225,47 @@ export default function Onboarding({ onComplete }) {
           </div>
         )}
 
-        {/* Medication / Wakeup: meal offset editor */}
+        {/* Medication / Wakeup: cascade rule editor + evening bucket */}
         {isOffsetMode && (
           <>
             <div style={{ marginBottom: spacing.md }}>
               <Label>Meal schedule</Label>
-              <HelperText>Times relative to your anchor</HelperText>
               <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
-                {MEAL_ROWS.map(({ key, label }) => {
-                  const total   = config[key];
-                  const isEmpty = total === null || total === undefined;
-                  const { h, m } = toHrMin(isEmpty ? 0 : total);
+                {[
+                  { key_h: "first_meal_offset_hours", key_m: "first_meal_offset_minutes", label: "First meal",    caption: "hours after your anchor" },
+                  { key_h: "meal_interval_hours",     key_m: "meal_interval_minutes",     label: "Meal interval", caption: "hours between meals" },
+                ].map(({ key_h, key_m, label, caption }) => {
+                  const h = config[key_h] ?? 0;
+                  const m = config[key_m] ?? 0;
                   return (
-                    <Card key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
-                      <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>{label}</span>
-                      <Input
-                        variant="number" width={52} min="0" max="23"
-                        inputMode="numeric" pattern="[0-9]*"
-                        value={isEmpty ? "" : h}
-                        onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(e.target.value, isEmpty ? 0 : m))}
-                        placeholder="0"
-                      />
-                      <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
-                      <Input
-                        variant="number" width={52} min="0" max="59"
-                        inputMode="numeric" pattern="[0-9]*"
-                        value={isEmpty ? "" : m}
-                        onChange={e => updateConfig(key, e.target.value === "" ? 0 : fromHrMin(isEmpty ? 0 : h, e.target.value))}
-                        placeholder="0"
-                      />
-                      <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
-                    </Card>
+                    <div key={key_h}>
+                      <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                        <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>{label}</span>
+                        <Input
+                          variant="number" width={52} min="0" max="23"
+                          inputMode="numeric" pattern="[0-9]*"
+                          value={h === 0 ? "" : h}
+                          onChange={e => updateCascade(key_h, parseInt(e.target.value) || 0)}
+                          placeholder="0"
+                        />
+                        <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                        <Input
+                          variant="number" width={52} min="0" max="59"
+                          inputMode="numeric" pattern="[0-9]*"
+                          value={m === 0 ? "" : m}
+                          onChange={e => updateCascade(key_m, parseInt(e.target.value) || 0)}
+                          placeholder="0"
+                        />
+                        <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                      </Card>
+                      <HelperText style={{ marginTop: spacing.xxxs }}>{caption}</HelperText>
+                    </div>
                   );
                 })}
               </div>
             </div>
-            <div style={{ marginBottom: spacing.lg }}>
+
+            <div style={{ marginBottom: spacing.md }}>
               <Label>Pre-meal window</Label>
               <HelperText>How early before each meal to schedule pre-meal items</HelperText>
               <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
@@ -262,6 +278,67 @@ export default function Onboarding({ onComplete }) {
                 />
                 <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
               </Card>
+            </div>
+
+            <div style={{ marginBottom: spacing.lg }}>
+              <Label>Evening</Label>
+              <HelperText>A fixed slot independent of your anchor</HelperText>
+              <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.sm }}>
+                {([
+                  [null,           "Off"],
+                  ["fixed",        "Fixed time"],
+                  ["before_sleep", "Before sleep"],
+                ]).map(([val, label]) => (
+                  <button key={String(val)} onClick={() => updateEvening({ evening_mode: val })} style={segBtnStyle(em === val)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {em === "fixed" && (
+                <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                  <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Evening time</span>
+                  <Input
+                    variant="time"
+                    value={config.evening_time || ""}
+                    onChange={e => updateEvening({ evening_mode: "fixed", evening_time: e.target.value || null })}
+                    style={{ width: "auto" }}
+                  />
+                </Card>
+              )}
+
+              {em === "before_sleep" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
+                  <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                    <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Bedtime</span>
+                    <Input
+                      variant="time"
+                      value={config.sleep_time || ""}
+                      onChange={e => updateEvening({ evening_mode: "before_sleep", sleep_time: e.target.value || null })}
+                      style={{ width: "auto" }}
+                    />
+                  </Card>
+                  <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
+                    <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Before bedtime</span>
+                    <Input
+                      variant="number" width={52} min="0" max="23"
+                      inputMode="numeric" pattern="[0-9]*"
+                      value={(config.evening_offset_hours ?? 1) || ""}
+                      onChange={e => updateEvening({ evening_mode: "before_sleep", evening_offset_hours: parseInt(e.target.value) || 0 })}
+                      placeholder="0"
+                    />
+                    <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                    <Input
+                      variant="number" width={52} min="0" max="59"
+                      inputMode="numeric" pattern="[0-9]*"
+                      value={(config.evening_offset_minutes ?? 0) || ""}
+                      onChange={e => updateEvening({ evening_mode: "before_sleep", evening_offset_minutes: parseInt(e.target.value) || 0 })}
+                      placeholder="0"
+                    />
+                    <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                  </Card>
+                </div>
+              )}
             </div>
           </>
         )}

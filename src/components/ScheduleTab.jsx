@@ -211,9 +211,6 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         {localMode === 'none' && (
           <HelperText>Add items without a time slot to use a simple checklist.</HelperText>
         )}
-        {(localMode === 'medication' || localMode === 'wakeup') && (
-          <HelperText>{ANCHOR_NOTES[localMode]}</HelperText>
-        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.xs }}>
           {DISPLAY_MODES.map(m => {
             const on = selectedCard === m.id;
@@ -251,6 +248,9 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                 </Button>
               ))}
             </div>
+            {(localMode === 'medication' || localMode === 'wakeup') && (
+              <HelperText style={{ marginTop: spacing.xs }}>{ANCHOR_NOTES[localMode]}</HelperText>
+            )}
           </div>
         )}
       </div>
