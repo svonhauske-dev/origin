@@ -44,6 +44,7 @@ import {
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isStoppedSupp } from './lib/time';
 import { SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
+import DesignSystemPage from "./components/design-system-page/DesignSystemPage";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,15 @@ function PlaceholderSection({ title, style }) {
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
+  if (import.meta.env.DEV && window.location.pathname === '/design') {
+    return (
+      <ThemeProvider>
+        <DesignSystemPage />
+        <DevThemePicker />
+      </ThemeProvider>
+    );
+  }
+
   const loaderRenderTime = useRef(null);
   const [user, setUser]                         = useState(null);
   const [authLoading, setAuthLoading]           = useState(true);

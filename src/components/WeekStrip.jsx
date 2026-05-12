@@ -16,7 +16,7 @@ function formatWeekRange(start, end) {
     : `${sm} ${start.getDate()} – ${em} ${end.getDate()}`;
 }
 
-function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClick }) {
+export function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClick }) {
   const { theme } = useTheme();
   const pct = isFuture ? null : calculateAdherenceForDate(date, supplements, log);
   const dayName = DAYS_SHORT[date.getDay()];

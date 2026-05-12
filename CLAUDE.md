@@ -91,4 +91,24 @@ For everything else, read the handoff.
 
 ---
 
+## Design system page maintenance
+
+The `/design` route (dev only, `import.meta.env.DEV`) auto-renders from two sources:
+- `src/design-system.js` — foundation tokens (palette, typography, spacing, radius, shadows). Changes here automatically appear.
+- `src/components/design-system-page/registry.js` — component catalog. **Must be kept up to date manually.**
+
+**When adding a new component or variant:**
+1. Build the component.
+2. Add it to `registry.js` under `primitives` or `composed` with realistic example props.
+3. Open `/design` in dev to verify it renders correctly across themes.
+4. Commit both files together.
+
+**When adding a playground** (for primitives only): add a playground component to `DesignSystemPage.jsx` and register it in the `PLAYGROUNDS` map.
+
+**When shipping a new primitive:** also add a named export from `WeekStrip.jsx` if the component lives inside another file (as DayCell does), so it can be imported by the registry.
+
+If a component appears in the app but not on `/design`, the registry is stale. Update it before signing off.
+
+---
+
 *End of CLAUDE.md. Last updated: May 11, 2026.*
