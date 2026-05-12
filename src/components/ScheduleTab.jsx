@@ -211,7 +211,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         {localMode === 'none' && (
           <HelperText>Add items without a time slot to use a simple checklist.</HelperText>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.xs }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing.md }}>
           {DISPLAY_MODES.map(m => {
             const on = selectedCard === m.id;
             return (
@@ -222,7 +222,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                   if (m.id !== 'anchor') handleModeChange(m.id);
                   // anchor: show sub-selector, wait for sub-mode pick before saving
                 }}
-                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0, ...(m.id === 'none' ? { gridColumn: '1 / -1' } : {}) }}
+                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0 }}
               >
                 <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
                 <span style={{ fontSize: typography.label, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
