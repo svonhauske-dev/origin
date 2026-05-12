@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 11, 2026 (full day — desktop responsive Home + Phase 4 Insights shipped, Achromatic locked as production identity, design system reference page shipped at /design-system (public, portfolio-linked), Vercel SPA fallback added, modal unmount screenshot bug fixed)*
+*Last updated: May 12, 2026 (schedule modes condensed to 4 with Anchor sub-selector, Button pill variant renamed to selector across codebase + docs)*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -96,7 +96,7 @@ The design system uses a token-based theme architecture. All components consume 
 **CSS variable font system:** `typography.fontBody/fontHeading/fontData` resolve to `var(--font-body/heading/data)`. ThemeProvider sets those CSS vars on every theme change. All existing components automatically get the right font for whichever theme is active.
 
 **7 primitives:**
-- `Button` — variants: primary, secondary, tertiary, destructive, icon, pill, startDay (+ size: default/compact)
+- `Button` — variants: primary, secondary, tertiary, destructive, icon, selector, startDay (+ size: default/compact)
 - `Input`
 - `Card`
 - `Badge`
@@ -106,7 +106,7 @@ The design system uses a token-based theme architecture. All components consume 
 
 **Notable patterns:**
 - Pill width-locked via CSS `::before` pseudo-element so bold-active state doesn't cause layout shift
-- Border hierarchy inverted: inactive pills use `borderSubtle`, active pills use `accent` border
+- Border hierarchy inverted: inactive selectors use `borderSubtle`, active selectors use `accent` border
 - `schedSaveRef` ref pattern bridges ScheduleModal's internal save handler to footer button
 - Three-tier helper text convention (T1 section explanation, T2 item description, T3 inline unit hint)
 - Copy voice convention — "considered, precise instrument":
@@ -122,10 +122,9 @@ The design system uses a token-based theme architecture. All components consume 
 
 ## Features Shipped
 
-**5 schedule modes** (default for new users = No Schedule):
+**4 schedule modes UI, 5 underlying values** (default for new users = No Schedule):
 - No Schedule — pure checklist, no times, no notifications
-- Medication Anchor — cascades from when you take your medication
-- Wake Up Anchor — cascades from when you wake up
+- Anchor (groups Medication + Wake Up) — onboarding and Manage Protocol show 4 cards; tapping Anchor reveals a sub-selector for Medication or Wake Up; DB still stores `medication` or `wakeup` directly (no migration)
 - Intermittent Fasting — built around eating window
 - Fixed Times — same schedule every day
 
@@ -189,7 +188,7 @@ Three modes, default `indefinite`:
 - **Scheduled** — uses `starts_at` and/or `ends_at` date fields. Adherence and notifications filtered by date bounds. Edge function auto-stops supplements when `ends_at ≤ today` (sets `status = 'stopped'`, `stopped_at = today`).
 - **Cycled** — uses `cycle_on_value` + `cycle_on_unit` + `cycle_off_value` + `cycle_off_unit`. Modulo math in `isSupplementActiveOn()`: `daysSinceStart = (date - starts_at) in days`, `cycleDays = onDays + offDays`, `active = (daysSinceStart % cycleDays) < onDays`. Days-of-week picker hidden for cycled mode (all days implied). Which-days adherence check skipped for cycled supps. Cycle units: `days`, `weeks`, `months`.
 
-Treatment pill picker appears in EditForm between Category and "When to take it" sections (reordered Treatment-first in commit 28b3e3b).
+Treatment selector appears in EditForm between Category and "When to take it" sections (reordered Treatment-first in commit 28b3e3b).
 
 Insights panel (desktop) shows "Upcoming" section with supplements ending in next 14 days. Format: "Berberine course ends Fri" (up to 3 visible, "+N more" overflow).
 
@@ -281,11 +280,11 @@ Insights panel (desktop) shows "Upcoming" section with supplements ending in nex
 1. **Name** — text input with autocomplete (history + static DB, max 5 results, no scroll)
 2. **Dose** — text input
 3. **Notes** — text input
-4. **Category** — pill picker: Oral / Rx / Injectable / Topical
-5. **Treatment** — pill picker: Indefinite / Scheduled / Cycled
+4. **Category** — selector: Oral / Rx / Injectable / Topical
+5. **Treatment** — selector: Indefinite / Scheduled / Cycled
    - If Scheduled: Starts (date) + Ends (date, optional)
    - If Cycled: On (value + unit) + Off (value + unit) + Starts (date)
-6. **When to take it** — pill picker: rx (shown if mode = medication OR already tagged), pre_breakfast, breakfast, pre_lunch, lunch, pre_dinner, dinner, after_dinner, Anytime
+6. **When to take it** — selector: rx (shown if mode = medication OR already tagged), pre_breakfast, breakfast, pre_lunch, lunch, pre_dinner, dinner, after_dinner, Anytime
 7. **Which days** — circle day-of-week buttons (hidden when treatment_mode = cycled)
 8. **Stop button** — edit mode only, at bottom, destructive style
 
@@ -355,8 +354,8 @@ Locked direction: responsive (same content, broader layout on desktop). Hard bre
 - **Autocomplete dropdown scroll on iOS** — multiple fix attempts failed (CSS overflow, portal, body scroll lock), final solution was capping results to 5 (no scroll needed).
 - **Manage Protocol scroll-to-top** — mount-only useEffect fired once at app boot when screen was hidden, never refired. Fixed by watching `isOpen` prop.
 - **Modal scroll-to-top on every open** — same pattern, fixed via Modal primitive's bodyRef + isOpen useEffect.
-- **Radius leak round 1 under Terminal themes** — UI pills + chevron buttons + settings gear used `radius.full` (9999) directly. Fixed by referencing `radius.button` token instead, leaving `radius.full` for genuinely circular shapes.
-- **Radius leak round 2** — Round 1 fix didn't catch pill variants and day-of-week picker. Category pills, Treatment pills, When-to-take pills, Which-days circles all still rendered circular under Achromatic. Fixed in commit a14f8e3.
+- **Radius leak round 1 under Terminal themes** — UI selectors + chevron buttons + settings gear used `radius.full` (9999) directly. Fixed by referencing `radius.button` token instead, leaving `radius.full` for genuinely circular shapes.
+- **Radius leak round 2** — Round 1 fix didn't catch selector variants and day-of-week picker. Category, Treatment, When-to-take selectors and Which-days circles all still rendered circular under Achromatic. Fixed in commit a14f8e3.
 - **Selected day visual hierarchy inverted** — slate blue tint was too subtle against white-elevated cells, making selected cell look recessed. Fixed by strengthening opacity values.
 - **Past day expansion locked in read-only mode** — chevron click toggle was gated on `!isReadOnly`. Fixed by removing that gate (only checkbox/edit are gated, expansion is always available).
 - **Week strip adherence ring stale after past-day edit** — week strip read from snapshot `weekLogs` not updated by checkbox toggle. Fixed by updating `weekLogs` state alongside `loggedSupps` on toggle.
@@ -402,13 +401,13 @@ Locked Terminal as the direction. Removed Clinical/Editorial/Soft Futurism theme
 Renamed `terminalAchromatic` to `achromatic`. `VALID_PREFS = ["achromatic"]` — only achromatic is a valid production preference. All themes.light fallback references → themes.achromatic. SettingsScreen theme picker removed entirely (single production theme, nothing to pick). Silent migration of existing users with light/dark/system preference. Dev theme switcher retains all variants for future reference.
 
 **Pass — Radius leak fix (Achromatic production)**
-UI pill elements (theme picker pills in Settings, chevron navigation buttons, Settings gear button) referenced `radius.full` (9999) directly, so they stayed circular under Achromatic's zero-radius treatment. Fixed by introducing `radius.button` token that maps to theme's UI radius (0 under Achromatic). Account avatar kept at `radius.full` (legitimate circular shape). Adherence rings unchanged.
+UI selector elements (chevron navigation buttons, Settings gear button, theme picker) referenced `radius.full` (9999) directly, so they stayed circular under Achromatic's zero-radius treatment. Fixed by introducing `radius.button` token that maps to theme's UI radius (0 under Achromatic). Account avatar kept at `radius.full` (legitimate circular shape). Adherence rings unchanged.
 
 **Document — HIG-informed design rules drafted**
 Apple HIG audit document drafted covering 15 categories: Touch targets, State systems, Modals & sheets, Navigation, Accessibility, Typography, Spacing, Color & contrast, Animation & motion, Forms & inputs, Feedback patterns, Buttons, Lists & rows, Empty states, Onboarding. v1 baseline with HIG-compliant defaults. Pending: save to repo as `/ORIGIN-DESIGN-RULES.md`, then bulk fix pass to apply to existing components.
 
 **Pass — Radius leak fix round 2 (May 11 late evening)**
-Round 1 didn't catch pill variants and day-of-week picker. Category pills, Treatment pills, When-to-take pills, and day-of-week circles in EditForm were still rendering rounded under Achromatic. Fixed in commit a14f8e3.
+Round 1 didn't catch selector variants and day-of-week picker. Category, Treatment, and When-to-take selectors and day-of-week circles in EditForm were still rendering rounded under Achromatic. Fixed in commit a14f8e3.
 
 **Document update — Comprehensive diagnostic (May 11 late evening)**
 Ran full state diagnostic via Claude Code: schema verification, component inventory, API helper inventory, recent commits, production user count. Surfaced: Treatment mode column structure (treatment_mode + cycle_on/off_value/unit), status column replacing legacy `paused` boolean, 4th user account (dra.orozcobp, abandoned onboarding), Loader minimum 3000ms behavior, 22 API helpers, multiple legacy/stale items worth tracking. Handoff document updated to match actual production state.
@@ -421,6 +420,14 @@ Built `src/components/design-system-page/DesignSystemPage.jsx` and `registry.js`
 
 **Fix — Modal unmount after exit animation (May 11 evening)**
 Modal.jsx kept its portal mounted at `translateY(100%)` when closed, making it visible in full-page screenshot tools. Added `mounted` state with 300ms delayed unmount (matching `transform 0.3s ease-out`). Entry animation unaffected; exit animation plays in full before DOM removal. Audit confirmed all other overlays (Toast, SupplementNameAutocomplete) already unmount cleanly. Commit `5d177fc`.
+
+### Session of May 12
+
+**Pass — Schedule modes condensed to 4 (Anchor sub-selector)**
+Onboarding and Manage Protocol → Schedule tab now show 4 mode cards (No Schedule, Anchor, Intermittent Fasting, Fixed Times) instead of 5. Tapping Anchor reveals a sub-selector below the grid (Button variant="selector", two options: Medication / Wake Up). DB values unchanged — `schedule_type` still stores `medication` or `wakeup` directly. New config.js exports: `DISPLAY_MODES` (4-item UI array) and `ANCHOR_SUB_MODES`. `MODES` kept intact for all internal lookups. Onboarding: Continue disabled until sub-mode explicitly selected when Anchor card is active. ScheduleTab: Anchor card shows as selected when `localMode` is medication or wakeup; sub-selector pre-selects current value on load.
+
+**Refactor — Button variant "pill" renamed to "selector"**
+`variant="pill"` → `variant="selector"` across the codebase. CSS class `.pill-label` → `.selector-label` (definition in index.html inline style, usage in Button.jsx). Internal variable `pillBase` → `selectorBase`. All 7 usages in EditForm.jsx updated. Design system page registry Button entries updated. `theme.radius.pill` token kept as-is — it names a visual shape (fully rounded, 999px) used for drag handles, progress dots, status indicators, not the UI component. ORIGIN-DESIGN-RULES.md and ORIGIN-HANDOFF.md updated.
 
 ---
 

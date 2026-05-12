@@ -516,7 +516,7 @@ Web doesn't reliably support haptic feedback. Real future work for native wrappi
 - `tertiary` — text only, no background or border
 - `destructive` — uses `status.danger` color
 - `icon` — square button with icon only, no label
-- `pill` — for selectable pill contexts (slot picker, etc.)
+- `selector` — for selectable segment contexts (category picker, slot picker, etc.)
 - `startDay` — special variant for "Start my day" CTA (existing pattern)
 
 **Sizing:**
