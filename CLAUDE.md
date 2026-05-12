@@ -91,23 +91,29 @@ For everything else, read the handoff.
 
 ---
 
-## Design system page maintenance
+## Design system page — public
 
-The `/design` route (dev only, `import.meta.env.DEV`) auto-renders from two sources:
-- `src/design-system.js` — foundation tokens (palette, typography, spacing, radius, shadows). Changes here automatically appear.
-- `src/components/design-system-page/registry.js` — component catalog. **Must be kept up to date manually.**
+`/design-system` is publicly accessible at `origin-protocol.vercel.app/design-system`. It is portfolio-linked. `/design` (old URL) redirects to `/design-system`.
+
+**This page is public. Quality bar is portfolio-quality.**
+
+Real implications:
+- Stub data in registry.js examples must be generic (no personal medical info, no personal references, no real user data)
+- Token or component changes that break the page visually must be caught before shipping — open `/design-system` in dev after any design-system.js change
+- Page is `noindex` (not search-indexed) but portfolio-visible
+- No admin/debug features, no real user data, no internal state on this page
 
 **When adding a new component or variant:**
 1. Build the component.
-2. Add it to `registry.js` under `primitives` or `composed` with realistic example props.
-3. Open `/design` in dev to verify it renders correctly across themes.
+2. Add it to `src/components/design-system-page/registry.js` under `primitives` or `composed` with realistic, generic example props.
+3. Open `/design-system` in dev to verify it renders across themes.
 4. Commit both files together.
 
-**When adding a playground** (for primitives only): add a playground component to `DesignSystemPage.jsx` and register it in the `PLAYGROUNDS` map.
+**When adding a playground** (primitives only): add a playground component to `DesignSystemPage.jsx` and register it in the `PLAYGROUNDS` map.
 
-**When shipping a new primitive:** also add a named export from `WeekStrip.jsx` if the component lives inside another file (as DayCell does), so it can be imported by the registry.
+**When shipping a primitive inside another file** (like DayCell inside WeekStrip): add a named export so registry.js can import it directly.
 
-If a component appears in the app but not on `/design`, the registry is stale. Update it before signing off.
+Foundation sections auto-render from `design-system.js` — no registry update needed for token changes.
 
 ---
 

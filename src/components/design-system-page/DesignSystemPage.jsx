@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme, THEME_NAMES } from '../../lib/theme';
-import { themes, typography, spacing, shadows as globalShadows } from '../../design-system';
+import { themes, typography, spacing, shadows as globalShadows, breakpoints } from '../../design-system';
 import Button from '../Button';
 import Input from '../Input';
 import AdherenceRing from '../AdherenceRing';
@@ -478,25 +478,43 @@ function NavItem({ id, label, theme, onScroll }) {
   );
 }
 
-// ── Page header ───────────────────────────────────────────────────────────────
+// ── Intro header (full-width band above sidebar+content) ─────────────────────
 
-function DSHeader({ theme, themeName }) {
+function IntroHeader({ theme }) {
   return (
-    <div style={{ marginBottom: spacing.xxl, paddingBottom: spacing.xl, borderBottom: `1px solid ${theme.border.subtle}` }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: spacing.sm }}>
-        <h1 style={{ fontFamily: typography.fontHeading, fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, margin: 0, letterSpacing: '-0.02em' }}>
-          Design System
-        </h1>
-        <a href="/" style={{ fontSize: typography.caption, fontFamily: typography.fontBody, color: theme.text.secondary, textDecoration: 'none', marginTop: spacing.xs, flexShrink: 0 }}>
-          ← Back to app
-        </a>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-        <span style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.muted }}>Active theme:</span>
-        <span style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.accent.default, fontWeight: typography.semibold, border: `1px solid ${theme.accent.border}`, padding: `${spacing.xxxs}px ${spacing.xs}px` }}>
-          {themeName}
-        </span>
-        <span style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.muted }}>— Switch themes with the picker (bottom right)</span>
+    <div style={{ background: theme.surface.card, borderBottom: `1px solid ${theme.border.subtle}`, padding: `${spacing.xl}px`, flexShrink: 0 }}>
+      <h1 style={{ fontFamily: typography.fontHeading, fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, margin: `0 0 ${spacing.sm}px`, letterSpacing: '-0.02em' }}>
+        Origin Design System
+      </h1>
+      <p style={{ margin: `0 0 ${spacing.md}px`, fontSize: typography.body, fontFamily: typography.fontBody, color: theme.text.secondary, lineHeight: 1.6, maxWidth: 600 }}>
+        The live system behind Origin. Tokens, primitives, and composed components — auto-generated from the codebase. Switch themes via the picker (bottom right) to see Achromatic, the production identity, alongside the directional explorations that didn't ship.
+      </p>
+      <a href="https://origin-protocol.vercel.app/" style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, textDecoration: 'none', letterSpacing: typography.labelSpacing }}>
+        ← Back to Origin
+      </a>
+    </div>
+  );
+}
+
+// ── Mobile nav (horizontal scroll strip, shown below 1024px) ─────────────────
+
+function MobileNav({ theme }) {
+  const scroll = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  return (
+    <div style={{ position: 'sticky', top: 0, zIndex: 10, background: theme.surface.canvas, borderBottom: `1px solid ${theme.border.subtle}`, overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
+      <div style={{ display: 'flex', minWidth: 'max-content', padding: `${spacing.xxs}px ${spacing.sm}px`, gap: spacing.xxs }}>
+        {NAV.map(section => (
+          <div key={section.group} style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontSize: 9, color: theme.text.muted, fontFamily: typography.fontBody, padding: `${spacing.xs}px ${spacing.xxs}px`, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', flexShrink: 0 }}>{section.group}</span>
+            {section.items.map(item => (
+              <button key={item.id} onClick={() => scroll(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption, fontFamily: typography.fontBody, color: theme.text.secondary, whiteSpace: 'nowrap' }}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -506,32 +524,55 @@ function DSHeader({ theme, themeName }) {
 
 export default function DesignSystemPage() {
   const { theme, themeName } = useTheme();
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= breakpoints.desktop);
+
+  useEffect(() => {
+    document.title = 'Design System — Origin';
+    let meta = document.querySelector('meta[name="robots"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'robots';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'noindex';
+    return () => { meta.remove(); };
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => setIsDesktop(window.innerWidth >= breakpoints.desktop);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: theme.surface.canvas, color: theme.text.primary, fontFamily: typography.fontBody, WebkitFontSmoothing: 'antialiased' }}>
-      <DSSidebar theme={theme} />
-      <main style={{ flex: 1, overflowY: 'auto', padding: `${spacing.xl}px ${spacing.xxl}px` }}>
-        <DSHeader theme={theme} themeName={themeName} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: theme.surface.canvas, color: theme.text.primary, fontFamily: typography.fontBody, WebkitFontSmoothing: 'antialiased' }}>
+      <IntroHeader theme={theme} />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        {isDesktop && <DSSidebar theme={theme} />}
+        <main style={{ flex: 1, overflowY: 'auto' }}>
+          {!isDesktop && <MobileNav theme={theme} />}
+          <div style={{ padding: `${spacing.xl}px ${isDesktop ? spacing.xxl : spacing.md}px` }}>
+            {/* Foundation */}
+            <PaletteSection    theme={theme} themeName={themeName} />
+            <TypographySection theme={theme} />
+            <SpacingSection    theme={theme} />
+            <RadiusSection     theme={theme} />
+            <ShadowsSection    theme={theme} />
 
-        {/* Foundation */}
-        <PaletteSection    theme={theme} themeName={themeName} />
-        <TypographySection theme={theme} />
-        <SpacingSection    theme={theme} />
-        <RadiusSection     theme={theme} />
-        <ShadowsSection    theme={theme} />
+            {/* Primitives */}
+            {Object.entries(componentRegistry.primitives).map(([name, def]) => (
+              <PrimitiveSection key={name} name={name} def={def} theme={theme} />
+            ))}
 
-        {/* Primitives */}
-        {Object.entries(componentRegistry.primitives).map(([name, def]) => (
-          <PrimitiveSection key={name} name={name} def={def} theme={theme} />
-        ))}
+            {/* Composed */}
+            {Object.entries(componentRegistry.composed).map(([name, def]) => (
+              <ComposedSection key={name} name={name} def={def} theme={theme} />
+            ))}
 
-        {/* Composed */}
-        {Object.entries(componentRegistry.composed).map(([name, def]) => (
-          <ComposedSection key={name} name={name} def={def} theme={theme} />
-        ))}
-
-        <div style={{ height: spacing.xxl * 2 }} />
-      </main>
+            <div style={{ height: spacing.xxl * 2 }} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

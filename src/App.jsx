@@ -87,7 +87,12 @@ function PlaceholderSection({ title, style }) {
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  if (import.meta.env.DEV && window.location.pathname === '/design') {
+  if (window.location.pathname === '/design') {
+    window.location.replace('/design-system');
+    return null;
+  }
+
+  if (window.location.pathname === '/design-system') {
     return (
       <ThemeProvider>
         <DesignSystemPage />

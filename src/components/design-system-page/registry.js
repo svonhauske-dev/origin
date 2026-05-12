@@ -18,7 +18,8 @@ import InsightsPanel from '../InsightsPanel';
 // ── Stub helpers ───────────────────────────────────────────────────────────────
 
 const noop = () => {};
-const dk = (d) => d.toISOString().split('T')[0];
+const dk  = (d) => d.toISOString().split('T')[0];
+const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 const TODAY  = new Date();
 const YEST   = new Date(TODAY); YEST.setDate(YEST.getDate() - 1);
@@ -203,23 +204,23 @@ export const componentRegistry = {
       examples: [
         {
           name: 'Day not started — medication anchor',
-          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: 'May 11', pct: 0,   coreTotal: 4, coreDone: 0, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
+          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 0,   coreTotal: 4, coreDone: 0, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
           name: 'In progress (35%) — anchor set',
-          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: 'May 11', pct: 35,  coreTotal: 4, coreDone: 1, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
+          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 35,  coreTotal: 4, coreDone: 1, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
           name: '100% complete',
-          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: 'May 11', pct: 100, coreTotal: 4, coreDone: 4, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
+          props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 100, coreTotal: 4, coreDone: 4, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
           name: 'Past day — read-only',
-          props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: YEST,  shortDate: 'May 10', pct: 75,  coreTotal: 4, coreDone: 3, pillTime: '08:15', isFuture: false, isPast: true,  isReadOnly: true,  viewDay: YEST.getDay() },
+          props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: YEST,  shortDate: fmt(YEST), pct: 75,  coreTotal: 4, coreDone: 3, pillTime: '08:15', isFuture: false, isPast: true,  isReadOnly: true,  viewDay: YEST.getDay() },
         },
         {
           name: 'No schedule mode',
-          props: { ...heroBase, scheduleMode: 'none',       isToday: true, viewDate: TODAY, shortDate: 'May 11', pct: 50,  coreTotal: 2, coreDone: 1, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
+          props: { ...heroBase, scheduleMode: 'none',       isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 50,  coreTotal: 2, coreDone: 1, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
       ],
     },
