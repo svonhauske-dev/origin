@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 12, 2026 (schedule mode condensation + pill→selector rename + cascade parity fix + four follow-up bug fixes)*
+*Last updated: May 12, 2026 (HIG accessibility pass + prefers-reduced-motion exceptions + notifications selector refactor + nav stack reset bug fix)*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -252,6 +252,16 @@ Insights panel (desktop) shows "Upcoming" section with supplements ending in nex
 - Travel timezone auto-fix: `visibilitychange` listener triggers recompute when timezone changes
 - 2 of 4 users currently subscribed, 68 notifications in queue as of May 11
 
+**Notifications toggle refactored to On/Off selector:**
+- Settings (SettingsScreen.jsx) and dead-code SettingsModal.jsx — replaced iOS-style circular switch with two `Button variant="selector"` buttons (On / Off), consistent with Treatment, Category, and Anchor sub-mode selectors. Disabled state on On when permission = denied; helper text covers all permission states. Design system registry updated with three binary selector examples. Commit `f897a42`.
+
+**HIG foundational accessibility (shipped May 12):**
+- **Touch targets:** SlotCard expand header converted from `<div>` to `<button aria-expanded>`. SlotCard checkbox converted from `<div>` to `<button aria-label aria-pressed>` with 44pt tap area (padding: 10 / margin: -10, visual 24px preserved). WeekStrip nav arrows: `minWidth: 32, minHeight: 32`. SupplementRow pencil: `minWidth: 32, minHeight: 32`. Hero "edit" button: `minHeight: touch.min` with inline-flex centering.
+- **`prefers-reduced-motion`:** Global CSS rule kills all transitions and animations. Four HIG-compliant exceptions re-enabled via CSS class overrides: Loader rings/dot, Toast slide-in, SupplementRow checkbox transition, and row hover (SupplementRow, SidebarNavItem, DayCell). CSS classes: `.toast-item`, `.supp-checkbox`, `.supp-row`, `.sidebar-nav-item`, `.day-cell`. Loader exception in its inline `<style>` block. All others in `index.html`. Rationale comments at each override site. Category 9 of ORIGIN-DESIGN-RULES.md and CLAUDE.md updated with exception list and future-contribution guidance.
+- **`:focus-visible`:** `outline: 1px solid #FFFFFF; outline-offset: 2px` in `index.html` — keyboard navigation only, no mouse focus rings.
+- **Modal keyboard:** Escape key closes any open modal. Tab key trapped within sheet (cycles first→last focusable element). First focusable element auto-focused 50ms after open (allows enter animation).
+- Commits: `f2b3da4` (touch targets + reduced-motion + focus states), `c6ff004` (reduced-motion exceptions).
+
 **Design system reference page (`/design-system` — public, portfolio-linked):**
 - Publicly accessible at `origin-protocol.vercel.app/design-system`
 - Foundation sections auto-rendered from `design-system.js`: Palette (all 7 themes), Typography scale, Spacing scale, Radius tokens, Shadow tokens
@@ -365,6 +375,8 @@ Locked direction: responsive (same content, broader layout on desktop). Hard bre
 - **Onboarding cascade parity** — Onboarding Step 2 wrote per-meal absolute offsets (`breakfast: 60`, `lunch: 300`, etc.) but not cascade fields (`first_meal_offset_hours`, `meal_interval_hours`, `evening_mode`). New users hit `migrateConfig` on every Schedule tab mount — the function inferred cascade fields from absolute offsets and re-saved to DB each time. Fixed: Onboarding Step 2 now uses the same cascade rule editor as ScheduleTab (First meal offset + Meal interval + Evening mode picker). Initial config has cascade defaults (`first_meal_offset_hours: 1`, `meal_interval_hours: 4`). MEAL_ROWS constant removed. Commit `71b62d0`.
 - **migrateConfig firing on every Schedule tab mount for new users** — side effect of the cascade parity bug above. Now that Onboarding writes cascade fields on first save, `migrateConfig` sees `first_meal_offset_hours !== undefined` and skips. No extra DB write on mount for any user. Resolved by `71b62d0`.
 - **Anchor helper text rendering before selection** — `ANCHOR_NOTES` HelperText in ScheduleTab rendered immediately above the card grid for any user already on `medication` or `wakeup` mode, before any interaction. Moved to inside the Anchor sub-selector block, below the two buttons, conditional on `localMode` having a value. Commit `71b62d0`.
+- **Grid layout remaining span** — after the first grid fix (`fb5a9ce`), `gridColumn: "1 / -1"` spread was still left in both Onboarding and ScheduleTab card style objects. Full-width span caused No Schedule to occupy its own row, Fixed Times to be stranded. Removed spread entirely. Commit `42b3eaa`.
+- **Sign-in nav stack stale** — `NavigationProvider` is mounted above both `Auth` and `ProtocolApp` and survives sign-out. When user signed in after signing out, `ProtocolApp` remounted and read the stale `screenStack` (e.g. `[home, settings]`), rendering Settings open. Navigation state is not persisted to localStorage — purely in-memory. Fixed by adding `resetStack()` to `NavigationProvider` and calling it in `ProtocolApp`'s mount effect (fires on every sign-in, harmless on refresh since stack already starts at home). Commit `f7b8bb8`.
 
 ---
 
@@ -440,6 +452,30 @@ Follow-up bug fixes after the schedule mode condensation work:
 3. migrateConfig side effect resolved: new users no longer trigger a DB re-save on every Schedule tab mount. Commit `71b62d0`.
 4. Anchor helper text moved: `ANCHOR_NOTES` HelperText in ScheduleTab relocated from above the card grid to below the sub-selector buttons. Commit `71b62d0`.
 
+**Fix — Grid layout remaining span (May 12)**
+Second grid fix: `gridColumn: "1 / -1"` spread was still present in both Onboarding and ScheduleTab after the first fix, stranding No Schedule and Fixed Times in their own rows. Removed entirely. Commit `42b3eaa`.
+
+**Refactor — Notifications toggle to selector pattern (May 12)**
+Replaced iOS-style circular switch in SettingsScreen.jsx (and dead-code SettingsModal.jsx) with two-option `Button variant="selector"` (On / Off). Consistent with rest of app's binary selector pattern. Design system registry updated with three binary selector examples. Commit `f897a42`.
+
+**Pass — HIG foundational accessibility (May 12)**
+Touch targets, prefers-reduced-motion, focus states, keyboard accessibility — all in one pass:
+- SlotCard expand header `<div>` → `<button aria-expanded>` (keyboard accessible, accessible name from children)
+- SlotCard checkbox `<div>` → `<button aria-label aria-pressed>` with 44pt tap area (padding+margin negative offset, visual preserved)
+- WeekStrip nav arrows: `minWidth/minHeight: 32`
+- SupplementRow pencil: `minWidth/minHeight: 32`
+- Hero "edit" button: `minHeight: touch.min`, inline-flex centering
+- Global `@media (prefers-reduced-motion: reduce)` kills all transitions/animations
+- `:focus-visible { outline: 1px solid #FFFFFF; outline-offset: 2px }` for keyboard nav
+- Modal: Escape closes, Tab cycles within sheet, first focusable element auto-focused on open
+- Commit `f2b3da4`
+
+**Pass — prefers-reduced-motion exceptions (May 12)**
+Four HIG-compliant animations re-enabled under reduced-motion as functional feedback exceptions: Loader rings/dot, SupplementRow checkbox state transition, Toast slide-in, row hover (SupplementRow, SidebarNavItem, DayCell). Pattern: CSS class on each element, override in index.html's reduced-motion block. Loader extends its own inline `<style>`. Rationale comments at each override site. ORIGIN-DESIGN-RULES.md Category 9 and CLAUDE.md updated. Commit `c6ff004`.
+
+**Fix — Navigation stack stale on sign-in (May 12)**
+`NavigationProvider` survives sign-out (mounted above `ProtocolApp`), so stale screen stack caused Settings to reopen after sign-out/sign-in. Fixed: `resetStack()` added to `NavigationProvider`, called in `ProtocolApp` mount effect. Commit `f7b8bb8`.
+
 ---
 
 ## Codebase Health
@@ -451,7 +487,7 @@ Follow-up bug fixes after the schedule mode condensation work:
 - `src/lib/time.js` — time/date utilities
 - `src/lib/notifications.js` — scheduleNotifications, SLOTS
 - `src/lib/adherence.js` — adherence calculations (per-date + week + streak)
-- `src/lib/navigation.jsx` — NavigationProvider, screenStack, pushScreen/popScreen
+- `src/lib/navigation.jsx` — NavigationProvider, screenStack, pushScreen/popScreen/resetStack
 - `src/config.js` — DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets
 - `src/design-system.js` — single source of truth for tokens (Achromatic + dev themes)
 - `src/data/supplements-database.js` — autocomplete static list (~300 entries)
@@ -501,6 +537,13 @@ Follow-up bug fixes after the schedule mode condensation work:
 
 **Onboarding and ScheduleTab share cascade logic.** Both use the same `applyCascade()` function (defined locally in each file — not a shared import, intentional — same logic, separate contexts). MEAL_ROWS constant removed from Onboarding. Both write `first_meal_offset_hours`, `meal_interval_hours`, `evening_mode` to `offsets` JSONB. `migrateConfig` in ScheduleTab exists only for legacy users who saved before the cascade system; new users never hit it.
 
+**Accessibility state (as of May 12):**
+- Touch targets: all interactive elements ≥ 44pt mobile / 32pt desktop. SlotCard expand and checkbox converted to semantic `<button>`. Aria attributes: `aria-expanded` on expand header, `aria-label` + `aria-pressed` on checkboxes.
+- `prefers-reduced-motion`: global kill rule in index.html. Four exceptions re-enabled via CSS classes (`.toast-item`, `.supp-checkbox`, `.supp-row`, `.sidebar-nav-item`, `.day-cell`). Loader in its own `<style>` block.
+- `:focus-visible`: white 1px outline, 2px offset, global in index.html.
+- Modal keyboard: Escape closes, Tab focus trap, auto-focus on open.
+- Remaining gaps: `aria-live` regions for toast/loading states, keyboard skip links, form `autoComplete` attributes, color contrast audit for `text.muted` pairs.
+
 **Known cleanup candidates (low priority):**
 - Hero component has 19 props — works, but smell. Future pass could group related state into objects.
 - `handleEditFormTogglePause` is dead code (no UI calls it from the Edit form anymore — Pause/Delete moved to Manage)
@@ -548,16 +591,14 @@ Update the portfolio entry to reflect the current `/design-system` URL and any c
 
 ### Highest priority
 
-**1. Apple HIG bulk fix pass.**
-The HIG document is drafted but no fixes have shipped. Real engineering work to apply rules to existing components:
-- Touch target audit: scan all interactive elements for sub-44pt mobile hit areas
-- State coverage: verify all components implement required states (focus states most critical)
-- `prefers-reduced-motion`: add global CSS rule honoring user preference
-- Modal patterns: verify scroll-to-top, sticky header/footer, dismiss methods
-- Color contrast: verify all text/background pairs meet WCAG AA, adjust `text.muted` if needed
-- Form patterns: verify real `<form>` elements, `autoComplete`, in-flight protection
-- Empty states: add treatments where currently blank
-Estimated: 2-3 sessions of focused engineering.
+**1. Apple HIG remaining gaps (foundational pass shipped May 12).**
+The foundational pass shipped touch targets, reduced-motion, focus states, and Modal keyboard. Remaining:
+- **Color contrast:** verify `text.muted` (#666666) on `surface.canvas` (#0D0D0D) meets WCAG AA for non-decorative text. Adjust token if needed.
+- **Form patterns:** Auth form and EditForm should use real `<form>` elements with `autoComplete` attributes and Enter-to-submit. Currently all use `<div>` containers and manual onClick.
+- **Empty states:** several views show blank space when empty (no supplements, no logs). Add minimal copy per ORIGIN-DESIGN-RULES.md Category 14.
+- **`aria-live` regions:** Toast announcements and loading state changes not announced to screen readers.
+- **Keyboard skip links:** no skip-to-content link for keyboard-only desktop navigation.
+Estimated: 1 session for color + forms; empty states + aria-live is a second session.
 
 ### Medium priority
 
@@ -588,7 +629,7 @@ Parked. Unified `meals` array decision (or keep IF's `meals_per_day` separate fr
 
 ### Parked from past sessions (lower urgency)
 
-- **MOB-026 — accessibility role/aria markup** on supplement row checkboxes and slot card expand headers.
+- **MOB-026 — DONE** accessibility role/aria markup shipped: `aria-expanded` on SlotCard expand header, `aria-label` + `aria-pressed` on SlotCard and SupplementRow checkboxes. Commit `f2b3da4`.
 - **MOB-009 — slot card chevron discoverability** on mobile (no visual cue that headers are tappable).
 - **MOB-019 — skeleton screens during initial app load.**
 - **B3 persona finding** — left chevron one-handed reach issue, swipe gesture on date row could help right-handed one-handed use.
