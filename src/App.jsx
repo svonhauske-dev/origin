@@ -76,7 +76,7 @@ function PlaceholderSection({ title, style }) {
       fontSize: typography.label,
       letterSpacing: typography.labelSpacingWide,
       textTransform: 'uppercase',
-      color: theme.text.muted,
+      color: theme.text.secondary,
       fontFamily: typography.fontBody,
     }}>
       {title}
@@ -905,7 +905,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
         <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)}><ChevronLeft size={24} color={theme.text.secondary} style={{ marginRight: spacing.xxxs }} /></Button>
         <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
-          <div style={{ fontSize: typography.label, color: theme.text.muted, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
+          <div style={{ fontSize: typography.label, color: theme.text.secondary, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
           <button onClick={() => { if (!isToday) { setViewDate(TODAY); setPastDayEditing(false); } }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? theme.text.primary : theme.accent.default, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
           <div style={{ fontSize: typography.caption2, color: theme.text.faint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
         </div>

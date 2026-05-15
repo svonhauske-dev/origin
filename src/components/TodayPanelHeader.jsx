@@ -39,7 +39,7 @@ export default function TodayPanelHeader({
         <div style={{
           fontSize: typography.label,
           fontWeight: typography.semibold,
-          color: theme.text.muted,
+          color: theme.text.secondary,
           letterSpacing: typography.labelSpacingWide,
           textTransform: 'uppercase',
           fontFamily: typography.fontBody,
@@ -93,7 +93,7 @@ export default function TodayPanelHeader({
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: theme.text.muted,
+                      color: theme.text.secondary,
                       padding: `${spacing.xxxs}px`,
                       display: 'flex',
                       alignItems: 'center',

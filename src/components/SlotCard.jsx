@@ -35,16 +35,16 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
             : <span style={{ color: theme.slot.default, fontSize: typography.caption, flexShrink: 0, width: 20, textAlign: "center" }}>{slot.icon}</span>
           }
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: allDone ? theme.text.muted : theme.text.primary, display: "flex", alignItems: "center", gap: spacing.xs }}>
+            <div style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: allDone ? theme.text.secondary : theme.text.primary, display: "flex", alignItems: "center", gap: spacing.xs }}>
               {slot.label}
               {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : "missed"}>{sc.badge.label}</Badge>}
             </div>
-            <div style={{ fontSize: typography.label, color: theme.text.muted, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
+            <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? theme.slot.default : theme.text.muted, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
-          <span style={{ fontSize: typography.caption, color: theme.text.muted, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
+          {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? theme.slot.default : theme.text.secondary, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
+          <span style={{ fontSize: typography.caption, color: theme.text.secondary, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
         </div>
       </button>
       {expanded && (
@@ -59,11 +59,11 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                   </div>
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: typography.body, color: done ? theme.text.muted : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: "6px" }}>
                     {supp.name}
-                    <CategoryIcon category={supp.category} color={theme.text.muted} />
+                    <CategoryIcon category={supp.category} color={theme.text.secondary} />
                   </div>
-                  <div style={{ fontSize: typography.label, color: theme.text.muted, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
+                  <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 14 }}>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</div>
                 </div>
                 {!isReadOnly && !isPast && <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ border: "none" }}><Pencil size={16} /></Button>}
               </div>

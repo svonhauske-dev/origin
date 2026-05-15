@@ -44,7 +44,7 @@ export default function Hero({
       {/* Past-day header: eyebrow label + Edit / Done button */}
       {isPast && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xs }}>
-          <Label style={{ color: theme.text.muted, marginBottom: 0 }}>{viewingLabel}</Label>
+          <Label style={{ color: theme.text.secondary, marginBottom: 0 }}>{viewingLabel}</Label>
           <Button
             variant="secondary"
             size="compact"
@@ -63,9 +63,9 @@ export default function Hero({
         <div style={{ flex: 1 }}>
           {scheduleMode === "none" ? (
             <div>
-              {!isPast && <Label style={{ color: theme.text.muted, marginBottom: spacing.xxs }}>No schedule</Label>}
+              {!isPast && <Label style={{ color: theme.text.secondary, marginBottom: spacing.xxs }}>No schedule</Label>}
               <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: theme.text.primary }}>{isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long" })}</div>
-              <div style={{ fontSize: typography.caption, color: theme.text.muted, marginTop: spacing.xxxs }}>{shortDate}</div>
+              <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: spacing.xxxs }}>{shortDate}</div>
               {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: theme.status.success, fontWeight: typography.semibold, marginTop: spacing.xs }}>Protocol complete ✓</div>}
               {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
             </div>
@@ -73,7 +73,7 @@ export default function Hero({
             <div>
               {!isPast && nextFixedSlot ? (
                 <>
-                  <Label style={{ color: theme.text.muted, marginBottom: spacing.xxs }}>Next</Label>
+                  <Label style={{ color: theme.text.secondary, marginBottom: spacing.xxs }}>Next</Label>
                   <div style={{ display: "flex", alignItems: "baseline", gap: spacing.xs }}>
                     <span style={{ fontSize: typography.display, fontWeight: typography.bold, letterSpacing: typography.displayLetterSpacing, color: theme.accent.default, fontFamily: typography.fontHeading }}>{nextFixedSlot.time}</span>
                   </div>
@@ -82,7 +82,7 @@ export default function Hero({
                 </>
               ) : !isPast ? (
                 <>
-                  <Label style={{ color: theme.text.muted, marginBottom: spacing.xxs }}>Fixed schedule</Label>
+                  <Label style={{ color: theme.text.secondary, marginBottom: spacing.xxs }}>Fixed schedule</Label>
                   {pct === 100 && coreTotal > 0 && <div style={{ fontSize: typography.caption, color: theme.status.success, fontWeight: typography.semibold, marginTop: spacing.xs }}>All slots done</div>}
                   {pct > 0 && pct < 100 && <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
                 </>
@@ -96,7 +96,7 @@ export default function Hero({
           ) : heroHasTime ? (
             <div>
               {!isPast && (
-                <Label style={{ color: theme.text.muted, marginBottom: spacing.xxs }}>
+                <Label style={{ color: theme.text.secondary, marginBottom: spacing.xxs }}>
                   {pillTime ? "Started at" : "Scheduled"}
                 </Label>
               )}
@@ -109,7 +109,7 @@ export default function Hero({
                 <div style={{ display: "flex", alignItems: "baseline", gap: spacing.xs }}>
                   <span style={{ fontSize: typography.display, fontWeight: typography.bold, letterSpacing: typography.displayLetterSpacing, color: theme.accent.default, fontFamily: typography.fontHeading }}>{heroDisplayTime}</span>
                   {pillTime && !isReadOnly && (
-                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: theme.text.muted, background: "none", border: "none", cursor: "pointer", padding: `0 ${spacing.xs}px`, minHeight: touch.min, display: "inline-flex", alignItems: "center", lineHeight: 1 }}>edit</button>
+                    <button onClick={() => { setTmpTime(pillTime); setEditPillTime(true); }} style={{ fontSize: typography.caption, color: theme.text.secondary, background: "none", border: "none", cursor: "pointer", padding: `0 ${spacing.xs}px`, minHeight: touch.min, display: "inline-flex", alignItems: "center", lineHeight: 1 }}>edit</button>
                   )}
                 </div>
               )}
@@ -118,7 +118,7 @@ export default function Hero({
           ) : isPast ? (
             // Past day with no anchor time — no CTA, neutral message
             <div>
-              <div style={{ fontSize: typography.caption, color: theme.text.muted }}>No anchor time recorded</div>
+              <div style={{ fontSize: typography.caption, color: theme.text.secondary }}>No anchor time recorded</div>
               {pct > 0 && <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: spacing.xxs }}>{coreDone} of {coreTotal} done</div>}
             </div>
           ) : (
@@ -127,7 +127,7 @@ export default function Hero({
               <Button variant="startDay" isFuture={isFuture} fullWidth onClick={startDay}>
                 {isFuture ? "Future day" : (START_LABELS[scheduleMode] || "Start my day")}
               </Button>
-              {!isFuture && <div style={{ fontSize: typography.caption, color: theme.text.muted, marginTop: spacing.xs, textAlign: "center" }}>{START_SUBTITLES[scheduleMode] || "sets your daily schedule"}</div>}
+              {!isFuture && <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: spacing.xs, textAlign: "center" }}>{START_SUBTITLES[scheduleMode] || "sets your daily schedule"}</div>}
             </div>
           )}
         </div>

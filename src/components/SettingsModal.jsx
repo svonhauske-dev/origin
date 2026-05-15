@@ -159,7 +159,7 @@ export default function SettingsModal({ open, onClose, onOpenManage, onSignOut, 
           minHeight: touch.min,
         }}
       >
-        <span style={{ fontSize: typography.caption, color: theme.text.muted, flex: 1, paddingRight: spacing.sm }}>
+        <span style={{ fontSize: typography.caption, color: theme.text.secondary, flex: 1, paddingRight: spacing.sm }}>
           Install Origin to your home screen to enable reminders.
         </span>
         <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />

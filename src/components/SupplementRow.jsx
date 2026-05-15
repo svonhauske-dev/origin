@@ -50,7 +50,7 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
       <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: spacing.xs, minWidth: 0 }}>
         <span style={{
           fontSize: typography.body,
-          color: checked ? theme.text.muted : theme.text.primary,
+          color: checked ? theme.text.secondary : theme.text.primary,
           fontFamily: typography.fontBody,
           textDecoration: checked ? 'line-through' : 'none',
           overflow: 'hidden',
@@ -62,7 +62,7 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
         {supplement.dose && (
           <span style={{
             fontSize: typography.caption,
-            color: theme.text.muted,
+            color: theme.text.secondary,
             fontFamily: typography.fontBody,
             flexShrink: 0,
           }}>
@@ -79,7 +79,7 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: theme.text.muted,
+            color: theme.text.secondary,
             padding: `${spacing.xxs}px`,
             minWidth: 32,
             minHeight: 32,

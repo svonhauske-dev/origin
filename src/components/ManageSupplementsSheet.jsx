@@ -93,7 +93,7 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, tok
               padding: `${spacing.xs}px 0 ${spacing.sm}px`,
               fontSize: typography.body,
               fontWeight: viewMode === val ? typography.semibold : typography.regular,
-              color: viewMode === val ? theme.text.primary : theme.text.muted,
+              color: viewMode === val ? theme.text.primary : theme.text.secondary,
               cursor: "pointer",
               textAlign: "center",
               WebkitTapHighlightColor: "transparent",
@@ -226,12 +226,12 @@ export default function ManageSupplementsSheet({ open, onClose, supplements, tok
                         {supp.name}
                       </div>
                       {supp.dose && (
-                        <div style={{ fontSize: typography.caption, color: theme.text.muted, marginBottom: spacing.xxxs }}>
+                        <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xxxs }}>
                           {supp.dose}
                         </div>
                       )}
                       {supp.stopped_at && (
-                        <div style={{ fontSize: typography.caption, color: theme.text.muted, marginBottom: spacing.xxxs }}>
+                        <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xxxs }}>
                           Stopped {formatStoppedDate(supp.stopped_at)}
                         </div>
                       )}

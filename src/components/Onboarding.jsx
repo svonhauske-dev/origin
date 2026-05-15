@@ -150,7 +150,7 @@ export default function Onboarding({ onComplete }) {
                     style={{ display: "flex", flexDirection: "column", gap: spacing.xxs, minHeight: layout.modeButtonHeight, marginBottom: 0 }}
                   >
                     <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
-                    <span style={{ fontSize: typography.caption, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
+                    <span style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.4 }}>{m.desc}</span>
                   </Card>
                 );
               })}
@@ -250,7 +250,7 @@ export default function Onboarding({ onComplete }) {
                           onChange={e => updateCascade(key_h, parseInt(e.target.value) || 0)}
                           placeholder="0"
                         />
-                        <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                        <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>hr</span>
                         <Input
                           variant="number" width={52} min="0" max="59"
                           inputMode="numeric" pattern="[0-9]*"
@@ -258,7 +258,7 @@ export default function Onboarding({ onComplete }) {
                           onChange={e => updateCascade(key_m, parseInt(e.target.value) || 0)}
                           placeholder="0"
                         />
-                        <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                        <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
                       </Card>
                       <HelperText style={{ marginTop: spacing.xxxs }}>{caption}</HelperText>
                     </div>
@@ -278,7 +278,7 @@ export default function Onboarding({ onComplete }) {
                   value={config.pre_meal_window ?? 30}
                   onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
                 />
-                <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
               </Card>
             </div>
 
@@ -329,7 +329,7 @@ export default function Onboarding({ onComplete }) {
                       onChange={e => updateEvening({ evening_mode: "before_sleep", evening_offset_hours: parseInt(e.target.value) || 0 })}
                       placeholder="0"
                     />
-                    <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                    <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>hr</span>
                     <Input
                       variant="number" width={52} min="0" max="59"
                       inputMode="numeric" pattern="[0-9]*"
@@ -337,7 +337,7 @@ export default function Onboarding({ onComplete }) {
                       onChange={e => updateEvening({ evening_mode: "before_sleep", evening_offset_minutes: parseInt(e.target.value) || 0 })}
                       placeholder="0"
                     />
-                    <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                    <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
                   </Card>
                 </div>
               )}
@@ -376,7 +376,7 @@ export default function Onboarding({ onComplete }) {
                 value={config.pre_meal_window ?? 30}
                 onChange={e => updateConfig("pre_meal_window", parseInt(e.target.value) || 0)}
               />
-              <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+              <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
             </Card>
           </div>
         )}

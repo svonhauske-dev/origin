@@ -72,7 +72,7 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
       {/* Day abbreviation — consistent across all cells */}
       <span style={{
         fontSize: typography.label,
-        color: theme.text.muted,
+        color: theme.text.secondary,
         fontFamily: typography.fontBody,
         marginBottom: spacing.xxs,
       }}>

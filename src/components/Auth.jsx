@@ -30,7 +30,7 @@ function PasswordRule({ met, label }) {
       }}>
         {met && <Check size={10} color={theme.text.onAccent} strokeWidth={3} />}
       </div>
-      <span style={{ fontSize: typography.label, color: met ? theme.text.primary : theme.text.muted, transition: "color 150ms" }}>{label}</span>
+      <span style={{ fontSize: typography.label, color: met ? theme.text.primary : theme.text.secondary, transition: "color 150ms" }}>{label}</span>
     </div>
   );
 }
@@ -179,7 +179,7 @@ export default function Auth({ onSignIn }) {
         <button
           type="button"
           onClick={switchMode}
-          style={{ marginTop: spacing.md, background: "none", border: "none", color: theme.text.muted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
+          style={{ marginTop: spacing.md, background: "none", border: "none", color: theme.text.secondary, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
         >
           {mode === "signin" ? "New to Origin? Sign up" : "Already have an account? Sign in"}
         </button>

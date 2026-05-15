@@ -225,7 +225,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                 style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0 }}
               >
                 <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
-                <span style={{ fontSize: typography.label, color: theme.text.muted, lineHeight: 1.4 }}>{m.desc}</span>
+                <span style={{ fontSize: typography.label, color: theme.text.secondary, lineHeight: 1.4 }}>{m.desc}</span>
               </Card>
             );
           })}
@@ -299,7 +299,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                         onChange={e => updateCascade(key_h, parseInt(e.target.value) || 0)}
                         placeholder="0"
                       />
-                      <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                      <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>hr</span>
                       <Input
                         variant="number" width={52} min="0" max="59"
                         inputMode="numeric" pattern="[0-9]*"
@@ -307,7 +307,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                         onChange={e => updateCascade(key_m, parseInt(e.target.value) || 0)}
                         placeholder="0"
                       />
-                      <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                      <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
                     </Card>
                     <HelperText style={{ marginTop: spacing.xxxs }}>{caption}</HelperText>
                   </div>
@@ -327,7 +327,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                 value={localConfig.pre_meal_window ?? 30}
                 onChange={e => updateConfig('pre_meal_window', parseInt(e.target.value) || 0)}
               />
-              <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+              <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
             </Card>
           </div>
 
@@ -382,7 +382,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                     onChange={e => updateEvening({ evening_mode: 'before_sleep', evening_offset_hours: parseInt(e.target.value) || 0 })}
                     placeholder="0"
                   />
-                  <span style={{ fontSize: typography.caption, color: theme.text.muted }}>hr</span>
+                  <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>hr</span>
                   <Input
                     variant="number" width={52} min="0" max="59"
                     inputMode="numeric" pattern="[0-9]*"
@@ -390,7 +390,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                     onChange={e => updateEvening({ evening_mode: 'before_sleep', evening_offset_minutes: parseInt(e.target.value) || 0 })}
                     placeholder="0"
                   />
-                  <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+                  <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
                 </Card>
               </div>
             )}
@@ -422,7 +422,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
           <Card style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
             <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Pre-meal items</span>
             <Input variant="number" width={52} min="0" max="120" inputMode="numeric" pattern="[0-9]*" value={localConfig.pre_meal_window ?? 30} onChange={e => updateConfig('pre_meal_window', parseInt(e.target.value) || 0)} />
-            <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+            <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
           </Card>
         </div>
       )}
@@ -457,7 +457,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                 value={localConfig.pre_meal_window ?? 30}
                 onChange={e => updateConfig('pre_meal_window', parseInt(e.target.value) || 0)}
               />
-              <span style={{ fontSize: typography.caption, color: theme.text.muted }}>min</span>
+              <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>min</span>
             </Card>
             <HelperText style={{ marginTop: spacing.xxxs }}>
               Pre-Breakfast, Pre-Lunch, and Pre-Dinner slots are scheduled this many minutes before their meal.
@@ -472,13 +472,13 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
           <Label>{localMode === 'fixed' ? 'Schedule preview' : 'Preview — 7:00 am anchor'}</Label>
           <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
             {previewRows.length === 0
-              ? <span style={{ fontSize: typography.caption, color: theme.text.muted }}>No times configured yet</span>
+              ? <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>No times configured yet</span>
               : previewRows.map((row, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                     <span style={{ fontSize: typography.caption, fontVariantNumeric: 'tabular-nums', color: theme.accent.default, fontWeight: typography.semibold, minWidth: touch.min }}>
                       {row.timeStr ?? fmtTime(addMins(previewBase, row.offset))}
                     </span>
-                    <span style={{ fontSize: typography.caption, color: theme.text.muted }}>—</span>
+                    <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>—</span>
                     <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>{row.label}</span>
                   </div>
                 ))

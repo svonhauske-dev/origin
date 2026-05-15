@@ -40,7 +40,7 @@ function SectionLabel({ children }) {
     <div style={{
       fontSize: typography.label,
       fontWeight: typography.semibold,
-      color: theme.text.muted,
+      color: theme.text.secondary,
       letterSpacing: typography.labelSpacingWide,
       textTransform: 'uppercase',
       fontFamily: typography.fontBody,
@@ -192,7 +192,7 @@ export default function InsightsPanel({
                   </div>
                 ))}
                 {upcoming.length > 3 && (
-                  <div style={{ fontSize: typography.caption, color: theme.text.muted, fontFamily: typography.fontBody }}>
+                  <div style={{ fontSize: typography.caption, color: theme.text.secondary, fontFamily: typography.fontBody }}>
                     +{upcoming.length - 3} more
                   </div>
                 )}

@@ -8,7 +8,7 @@ export default function Badge({ variant = "neutral", style, children }) {
     now:      { background: theme.status.nowBadgeBg,    color: theme.accent.default },
     missed:   { background: theme.status.warningSubtle,  color: theme.status.warning },
     category: { background: theme.accent.subtle,         color: theme.accent.onSubtle },
-    neutral:  { background: theme.surface.cardHover,     color: theme.text.muted },
+    neutral:  { background: theme.surface.cardHover,     color: theme.text.secondary },
   };
 
   const base = {

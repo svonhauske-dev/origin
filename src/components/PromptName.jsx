@@ -41,7 +41,7 @@ export default function PromptName({ onSave }) {
         </Button>
         <button
           onClick={() => onSave(null)}
-          style={{ marginTop: spacing.md, background: "none", border: "none", color: theme.text.muted, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
+          style={{ marginTop: spacing.md, background: "none", border: "none", color: theme.text.secondary, fontSize: typography.caption, cursor: "pointer", WebkitTapHighlightColor: "transparent", minHeight: touch.min, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}
         >
           Skip for now
         </button>

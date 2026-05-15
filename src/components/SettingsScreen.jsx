@@ -36,7 +36,7 @@ function PasswordRule({ met, label }) {
       }}>
         {met && <Check size={10} color={theme.text.onAccent} strokeWidth={3} />}
       </div>
-      <span style={{ fontSize: typography.label, color: met ? theme.text.primary : theme.text.muted, transition: 'color 150ms' }}>
+      <span style={{ fontSize: typography.label, color: met ? theme.text.primary : theme.text.secondary, transition: 'color 150ms' }}>
         {label}
       </span>
     </div>
@@ -244,7 +244,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             <Label style={{ marginBottom: spacing.sm }}>Account</Label>
 
             <div style={{ marginBottom: spacing.md }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.muted }}>
+              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>
                 Full name
               </Label>
               <div style={{ position: 'relative' }}>
@@ -264,10 +264,10 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </div>
 
             <form onSubmit={e => { e.preventDefault(); handleSaveEmail(); }} style={{ marginBottom: spacing.md }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.muted }}>
+              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>
                 Email
               </Label>
-              <div style={{ fontSize: typography.caption, color: theme.text.muted, marginBottom: spacing.xs }}>
+              <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xs }}>
                 {user.email}
               </div>
               <Input
@@ -298,7 +298,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </form>
 
             <form onSubmit={e => { e.preventDefault(); handleSavePassword(); }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.muted }}>
+              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>
                 Password
               </Label>
               <Input
@@ -352,7 +352,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                   minHeight: touch.min,
                 }}
               >
-                <span style={{ fontSize: typography.caption, color: theme.text.muted, flex: 1, paddingRight: spacing.sm }}>
+                <span style={{ fontSize: typography.caption, color: theme.text.secondary, flex: 1, paddingRight: spacing.sm }}>
                   Install Origin to your home screen to enable reminders.
                 </span>
                 <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />

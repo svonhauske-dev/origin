@@ -150,7 +150,7 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                     padding: `${spacing.xs}px 0 ${spacing.sm}px`,
                     fontSize: typography.body,
                     fontWeight: viewMode === val ? typography.semibold : typography.regular,
-                    color: viewMode === val ? theme.text.primary : theme.text.muted,
+                    color: viewMode === val ? theme.text.primary : theme.text.secondary,
                     cursor: "pointer",
                     textAlign: "center",
                     WebkitTapHighlightColor: "transparent",
@@ -200,7 +200,7 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                               <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
                                 {supp.name}
                               </span>
-                              <CategoryIcon category={supp.category} color={theme.text.muted} />
+                              <CategoryIcon category={supp.category} color={theme.text.secondary} />
                               {isPausedSupp(supp) && <Badge variant="neutral">Paused</Badge>}
                             </div>
                             <Button
@@ -261,15 +261,15 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs, display: "flex", alignItems: "center", gap: "6px" }}>
                               {supp.name}
-                              <CategoryIcon category={supp.category} color={theme.text.muted} />
+                              <CategoryIcon category={supp.category} color={theme.text.secondary} />
                             </div>
                             {supp.dose && (
-                              <div style={{ fontSize: typography.caption, color: theme.text.muted, marginBottom: spacing.xxxs }}>
+                              <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xxxs }}>
                                 {supp.dose}
                               </div>
                             )}
                             {supp.stopped_at && (
-                              <div style={{ fontSize: typography.caption, color: theme.text.muted, marginBottom: spacing.xxxs }}>
+                              <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xxxs }}>
                                 Stopped {formatStoppedDate(supp.stopped_at)}
                               </div>
                             )}

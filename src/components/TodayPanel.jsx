@@ -91,7 +91,7 @@ export default function TodayPanel({
         <div style={{
           padding: `${spacing.xl}px ${spacing.lg}px`,
           textAlign: 'center',
-          color: theme.text.muted,
+          color: theme.text.secondary,
           fontSize: typography.body,
           fontFamily: typography.fontBody,
         }}>

@@ -45,7 +45,7 @@ export default function Button({
   } else if (variant === "startDay") {
     v = {
       background: isFuture ? theme.surface.cardHover : theme.accent.default,
-      color: isFuture ? theme.text.muted : theme.text.onAccent,
+      color: isFuture ? theme.text.secondary : theme.text.onAccent,
       border: "none",
       fontWeight: typography.semibold,
       borderRadius: theme.radius.button,

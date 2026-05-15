@@ -56,7 +56,7 @@ export default function SlotRow({
           {slotTime && slotTime !== '--:--' && (
             <span style={{
               fontSize: typography.caption,
-              color: theme.text.muted,
+              color: theme.text.secondary,
               fontFamily: typography.fontData,
             }}>
               {slotTime}
@@ -74,7 +74,7 @@ export default function SlotRow({
           </span>
           <ChevronDown
             size={16}
-            color={hovered ? theme.text.primary : theme.text.muted}
+            color={hovered ? theme.text.primary : theme.text.secondary}
             style={{
               transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 150ms ease',
