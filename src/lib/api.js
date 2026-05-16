@@ -148,6 +148,27 @@ export function signOut() {
   localStorage.removeItem("sb_refresh_token");
 }
 
+// Protocols
+export const dbGetProtocols    = (t)       => supa("GET",    "/rest/v1/protocols?select=*&order=created_at.asc", null, t);
+export const dbAddProtocol     = (p, t)    => supa("POST",   "/rest/v1/protocols", p, t);
+export const dbUpdateProtocol  = (p, t)    => supa("PATCH",  `/rest/v1/protocols?id=eq.${p.id}`, { name: p.name, status: p.status, treatment_mode: p.treatment_mode, starts_at: p.starts_at ?? null, ends_at: p.ends_at ?? null, updated_at: new Date().toISOString() }, t);
+export const dbDeleteProtocol  = (id, t)   => supa("DELETE", `/rest/v1/protocols?id=eq.${id}`, null, t);
+
+const dbResetProtocolSupps = (protocolId, t) =>
+  supa("PATCH", `/rest/v1/supplements?protocol_id=eq.${protocolId}`, { status: 'active', paused: false, updated_at: new Date().toISOString() }, t);
+
+export const dbPauseProtocol = async (protocolId, t) => {
+  await dbResetProtocolSupps(protocolId, t);
+  return supa("PATCH", `/rest/v1/protocols?id=eq.${protocolId}`, { status: 'paused',   updated_at: new Date().toISOString() }, t);
+};
+export const dbArchiveProtocol = async (protocolId, t) => {
+  await dbResetProtocolSupps(protocolId, t);
+  return supa("PATCH", `/rest/v1/protocols?id=eq.${protocolId}`, { status: 'archived', updated_at: new Date().toISOString() }, t);
+};
+export const dbActivateProtocol = (protocolId, t) =>
+  supa("PATCH", `/rest/v1/protocols?id=eq.${protocolId}`, { status: 'active', updated_at: new Date().toISOString() }, t);
+
+// Supplements
 export const dbGetSupps     = (t)       => supa("GET",    "/rest/v1/supplements?select=*&order=created_at.asc", null, t);
 export const dbAddSupp      = (s, t)    => supa("POST",   "/rest/v1/supplements", s, t);
 export const dbUpdateSupp   = (s, t)    => supa("PATCH",  `/rest/v1/supplements?id=eq.${s.id}`, { name: s.name, dose: s.dose, notes: s.notes, slots: s.slots, days: s.days, category: s.category, timePreference: s.timePreference, paused: s.paused ?? false, status: s.status ?? 'active', stopped_at: s.stopped_at ?? null, treatment_mode: s.treatment_mode ?? "indefinite", starts_at: s.starts_at ?? null, ends_at: s.ends_at ?? null, cycle_on_value: s.cycle_on_value ?? null, cycle_on_unit: s.cycle_on_unit ?? null, cycle_off_value: s.cycle_off_value ?? null, cycle_off_unit: s.cycle_off_unit ?? null, updated_at: new Date().toISOString() }, t);

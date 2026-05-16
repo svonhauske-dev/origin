@@ -32,6 +32,8 @@ import TodayPanel from "./components/TodayPanel";
 import InsightsPanel from "./components/InsightsPanel";
 import {
   supa, getSession, signInPassword, signUp, signOut, refreshSession,
+  dbGetProtocols, dbAddProtocol, dbUpdateProtocol, dbDeleteProtocol,
+  dbPauseProtocol, dbArchiveProtocol, dbActivateProtocol,
   dbGetSupps, dbAddSupp, dbUpdateSupp, dbDeleteSupp,
   dbGetLog, dbUpsertLog,
   dbGetSchedule, dbSaveSchedule,
@@ -161,6 +163,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   useEffect(() => { resetStack(); }, []);
   const ANYTIME_SLOT = { id: "anytime", label: "Anytime", sublabel: "No specific time", icon: "◦", color: theme.text.muted };
   const BG_GRADIENT = theme.gradients.bg;
+  const [protocols, setProtocols]           = useState([]);
   const [supps, setSupps]                   = useState([]);
   const [pillTimes, setPillTimes]           = useState({});
   const [checked, setChecked]               = useState({});
@@ -201,7 +204,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
 
   const slotOffsets   = scheduleMode === "fixed" ? null : deriveOffsets(scheduleMode, scheduleConfig);
   const visibleSupps  = supps.filter(s => !pendingDeletes[s.id]);
-  const homeSupps     = visibleSupps.filter(s => isActiveSupp(s) && isSupplementActiveOn(s, viewDate));
+  const activeProtocolIds = new Set(protocols.filter(p => p.status === 'active').map(p => p.id));
+  const homeSupps     = visibleSupps.filter(s => isActiveSupp(s) && isSupplementActiveOn(s, viewDate) && (!s.protocol_id || activeProtocolIds.has(s.protocol_id)));
 
   const dk         = dateKey(viewDate);
   const isToday    = dateKey(viewDate) === dateKey(TODAY);
@@ -246,13 +250,15 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     (async () => {
       setLoading(true);
       try {
-        const [s, log, sched, prof, histRows] = await Promise.all([
+        const [protos, s, log, sched, prof, histRows] = await Promise.all([
+          dbGetProtocols(token).catch(() => []),
           dbGetSupps(token),
           dbGetLog(dk, token),
           dbGetSchedule(token),
           dbGetProfile(user.id, token).catch(() => null),
           dbGetSupplementHistory(token).catch(() => []),
         ]);
+        setProtocols(protos || []);
         setSupplementHistory((histRows || []).map(r => r.name));
         setProfile(prof);
         if (prof === null) setNeedsNamePrompt(true);
@@ -661,6 +667,55 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       return false;
     }
     return true;
+  };
+
+  // ── Protocol actions ─────────────────────────────────────────────────────
+  const addProtocol = async (data) => {
+    try {
+      const rows = await dbAddProtocol({ ...data, user_id: user.id }, token);
+      if (rows?.[0]) setProtocols(p => [...p, rows[0]]);
+      return rows?.[0] ?? null;
+    } catch (err) { showToast("Couldn't create protocol. Try again."); console.error(err); return null; }
+  };
+
+  const updateProtocol = async (protocol) => {
+    try {
+      await dbUpdateProtocol(protocol, token);
+      setProtocols(p => p.map(x => x.id === protocol.id ? protocol : x));
+    } catch (err) { showToast("Couldn't save. Try again."); console.error(err); }
+  };
+
+  const pauseProtocol = async (protocol) => {
+    try {
+      await dbPauseProtocol(protocol.id, token);
+      setProtocols(p => p.map(x => x.id === protocol.id ? { ...x, status: 'paused' } : x));
+      setSupps(s => s.map(x => x.protocol_id === protocol.id ? { ...x, status: 'active', paused: false } : x));
+      showToast(`${protocol.name} paused`);
+    } catch (err) { showToast("Couldn't pause. Try again."); console.error(err); }
+  };
+
+  const archiveProtocol = async (protocol) => {
+    try {
+      await dbArchiveProtocol(protocol.id, token);
+      setProtocols(p => p.map(x => x.id === protocol.id ? { ...x, status: 'archived' } : x));
+      setSupps(s => s.map(x => x.protocol_id === protocol.id ? { ...x, status: 'active', paused: false } : x));
+      showToast(`${protocol.name} archived`);
+    } catch (err) { showToast("Couldn't archive. Try again."); console.error(err); }
+  };
+
+  const activateProtocol = async (protocol) => {
+    try {
+      await dbActivateProtocol(protocol.id, token);
+      setProtocols(p => p.map(x => x.id === protocol.id ? { ...x, status: 'active' } : x));
+      showToast(`${protocol.name} activated`);
+    } catch (err) { showToast("Couldn't activate. Try again."); console.error(err); }
+  };
+
+  const deleteProtocol = async (protocol) => {
+    try {
+      await dbDeleteProtocol(protocol.id, token);
+      setProtocols(p => p.filter(x => x.id !== protocol.id));
+    } catch (err) { showToast("Couldn't delete. Try again."); console.error(err); }
   };
 
   const handleEditFormTogglePause = async () => {
