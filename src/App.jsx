@@ -499,7 +499,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const openManageProtocol = () => { setManageProtocolDefaultTab('active');   pushScreen('manage_protocol'); };
 
   const openAdd   = () => { setEditingId(null); setForm({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null }); setSubmitError(null); setFormOpen(true); };
-  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...supp.slots], days: [...supp.days], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
+  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...(supp.slots || [])], days: [...(supp.days || [])], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
   const closeForm = () => { setFormOpen(false); setEditingId(null); };
 
   const submitForm = async () => {
@@ -589,7 +589,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const updated = { ...supp, status: 'active', stopped_at: null };
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));
-      openEdit(updated);
       showToast(`${supp.name} resumed`);
     } catch (err) {
       showToast(`Couldn't resume ${supp.name}. Try again.`);
