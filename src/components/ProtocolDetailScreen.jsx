@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Plus, Pause, Play, Trash2 } from "lucide-react";
+import { ChevronLeft, Plus, Pause, Play, Trash2, MoreHorizontal } from "lucide-react";
 import { Pill, Syringe, Droplet } from "lucide-react";
 import { spacing, typography, touch, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
-import Label from "./Label";
 import Button from "./Button";
 import Modal from "./Modal";
 import TabBar from "./TabBar";
@@ -17,10 +16,20 @@ function CategoryIcon({ category, color }) {
   return null;
 }
 
+// Confirm copy templates. `body` is a function so we can inject the protocol name.
 const CONFIRM_COPY = {
-  pause:   { title: "Pause protocol?",   body: "All supplements will reset to template state. You can activate this protocol again anytime.", cta: "Pause" },
-  archive: { title: "Archive protocol?", body: "All supplements will reset to template state. You can activate this protocol again anytime.", cta: "Archive" },
-  delete:  { title: "Delete protocol?",  body: "This permanently deletes the protocol and all its supplements. This cannot be undone.", cta: "Delete" },
+  archive: {
+    title: (name) => `Archive ${name}?`,
+    body:  () => "You can restore it from Archived anytime.",
+    cta:   "Archive",
+    variant: "destructive",
+  },
+  delete: {
+    title: () => "Delete protocol?",
+    body:  () => "This permanently deletes the protocol and all its supplements. This cannot be undone.",
+    cta:   "Delete",
+    variant: "destructive",
+  },
 };
 
 export default function ProtocolDetailScreen({
@@ -37,6 +46,7 @@ export default function ProtocolDetailScreen({
   const [sendModalOpen, setSendModalOpen]   = useState(false);
   const [sending, setSending]               = useState(false);
   const [deletingSupp, setDeletingSupp]     = useState(null); // supp pending delete confirm
+  const [menuOpen, setMenuOpen]             = useState(false); // overflow menu
   const nameInputRef = useRef(null);
   const scrollRef    = useRef(null);
 
@@ -46,6 +56,7 @@ export default function ProtocolDetailScreen({
       setEditingName(false);
       setConfirmAction(null);
       setDeletingSupp(null);
+      setMenuOpen(false);
       setTab('active');
       if (scrollRef.current) scrollRef.current.scrollTo(0, 0);
     }
@@ -79,10 +90,30 @@ export default function ProtocolDetailScreen({
   const handleConfirm = async () => {
     const action = confirmAction;
     setConfirmAction(null);
-    if (action === 'pause')   await onPauseProtocol(protocol);
     if (action === 'archive') await onArchiveProtocol(protocol);
     if (action === 'delete')  { await onDeleteProtocol(protocol); onBack(); }
   };
+
+  // Overflow menu items — order matches iOS action-sheet conventions
+  // (lifecycle/state changes first, destructive last).
+  const menuItems = (() => {
+    if (!protocol) return [];
+    const items = [];
+    if (isActive) {
+      items.push({ key: 'pause',    label: 'Pause protocol',    onSelect: () => { setMenuOpen(false); onPauseProtocol(protocol); } });
+      items.push({ key: 'archive',  label: 'Archive protocol',  onSelect: () => { setMenuOpen(false); setConfirmAction('archive'); } });
+    } else if (isPaused) {
+      items.push({ key: 'activate', label: 'Activate protocol', onSelect: () => { setMenuOpen(false); onActivateProtocol(protocol); } });
+      items.push({ key: 'archive',  label: 'Archive protocol',  onSelect: () => { setMenuOpen(false); setConfirmAction('archive'); } });
+    } else if (isArchived) {
+      items.push({ key: 'activate', label: 'Activate protocol', onSelect: () => { setMenuOpen(false); onActivateProtocol(protocol); } });
+      items.push({ key: 'delete',   label: 'Delete protocol',   onSelect: () => { setMenuOpen(false); setConfirmAction('delete'); }, destructive: true });
+    }
+    if (isClinician && (isActive || isPaused)) {
+      items.push({ key: 'send', label: 'Send to patient', onSelect: () => { setMenuOpen(false); setSendModalOpen(true); } });
+    }
+    return items;
+  })();
 
   return (
     <div
@@ -152,58 +183,49 @@ export default function ProtocolDetailScreen({
           </button>
         )}
 
-        {(isActive || isArchived) ? (
-          <button
-            onClick={onAddSupp}
-            aria-label="Add supplement"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: `${spacing.xs}px`, marginRight: -spacing.xs,
-              color: theme.accent.default, display: 'flex', alignItems: 'center',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <Plus size={22} />
-          </button>
-        ) : (
-          <div style={{ width: 40 }} />
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xxs }}>
+          {menuItems.length > 0 && (
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Protocol actions"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: `${spacing.xs}px`,
+                color: theme.text.primary, display: 'flex', alignItems: 'center',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <MoreHorizontal size={22} />
+            </button>
+          )}
+          {(isActive || isArchived) ? (
+            <button
+              onClick={onAddSupp}
+              aria-label="Add supplement"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: `${spacing.xs}px`, marginRight: -spacing.xs,
+                color: theme.accent.default, display: 'flex', alignItems: 'center',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Plus size={22} />
+            </button>
+          ) : (
+            <div style={{ width: 40 }} />
+          )}
+        </div>
       </div>
 
       {protocol && (
         <div style={{
           maxWidth: layout.maxContentWidth, margin: '0 auto',
-          padding: `${spacing.lg}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
+          padding: `${spacing.md}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
         }}>
 
-          {/* Send to patient — clinician only */}
-          {isClinician && (
-            <Button variant="primary" fullWidth style={{ marginBottom: spacing.sm }} onClick={() => setSendModalOpen(true)}>
-              Send to patient
-            </Button>
-          )}
-
-          {/* Protocol lifecycle actions — top, side by side */}
-          <div style={{ display: 'flex', gap: spacing.xs, marginBottom: spacing.lg }}>
-            {isActive && (
-              <>
-                <Button variant="secondary" style={{ flex: 1 }} onClick={() => setConfirmAction('pause')}>Pause</Button>
-                <Button variant="secondary" style={{ flex: 1 }} onClick={() => setConfirmAction('archive')}>Archive</Button>
-              </>
-            )}
-            {isPaused && (
-              <>
-                <Button variant="primary"   style={{ flex: 1 }} onClick={() => onActivateProtocol(protocol)}>Activate</Button>
-                <Button variant="secondary" style={{ flex: 1 }} onClick={() => setConfirmAction('archive')}>Archive</Button>
-              </>
-            )}
-            {isArchived && (
-              <>
-                <Button variant="primary"      style={{ flex: 1 }} onClick={() => onActivateProtocol(protocol)}>Activate</Button>
-                <Button variant="destructive"  style={{ flex: 1 }} onClick={() => setConfirmAction('delete')}>Delete</Button>
-              </>
-            )}
-          </div>
+          {/* Body CTAs (Send to patient + Pause/Archive/Activate/Delete row) moved
+              to the overflow ⋯ menu in the header (May 17). Body now starts with
+              the tab strip / list, flush under the sticky header. */}
 
           {/* Archived: flat list (no pause/resume, since archive resets all supps to active state).
               Active / Paused: Active / Stopped tabs. */}
@@ -371,6 +393,41 @@ export default function ProtocolDetailScreen({
         </div>
       )}
 
+      {/* Overflow menu — bottom sheet with status-aware lifecycle actions */}
+      <Modal
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title={protocol?.name || ''}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {menuItems.map((item, i) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.onSelect}
+              style={{
+                display: 'flex', alignItems: 'center',
+                width: '100%',
+                padding: `${spacing.md}px 0`,
+                background: 'transparent',
+                border: 'none',
+                borderTop: i > 0 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : 'none',
+                color: item.destructive ? theme.status.danger : theme.text.primary,
+                fontFamily: 'inherit',
+                fontSize: typography.body,
+                fontWeight: typography.medium,
+                textAlign: 'left',
+                cursor: 'pointer',
+                minHeight: touch.min,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </Modal>
+
       {/* Send to patient modal */}
       <Modal
         open={sendModalOpen}
@@ -423,16 +480,16 @@ export default function ProtocolDetailScreen({
         )}
       </Modal>
 
-      {/* Confirmation modal */}
+      {/* Confirmation modal (Archive / Delete) */}
       <Modal
         open={!!confirmAction}
         onClose={() => setConfirmAction(null)}
-        title={confirmAction ? CONFIRM_COPY[confirmAction].title : ''}
+        title={confirmAction ? CONFIRM_COPY[confirmAction].title(protocol?.name) : ''}
         footer={
           <div style={{ display: 'flex', gap: spacing.xs }}>
             <Button variant="tertiary" fullWidth onClick={() => setConfirmAction(null)}>Cancel</Button>
             <Button
-              variant={confirmAction === 'delete' ? 'destructive' : 'primary'}
+              variant={confirmAction ? CONFIRM_COPY[confirmAction].variant : 'primary'}
               fullWidth
               onClick={handleConfirm}
             >
@@ -442,7 +499,7 @@ export default function ProtocolDetailScreen({
         }
       >
         <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
-          {confirmAction ? CONFIRM_COPY[confirmAction].body : ''}
+          {confirmAction ? CONFIRM_COPY[confirmAction].body() : ''}
         </p>
       </Modal>
 

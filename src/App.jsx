@@ -1319,7 +1319,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         onTogglePauseSupp={togglePause}
         onResumeSupp={resumeSupp}
         onDeleteSupp={deleteSuppById}
-        isClinician={isClinician}
+        isClinician={false}
         patients={patients}
         onSendToPatient={sendProtocol}
       />

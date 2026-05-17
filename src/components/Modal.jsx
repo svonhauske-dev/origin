@@ -21,13 +21,20 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
   const bodyRef = useRef(null);
   const sheetRef = useRef(null);
 
-  // Stay mounted long enough for the exit animation to finish, then unmount.
-  // This prevents the off-screen modal from appearing in full-page screenshots.
+  // `mounted` controls DOM presence (stays true through the exit animation).
+  // `shown` controls the visible position. Splitting them ensures the modal's
+  // first render commits at translateY(100%), then a follow-up frame flips
+  // to translateY(0) so the CSS transition actually animates. Without this
+  // the modal pops in at its final position with no slide.
   const [mounted, setMounted] = useState(open);
+  const [shown, setShown]     = useState(false);
   useEffect(() => {
     if (open) {
       setMounted(true);
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
+      return () => cancelAnimationFrame(id);
     } else {
+      setShown(false);
       const t = setTimeout(() => setMounted(false), ANIM_MS);
       return () => clearTimeout(t);
     }
@@ -108,7 +115,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
 
   const sheetTransform = isDragging
     ? `translateY(${dragOffset}px)`
-    : open ? "translateY(0)" : "translateY(100%)";
+    : shown ? "translateY(0)" : "translateY(100%)";
 
   const sheetTransition = isDragging ? "none" : "transform 0.3s ease-out";
 
@@ -130,9 +137,9 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
           background: theme.surface.backdrop,
           backdropFilter: effects.backdropBlur,
           WebkitBackdropFilter: effects.backdropBlur,
-          opacity: open ? 1 : 0,
+          opacity: shown ? 1 : 0,
           transition: "opacity 250ms ease-out",
-          pointerEvents: open ? "all" : "none",
+          pointerEvents: shown ? "all" : "none",
           zIndex: zBackdrop,
         }}
       />
