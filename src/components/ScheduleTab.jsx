@@ -301,8 +301,18 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                 key={m.id}
                 onClick={() => {
                   setSelectedCard(m.id);
-                  if (m.id !== 'anchor') handleModeChange(m.id);
-                  // anchor: show sub-selector, wait for sub-mode pick before saving
+                  if (m.id === 'anchor') {
+                    // Auto-pick Medication when switching INTO Anchor from a non-anchor
+                    // mode so the save fires immediately. Without this the user could
+                    // tap Anchor (which highlights the card), force-close before picking
+                    // a sub-mode, and lose their selection. User can still flip to
+                    // Wake Up via the sub-selector.
+                    if (localMode !== 'medication' && localMode !== 'wakeup') {
+                      handleModeChange('medication');
+                    }
+                  } else {
+                    handleModeChange(m.id);
+                  }
                 }}
                 style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0 }}
               >
