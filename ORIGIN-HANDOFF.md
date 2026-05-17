@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 16, 2026 (afternoon) — Protocol Library Phase 1-3 complete: multi-protocol stacking, ProtocolDetailScreen, ProtocolLibrary, TabBar primitive, SettingsScreen sub-view navigation, EditForm protocol picker, two-step new-protocol modal with intent (replace/stack/save later)*
+*Last updated: May 17, 2026 — IF v2 shipped: intermittent fasting migrated from anchor-relative offsets to a fixed-schedule eating window (start time + duration + meal count + evening). Includes new IF slot vocabulary, IFMigrationScreen for existing v1 users, edge-function notification scheduling, and a daily_logs slot-key migration SQL (not yet run).*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -125,18 +125,27 @@ The design system uses a token-based theme architecture. All components consume 
 **4 schedule modes UI, 5 underlying values** (default for new users = No Schedule):
 - No Schedule — pure checklist, no times, no notifications
 - Anchor (groups Medication + Wake Up) — onboarding and Manage Protocol show 4 cards in a 2×2 grid; tapping Anchor reveals a sub-selector below the grid (Medication / Wake Up); DB stores `medication` or `wakeup` directly (never `anchor`; no migration needed)
-- Intermittent Fasting — built around eating window
+- Intermittent Fasting — built around a fixed eating window (IF v2, shipped May 17): user sets a daily window start time + duration (4/6/8/10/12 hr) + meal count (2 or 3) + optional Evening slot. Slot times are absolute (like Fixed mode), not relative to a daily anchor. Existing v1 users (anchor-relative window) are upgraded through IFMigrationScreen on next load. New fasting users skip the migration screen.
 - Fixed Times — same schedule every day
 
 **Categories:** Oral, Rx, Injectable, Topical (with category-aware form behavior)
 
-**Slot vocabulary:**
+**Slot vocabulary (non-IF modes — Medication, Wakeup, Fixed):**
 - Anchor (Medication Anchor mode only)
 - Pre-Breakfast, Breakfast
 - Pre-Lunch, Lunch
 - Pre-Dinner, Dinner
 - Evening (time-of-day bucket — Fixed time OR Before sleep)
 - Anytime (explicit pill, stored as `slots: []`)
+
+**Slot vocabulary (Intermittent Fasting v2):** entirely separate IDs — never appear outside fasting mode.
+- Fasted (pre-window — 30 min before eating window opens)
+- Meal 1 (window opens — fires unconditionally as the "your eating window is open" notification)
+- Pre-Meal 2, Meal 2 (visible when meal_count ≥ 2)
+- Pre-Meal 3, Meal 3 (visible when meal_count ≥ 3)
+- Evening (only when evening_mode is set — Fixed time OR Before sleep)
+- Anytime (explicit pill, `slots: []`)
+- Window closes — unconditional 30-min warning, suppressed when a meal slot with supplements fires at the same minute (so default pre_meal_window=30 doesn't stack a meal notification on top of the closing warning).
 
 **Recoverable late state** — slots that pass without check-ins get a small muted ochre "late" badge. Slot card stays standard. Frame is "you can still take this," not "you failed."
 
@@ -541,6 +550,42 @@ When 2+ active protocols exist, EditForm shows a Protocol section above Name. Se
 *Intent handling in `addProtocol`:*
 Three intents: `replace` (archives all active protocols + client-side resets their supplements, creates new as 'active', shows archived names in toast), `stack` (creates new as 'active', existing unchanged), `save_later` (creates new as 'archived'). Intent step skipped entirely when no active protocols exist.
 
+### Session of May 17
+
+**Feature — IF v2: anchor-relative → absolute-time eating window**
+
+Existing IF (intermittent fasting) was anchor-relative: a single "pill time" anchor drove a derived eating window via `window_start` / `window_length` / `meals_per_day` offsets. Resuming supplements was broken for fasting users because the home surface and Start-Day CTA assumed every non-Fixed mode needed a daily anchor. Rebuilt fasting as a fixed-schedule model — same shape as Fixed mode, with its own dedicated slot vocabulary.
+
+*Core (`src/config.js`, `src/lib/notifications.js`):*
+New config fields `eating_window_start` (HH:MM), `eating_window_duration_hours` (4/6/8/10/12), `meal_count` (2/3), reusing existing `pre_meal_window`, `evening_mode`, `evening_time`, `sleep_time`. `computeIFSlotTimes(cfg)` derives absolute HH:MM times for each slot. New `IF_SLOTS` array with IF-only slot IDs — `fasted`, `meal_1`, `pre_meal_2`, `meal_2`, `pre_meal_3`, `meal_3`, `evening`. v1 config fields kept in `DEFAULT_CONFIG` so unmigrated reads don't error.
+
+*Schedule editor (`ScheduleTab.jsx`):*
+New fasting block — window start input (required), duration segmented control, meals 2/3, pre-meal-window number, evening sub-mode (Off / Fixed time / Before sleep). Live preview renders all active slot times computed from current state. Flexible/Consistent toggle hidden for fasting (always fixed-schedule). Orphan-supplement modal warns when dropping meal_count would strand supplements assigned to disappearing slots.
+
+*Slot picker (`EditForm.jsx`):*
+Mode-aware. In fasting mode, picker uses `IF_SLOTS` filtered by `meal_count` (hides meal_2/3 + pre slots when not used) and `evening_mode` (hides evening when off). All other modes use the original `SLOTS` list.
+
+*Onboarding (`Onboarding.jsx`):*
+Fasting block now collects the v2 fields directly. Get Started disabled until eating window start is provided. New fasting users are stamped `_if_v2_migrated: true` at save time so they skip the migration screen on next load.
+
+*Today surface (`Hero.jsx`, `TodayPanel.jsx`, `TodayPanelHeader.jsx`, `App.jsx`):*
+Fasting users see "Eating window: HH:MM" in the hero/header instead of the anchor Start-Day CTA. `activeSlotList` and `coreSlotIds` become mode-aware so the home renders only IF slots active for current `meal_count` / `evening_mode`, and adherence math counts the correct slot set. `getSlotTime()` handles fasting by reading from `computeIFSlotTimes` (plus evening sub-mode logic). `saveSchedule` strips anchor metadata for fasting. The legacy `fasted → pre_breakfast` slot rename is guarded by `_if_v2_migrated` so it stops firing for v2 users (in v2, `fasted` is a real slot).
+
+*Migration screen (`IFMigrationScreen.jsx`, new):*
+Full-screen confirm flow for existing IF users. Infers v2 fields from the user's old config (`_consistent_time` → window start, `window_length / 60` → duration hours, `meals_per_day` → meal_count, `pre_meal_window` carried), shows them with editable controls, requires the user to confirm. On confirm: persists v2 config with `_if_v2_migrated: true`, remaps every supplement's slot IDs from v1 → v2 (`pre_breakfast → fasted`, `breakfast → meal_1`, `pre_lunch → pre_meal_2`, `lunch → meal_2`, `pre_dinner → pre_meal_3`, `dinner → meal_3`, `after_dinner → evening`), writes each updated supplement to Supabase, and triggers a notification recompute. Trigger in App.jsx: `sched.schedule_type === "fasting" && !sched.offsets._if_v2_migrated`.
+
+*Backend (`supabase/functions/_shared/helpers.ts`, `supabase/functions/recompute_notifications/index.ts`):*
+Server-side `computeIFSlotTimesHHMM` mirrors the client. New IF v2 branch in `recompute_notifications` (gated on `_if_v2_migrated`):
+- Unconditional notifications: `fasted` (30-min warning before window opens), `meal_1` ("Your eating window is open"), `window_closing` (30-min warning before window closes).
+- `window_closing` is suppressed when its fire time coincides with a meal slot that has supplements (default `pre_meal_window=30` puts the last meal at exactly window_close − 30 → would otherwise stack two notifications at the same minute).
+- Conditional notifications (only fire if supplements assigned): `pre_meal_2`, `meal_2`, `pre_meal_3`, `meal_3`, `evening`.
+- v1 IF users (no migration flag) fall through to the legacy anchor-relative offset branch — no behavior change for them until they confirm migration.
+
+*Data migration (`supabase/if-logs-migration.sql`, not yet run):*
+One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users with `_if_v2_migrated = true`. CASE branches ordered longer-prefix-first to avoid double-substitution (e.g. `pre_breakfast` matched before `breakfast`). Intended to be run manually via Supabase Dashboard once all real IF users (currently just Bego) have completed the in-app migration. Without this, past daily logs would show as un-checked under v2 slot IDs even though they were completed under v1 slot IDs — adherence history would visually regress.
+
+*Commits (May 17):* `80a386d` core, `d091e5b` UI, `ee5d94c` home surface + migration screen, `25e0a36` notification scheduling, `82d2ef8` daily_logs migration SQL.
+
 ---
 
 ## Codebase Health
@@ -550,15 +595,15 @@ Three intents: `replace` (archives all active protocols + client-side resets the
 **Module structure:**
 - `src/lib/api.js` — Supabase data layer + auth (22 exported functions, see API Helpers reference below)
 - `src/lib/time.js` — time/date utilities
-- `src/lib/notifications.js` — scheduleNotifications, SLOTS
+- `src/lib/notifications.js` — scheduleNotifications, SLOTS, IF_SLOTS (IF v2)
 - `src/lib/adherence.js` — adherence calculations (per-date + week + streak)
 - `src/lib/navigation.jsx` — NavigationProvider, screenStack, pushScreen/popScreen/resetStack
-- `src/config.js` — DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets
+- `src/config.js` — DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets, IF_SLOT_IDS, CORE_SLOTS, computeIFSlotTimes (IF v2)
 - `src/design-system.js` — single source of truth for tokens (Achromatic + dev themes)
 - `src/data/supplements-database.js` — autocomplete static list (~300 entries)
 - `src/components/`:
   - Primitives: Button, Card, Input, Label, Badge, Modal, Toast, Loader, InlineLoader, TabBar
-  - Auth & onboarding: Auth, PromptName, Onboarding, NotificationPrompt
+  - Auth & onboarding: Auth, PromptName, Onboarding, NotificationPrompt, IFMigrationScreen
   - Home (mobile): Hero, SlotCard, WeekStrip (mobile date picker)
   - Home (desktop): Sidebar, WeekStrip, AdherenceRing, TodayPanel (+ TodayPanelHeader sub-component), SlotRow, SupplementRow, InsightsPanel; DayCell is a named export from WeekStrip.jsx (no standalone file)
   - Modals & screens: EditForm, ScheduleTab, SettingsScreen, ProtocolLibrary, ProtocolDetailScreen
@@ -671,8 +716,8 @@ Estimated: 1 session for empty states + aria-live.
 **3. Web Push notifications — SHIPPED** (moved from pending — confirmed via DB diagnostic May 11)
 Service Worker, VAPID subscription flow, `recompute_notifications` + `process_notifications_queue` edge functions all live. `push_subscriptions` table exists, 2 users have `notifications_enabled = true`, 68 notifications currently queued. Commits: `1983728` (sub flow Pass 2), `a0ff155` (edge function + frontend), `4a25934` (process queue). Remaining work: verify notification delivery reliability for real users (OVH and Bego), any UX gaps discovered from real use.
 
-**4. Configurable meal count.**
-Parked. Unified `meals` array decision (or keep IF's `meals_per_day` separate from cascade modes' configurable count). Needs fresh design thinking.
+**4. Configurable meal count — IF side addressed (May 17).**
+IF v2 makes meal_count a first-class user-facing setting (2 or 3 meals, with the slot picker filtering accordingly). Cascade-mode meal count (Medication / Wakeup) is still hard-coded to 3 — separate decision if/when that becomes friction.
 
 ### Lower priority (parked from various sessions)
 
