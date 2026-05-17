@@ -1,6 +1,19 @@
 import { dateKey, startOfDay, TODAY, isActiveSupp, isSupplementActiveOn } from './time';
 
-const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
+// One "expected check" per (slot, supp) pair, plus one for each anytime supp.
+// Iterating per supplement (not per fixed slot set) keeps this correct for any
+// schedule mode — including IF v2, whose slot IDs are not in the legacy CORE_SLOTS.
+function countExpectedChecks(supp, dk, checked) {
+  if (!supp.slots || supp.slots.length === 0) {
+    return { total: 1, done: checked[`${dk}_anytime_${supp.id}`] ? 1 : 0 };
+  }
+  let total = 0, done = 0;
+  for (const sid of supp.slots) {
+    total++;
+    if (checked[`${dk}_${sid}_${supp.id}`]) done++;
+  }
+  return { total, done };
+}
 
 export function calculateAdherenceForDate(date, supplements, log) {
   if (!log) return 0;
@@ -8,48 +21,34 @@ export function calculateAdherenceForDate(date, supplements, log) {
   const dayOfWeek = date.getDay();
   const checked = log.checked || {};
 
-  const activeSupps = supplements.filter(s => isActiveSupp(s) && isSupplementActiveOn(s, date));
+  const activeSupps = supplements.filter(s =>
+    isActiveSupp(s) && isSupplementActiveOn(s, date) && s.days.includes(dayOfWeek)
+  );
 
-  let total = 0;
-  let done = 0;
-
-  // Anytime supplements (no slots assigned)
-  activeSupps
-    .filter(s => s.slots.length === 0 && s.days.includes(dayOfWeek))
-    .forEach(s => {
-      total++;
-      if (checked[`${dk}_anytime_${s.id}`]) done++;
-    });
-
-  // Slotted supplements
-  CORE_SLOTS.forEach(sid => {
-    activeSupps
-      .filter(s => s.slots.includes(sid) && s.days.includes(dayOfWeek))
-      .forEach(s => {
-        total++;
-        if (checked[`${dk}_${sid}_${s.id}`]) done++;
-      });
-  });
-
+  let total = 0, done = 0;
+  for (const supp of activeSupps) {
+    const r = countExpectedChecks(supp, dk, checked);
+    total += r.total;
+    done  += r.done;
+  }
   return total === 0 ? 0 : Math.round((done / total) * 100);
 }
 
 export function calculateCurrentStreak(supplements, checked, scheduleMode, anchorBehavior, pillTimes) {
   function isDayComplete(d, ddk) {
     const pt = pillTimes[ddk];
-    if (!pt && scheduleMode !== 'fixed' && scheduleMode !== 'none' && anchorBehavior !== 'consistent') return false;
+    // Modes without a daily user-set anchor don't need pillTime to count the day.
+    const needsAnchor = scheduleMode !== 'fixed' && scheduleMode !== 'fasting' && scheduleMode !== 'none' && anchorBehavior !== 'consistent';
+    if (!pt && needsAnchor) return false;
     const day = d.getDay();
     const daySupps = supplements.filter(s =>
       isActiveSupp(s) && isSupplementActiveOn(s, d) && s.days.includes(day)
     );
     if (daySupps.length === 0) return false;
-    const slottedDone = CORE_SLOTS.every(sid =>
-      daySupps.filter(x => x.slots.includes(sid)).every(x => !!checked[`${ddk}_${sid}_${x.id}`])
-    );
-    const anytimeDone = daySupps
-      .filter(x => x.slots.length === 0)
-      .every(x => !!checked[`${ddk}_anytime_${x.id}`]);
-    return slottedDone && anytimeDone;
+    return daySupps.every(supp => {
+      const r = countExpectedChecks(supp, ddk, checked);
+      return r.total === r.done;
+    });
   }
 
   const d = new Date(TODAY);

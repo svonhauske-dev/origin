@@ -404,15 +404,23 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }, 200);
   }, [checked, pillTimes, dk, loading, isPast, pastDayEditing]);
 
-  // Streak
+  // Streak — count consecutive days where every active supplement has all its
+  // expected checks (slotted entries by (date,slot,supp) and anytime entries by
+  // (date,'anytime',supp)). Iterating per supplement avoids assuming any fixed
+  // slot set (works for IF v2 slots and anytime supps alike).
   useEffect(() => {
     let s = 0; const d = new Date(TODAY);
     for (let i = 0; i < 30; i++) {
       const ddk = dateKey(d);
       const pt  = pillTimes[ddk];
       if (!pt && scheduleMode !== "fixed" && scheduleMode !== "fasting" && scheduleMode !== "none" && anchorBehavior !== "consistent") break;
-      const day     = d.getDay();
-      const allDone = CORE_SLOTS.every(sid => supps.filter(x => isActiveSupp(x) && x.slots.includes(sid) && x.days.includes(day)).every(x => !!checked[`${ddk}_${sid}_${x.id}`]));
+      const day = d.getDay();
+      const daySupps = supps.filter(x => isActiveSupp(x) && x.days.includes(day));
+      if (daySupps.length === 0) break;
+      const allDone = daySupps.every(x => {
+        if (!x.slots || x.slots.length === 0) return !!checked[`${ddk}_anytime_${x.id}`];
+        return x.slots.every(sid => !!checked[`${ddk}_${sid}_${x.id}`]);
+      });
       if (!allDone) break;
       s++; d.setDate(d.getDate() - 1);
     }
@@ -930,6 +938,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     <IFMigrationScreen
       oldConfig={scheduleConfig}
       consistentTime={consistentTime}
+      hasLegacyEveningSupps={supps.some(s => s.slots?.includes("after_dinner"))}
       onComplete={async (newConfig) => {
         // Persist new v2 config with migration flag
         const configWithFlag = { ...newConfig, _if_v2_migrated: true };
