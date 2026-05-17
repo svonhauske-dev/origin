@@ -17,6 +17,18 @@ export const SLOTS = [
   { id: "after_dinner",  label: "Evening",           sublabel: "Before bed",                  icon: "◑" },
 ];
 
+// Slot definitions for Intermittent Fasting mode (v2 fixed-schedule model).
+// These IDs are entirely separate from SLOTS — they never appear in non-IF contexts.
+export const IF_SLOTS = [
+  { id: "fasted",     label: "Fasted",     sublabel: "Before eating window", icon: "◎" },
+  { id: "meal_1",     label: "Meal 1",     sublabel: "Window opens",         icon: "●" },
+  { id: "pre_meal_2", label: "Pre-Meal 2", sublabel: "Before second meal",   icon: "◎" },
+  { id: "meal_2",     label: "Meal 2",     sublabel: "With food",            icon: "●" },
+  { id: "pre_meal_3", label: "Pre-Meal 3", sublabel: "Before third meal",    icon: "◎" },
+  { id: "meal_3",     label: "Meal 3",     sublabel: "With food",            icon: "●" },
+  { id: "evening",    label: "Evening",    sublabel: "Before bed",           icon: "◑" },
+];
+
 // ── Service worker registration ───────────────────────────────────────────────
 
 let swRegistrationPromise = null;

@@ -4,6 +4,9 @@
 
 export const DEFAULT_CONFIG = {
   pre_meal_window: 30, breakfast: 60, lunch: 300, dinner: 540, after_dinner: 660,
+  // IF v2 fields
+  eating_window_start: "12:00", eating_window_duration_hours: 8, meal_count: 3,
+  // Legacy IF fields (kept so old configs don't break on read)
   window_start: 0, window_length: 480, meals_per_day: 2,
   fixed_times: {
     pre_breakfast: "07:30", breakfast: "08:00", pre_lunch: "11:30", lunch: "12:00",
@@ -67,26 +70,54 @@ export function getSlotLabelForMode(slotId, mode) {
   return null;
 }
 
-export function deriveOffsets(mode, cfg) {
-  if (mode === "none" || mode === "fixed") return null;
-  if (mode === "fasting") {
-    const winStart = cfg.window_start ?? 0;
-    const winLen   = cfg.window_length ?? 480;
-    const meals    = cfg.meals_per_day ?? 2;
-    const interval = Math.floor(winLen / (meals + 1));
-    const pmw      = cfg.pre_meal_window ?? 30;
-    return {
-      pre_breakfast: winStart + interval - pmw,
-      breakfast:     winStart + interval,
-      pre_lunch:     meals >= 2 ? winStart + (interval * 2) - pmw : null,
-      lunch:         meals >= 2 ? winStart + (interval * 2) : null,
-      pre_dinner:    meals >= 3 ? winStart + (interval * 3) - pmw : null,
-      dinner:        meals >= 3 ? winStart + (interval * 3) : null,
-      after_dinner:  winStart + winLen + 30,
-      injectable:    null,
-      topical:       null,
-    };
+// Slot IDs used on the home screen for adherence totals and slot ordering (non-IF modes).
+export const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
+
+// All IF slot IDs in chronological display order.
+export const IF_SLOT_IDS = ["fasted", "meal_1", "pre_meal_2", "meal_2", "pre_meal_3", "meal_3", "evening"];
+
+/**
+ * Compute absolute HH:MM times for each IF slot from the v2 config.
+ * Returns a partial map — only slots that exist for the current meal_count.
+ * The `evening` slot is not included here; it's handled via evening_mode like offset modes.
+ */
+export function computeIFSlotTimes(cfg) {
+  const ws = cfg.eating_window_start;
+  if (!ws) return {};
+  const durationMins = (cfg.eating_window_duration_hours ?? 8) * 60;
+  const mealCount    = cfg.meal_count ?? 3;
+  const pmw          = cfg.pre_meal_window ?? 30;
+  const [wh, wm]     = ws.split(":").map(Number);
+  const wsMins       = wh * 60 + wm;
+
+  const toHHMM = (mins) => {
+    const t = ((mins % 1440) + 1440) % 1440;
+    return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  };
+
+  const result = {
+    fasted: toHHMM(wsMins - pmw),
+    meal_1: ws,
+  };
+  if (mealCount >= 2) {
+    // Last meal (2-meal) or middle meal (3-meal).
+    // Last meal fires at windowEnd - pmw so it coincides with window_closing warning.
+    const meal2Mins = mealCount === 2 ? wsMins + durationMins - pmw : wsMins + durationMins / 2;
+    result.pre_meal_2 = toHHMM(meal2Mins - pmw);
+    result.meal_2     = toHHMM(meal2Mins);
   }
+  if (mealCount >= 3) {
+    // Last meal fires at windowEnd - pmw, coinciding with window_closing warning.
+    const meal3Mins   = wsMins + durationMins - pmw;
+    result.pre_meal_3 = toHHMM(meal3Mins - pmw);
+    result.meal_3     = toHHMM(meal3Mins);
+  }
+  return result;
+}
+
+export function deriveOffsets(mode, cfg) {
+  // IF is now absolute-time (like Fixed) — handled by computeIFSlotTimes, not offsets.
+  if (mode === "none" || mode === "fixed" || mode === "fasting") return null;
   const pmw       = cfg.pre_meal_window ?? 30;
   const pre_bfast = (cfg.breakfast ?? 60) - pmw;
   return {
