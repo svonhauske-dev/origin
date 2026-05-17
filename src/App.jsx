@@ -45,6 +45,7 @@ import {
   dbGetSupplementHistory, dbAddSupplementHistory,
   dbGetDailyLogsRange,
   dbGetMyPatients,
+  dbSendProtocol,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isStoppedSupp, isPausedSupp } from './lib/time';
 import { SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
@@ -759,6 +760,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     } catch (err) { showToast("Couldn't delete. Try again."); console.error(err); }
   };
 
+  const sendProtocol = async (protocol, patientId) => {
+    try {
+      const snapshot = visibleSupps.filter(s => s.protocol_id === protocol.id).map(s => ({ name: s.name, dose: s.dose, notes: s.notes, slots: s.slots, days: s.days, category: s.category }));
+      await dbSendProtocol({ clinician_id: user.id, patient_id: patientId, source_protocol_id: protocol.id, name: protocol.name, supplements_snapshot: snapshot }, token);
+      showToast(`${protocol.name} sent`);
+    } catch (err) { showToast("Couldn't send protocol. Try again."); console.error(err); }
+  };
+
   const handleEditFormTogglePause = async () => {
     const supp = supps.find(s => s.id === editingId);
     if (!supp) return;
@@ -987,6 +996,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           onEditSupp={openEdit}
           onTogglePauseSupp={togglePause}
           onResumeSupp={resumeSupp}
+          isClinician={isClinician}
+          patients={patients}
+          onSendToPatient={sendProtocol}
         />
         <Modal
           open={formOpen}

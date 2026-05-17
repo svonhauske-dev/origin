@@ -27,12 +27,15 @@ export default function ProtocolDetailScreen({
   isOpen, onBack, protocol, supplements,
   onUpdateProtocol, onPauseProtocol, onArchiveProtocol, onActivateProtocol, onDeleteProtocol,
   onAddSupp, onEditSupp, onTogglePauseSupp, onResumeSupp,
+  isClinician, patients = [], onSendToPatient,
 }) {
   const { theme } = useTheme();
   const [tab, setTab]                     = useState('active');
   const [editingName, setEditingName]     = useState(false);
   const [nameVal, setNameVal]             = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
+  const [sendModalOpen, setSendModalOpen] = useState(false);
+  const [sending, setSending]             = useState(false);
   const nameInputRef = useRef(null);
   const scrollRef    = useRef(null);
 
@@ -171,6 +174,13 @@ export default function ProtocolDetailScreen({
           padding: `${spacing.lg}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
         }}>
 
+          {/* Send to patient — clinician only */}
+          {isClinician && (
+            <Button variant="primary" fullWidth style={{ marginBottom: spacing.sm }} onClick={() => setSendModalOpen(true)}>
+              Send to patient
+            </Button>
+          )}
+
           {/* Protocol lifecycle actions — top, side by side */}
           <div style={{ display: 'flex', gap: spacing.xs, marginBottom: spacing.lg }}>
             {isActive && (
@@ -296,6 +306,58 @@ export default function ProtocolDetailScreen({
 
         </div>
       )}
+
+      {/* Send to patient modal */}
+      <Modal
+        open={sendModalOpen}
+        onClose={() => setSendModalOpen(false)}
+        title="Send to patient"
+      >
+        {patients.length === 0 ? (
+          <p style={{ fontSize: typography.body, color: theme.text.secondary, margin: 0 }}>
+            No patients assigned to your account yet.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {patients.map((p, i) => (
+              <button
+                key={p.id}
+                disabled={sending}
+                onClick={async () => {
+                  setSending(true);
+                  await onSendToPatient(protocol, p.id);
+                  setSending(false);
+                  setSendModalOpen(false);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: spacing.sm,
+                  padding: `${spacing.sm}px 0`,
+                  borderTop: i > 0 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : 'none',
+                  background: 'none', border: 'none', borderRadius: 0,
+                  cursor: sending ? 'default' : 'pointer',
+                  textAlign: 'left', width: '100%',
+                  opacity: sending ? 0.5 : 1,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                  background: theme.surface.cardSubtle,
+                  border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: typography.caption, fontWeight: typography.semibold,
+                  color: theme.text.primary,
+                }}>
+                  {(p.display_name || '?').charAt(0).toUpperCase()}
+                </div>
+                <span style={{ fontSize: typography.body, color: theme.text.primary }}>
+                  {p.display_name || 'Unnamed patient'}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       {/* Confirmation modal */}
       <Modal
