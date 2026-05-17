@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 17, 2026 — IF v2 shipped (anchor-relative → fixed-schedule eating window, IFMigrationScreen, edge-function support, daily_logs migration SQL); follow-up bug fixes (ScheduleTab mode-switch form sync, archived protocol editing, delete in Stopped tab, red trash icons); post-IF-v2 audit corrections (adherence + streak now count IF slots, IFMigrationScreen prompts for evening config, Onboarding fasting gained the Evening picker, cleanup of dead labels / unreachable branches).*
+*Last updated: May 17, 2026 (long day) — IF v2 shipped + follow-up bugs fixed + full frontend/backend audit done across three rounds. Critical: schedule-not-saving bug traced to `dbGetSchedule` returning every user's rows because RLS wasn't on; client-side `user_id=eq.` filter added to dbGetSchedule + dbGetAdherenceCounts + dbGetSupplementHistory + dbGetReceivedProtocols; RLS enabled at the DB perimeter via Supabase Dashboard; UNIQUE constraints added on `user_schedule(user_id)`, `daily_logs(user_id, log_date)`, `user_supplement_history(user_id, name)`. Design system tightened: dead Light/Dark/Terminal-* themes deleted (production bundle −10.5KB), single makeSegBtnStyle helper replaces three local copies, shadows.elevated added, touch.row applied to multi-line rows. Backend hardened: cascade-delete on protocol delete, transactional rollback on activateReceived, refreshSession memoized, recomputeNotifications surfaces failures via toast.*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -597,11 +597,30 @@ One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users 
 - `f5af642` — Onboarding fasting block gains the same Evening picker (cascade modes already had it).
 - `2c07e5e` — Cleanup: removed unreachable `START_LABELS.fasting` / `START_SUBTITLES.fasting` in Hero, removed the unreachable `rx + fasting → "Anchor"` branch in `getSlotLabelForMode` / `getModeSlotLabel`, fixed stale loop comment in `recompute_notifications`, and `seedConfigForMode` now defaults `eating_window_start` to "12:00" (DEFAULT_CONFIG value) instead of null when switching INTO fasting, so the resulting schedule is immediately notifiable.
 
+**Critical fix — schedule "not saving" was actually a read bug (May 17):**
+- `cf618b6` — `dbGetSchedule` did `SELECT *` from `user_schedule` with no `user_id` filter. RLS wasn't enforced at the DB level, so PostgREST returned rows for every user; the app's `[0]` picked some other user's stale 'none' row instead of the current user's saved schedule. Every save fired correctly — the read was looking at the wrong row.
+- Same shape fixed in three other queries: `dbGetAdherenceCounts(userId, ...)`, `dbGetSupplementHistory(userId, t)`, `dbGetReceivedProtocols(patientId, t)`. dbAddSupplementHistory also got user_id in the body (was relying on NULL-from-JWT injection, which caused NULL-keyed duplicate rows).
+- `dbSaveSchedule` now does DELETE-then-INSERT scoped to user_id so duplicate rows can't leak.
+- `2730252` — Anchor card click now auto-picks Medication and fires the save immediately. Was deferring to sub-mode click, which meant force-closing the PWA before the sub-mode pick lost the selection. User reproduced the bug in production; this was the user-facing symptom of the deeper RLS issue.
+
+**Audit + 3-round cleanup pass (May 17, same session):**
+Full frontend/backend audit (acting as HoD/FED + backend reviewer) produced a punch-list of ~15 items split into Round A (safety/source-of-truth), Round B (touch/rollback/polish), Round C (dead-code/observability). All shipped.
+
+- `e8eab9f` Round A — `makeSegBtnStyle(theme)` exported from design-system, three local copies removed across ScheduleTab / Onboarding / IFMigrationScreen. Raw `gap: "6px"` → `spacing.xs2` across SlotCard / ProtocolDetailScreen / ManageProtocolScreen (6 sites). Sidebar `gap: 2` → `spacing.xxxs`. Plus **Supabase Dashboard work**: RLS enabled on all 9 tables (user_schedule, daily_logs, user_supplement_history, supplements, protocols, user_profiles, protocol_sends, push_subscriptions, notifications_queue), 22 policies live; UNIQUE constraints added on user_schedule(user_id), daily_logs(user_id, log_date), user_supplement_history(user_id, name).
+- `5e1514b` Round B — SlotCard checkbox tap-area: `padding: 10, margin: -10` → `(touch.min - 24) / 2` (intent-expressing formula). WeekStrip selected-day shadow → new `shadows.elevated` token. ProtocolDetailScreen inline name-edit input baseline / border tokenized. TabBar buttons gain `minHeight: touch.min`. ProtocolDetailScreen Stopped-tab rows use `touch.row` (52pt, multi-line name+dose per Cat 13). ProtocolLibrary IntentOption is now a real `<button>` (was a div with onClick). Backend: `activateReceived` rolls back the partial protocol on partial-supp-insert failure; `recompute_notifications` auto-stop changed from `lte("ends_at", today)` to `lt(...)` so today's last-day notifications fire; `dbUpdateProtocol` PATCH adds defensive `user_id=eq.` filter alongside RLS.
+- `ab249c3` Round C — Deleted non-Achromatic themes (Light, Dark, Terminal Amber/Cyan/Phosphor/Magenta) and SLOTS_LIGHT/DARK consts from design-system.js. Removed dead top-level `colors` and `gradients` exports. design-system.js dropped from 688 → 259 lines; **production bundle from 383.57 KB → 373.03 KB (−10.5 KB)**. PatientsPanel raw fontFamily → `typography.fontHeading`. lib/theme.jsx 'system' branch (was referencing undefined `getSystemTheme()`) removed. Backend: `refreshSession` memoized via in-flight promise so parallel 401s share one /token call. IF window_closing dedupe threshold widened 60s → 5min. `recomputeNotifications` returns boolean; `recomputeWithToast` helper in App surfaces failures as toasts on user-action call sites. `dbGetAdherenceCounts` gained `daysBack=365` parameter to cap scan size.
+
+**Empty states + visual identity pass (May 17, earlier in the day):**
+- `565eaea` — Replaced 💊 emoji empty-state visual with `◯` glyph (matches existing slot iconography `◎`/`●`/`◑`). Auth screen pill emoji replaced with "Origin" wordmark. Empty-state copy unified ("Nothing X yet" for secondary list empties, "No X yet. [CTA]" for actionable empties).
+- `a64a267` — Deleted orphan spike files (SettingsModal.jsx, ManageSupplementsSheet.jsx) and May-6 scratch notes. Added `.claude/` to .gitignore.
+
 ---
 
 ## Codebase Health
 
-**App.jsx is ~1050 lines** (was ~554 when last measured; grew with desktop layout, NotificationPrompt wiring, and accessibility handlers). Pure orchestration — state, effects, handlers, home screen layout container. Every major rendering concern is in its own focused file.
+**App.jsx is ~1340 lines** (May 17 measurement). Still pure orchestration — state, effects, handlers, home screen layout container. Every major rendering concern is in its own focused file.
+
+**design-system.js is 191 lines** (was 688 before the May 17 cleanup). Only the Achromatic theme ships; the dead Light/Dark/Terminal-* themes were removed, along with the old top-level `colors`/`gradients` exports that no component imported. Production bundle 373 KB / 102 KB gzipped.
 
 **Module structure:**
 - `src/lib/api.js` — Supabase data layer + auth (22 exported functions, see API Helpers reference below)
@@ -610,7 +629,7 @@ One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users 
 - `src/lib/adherence.js` — adherence calculations (per-date + week + streak)
 - `src/lib/navigation.jsx` — NavigationProvider, screenStack, pushScreen/popScreen/resetStack
 - `src/config.js` — DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, MODES, deriveOffsets, IF_SLOT_IDS, CORE_SLOTS, computeIFSlotTimes (IF v2)
-- `src/design-system.js` — single source of truth for tokens (Achromatic + dev themes)
+- `src/design-system.js` — single source of truth for tokens. Exports: `spacing`, `radius`, `typography`, `touch`, `layout`, `shadows`, `zIndex`, `effects`, `breakpoints`, `themes` (Achromatic only), and the reusable `makeSegBtnStyle(theme)` curry that emits `(on) => style` for segmented buttons. The dead Light/Dark/Terminal themes were deleted May 17.
 - `src/data/supplements-database.js` — autocomplete static list (~300 entries)
 - `src/components/`:
   - Primitives: Button, Card, Input, Label, Badge, Modal, Toast, Loader, InlineLoader, TabBar
@@ -633,7 +652,7 @@ One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users 
 *Supplements:*
 - `dbGetSupps(t)` — GET all supplements ordered by created_at
 - `dbAddSupp(s, t)`, `dbUpdateSupp(s, t)`, `dbDeleteSupp(id, t)`
-- `dbGetAdherenceCounts(suppIds, token)` — count check marks per supplement across all logs
+- `dbGetAdherenceCounts(userId, suppIds, token, daysBack=365)` — count check marks per supplement over the last N days (default 365)
 
 *Daily logs:*
 - `dbGetLog(date, t)` — GET single daily_log by date
@@ -641,7 +660,9 @@ One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users 
 - `dbGetDailyLogsRange(start, end, t)` — GET logs in date range (used for week strip)
 
 *Schedule:*
-- `dbGetSchedule(t)`, `dbSaveSchedule(data, t)`, `dbUpdateScheduleField(field, value, userId, token)`
+- `dbGetSchedule(userId, t)` — filter by user_id, order by updated_at desc, return latest
+- `dbSaveSchedule(data, t)` — DELETE-then-INSERT scoped to user_id (workaround for missing unique constraint, kept as belt-and-suspenders even now that constraint exists)
+- `dbUpdateScheduleField(field, value, userId, token)`
 
 *Profile:*
 - `dbGetProfile(userId, t)`, `dbCreateProfile(data, t)`, `dbUpdateProfile(userId, data, t)`
@@ -649,7 +670,7 @@ One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users 
 - `setThemePreference(pref, userId, token)`
 
 *Supplement history (autocomplete):*
-- `dbGetSupplementHistory(t)`, `dbAddSupplementHistory(name, t)`
+- `dbGetSupplementHistory(userId, t)`, `dbAddSupplementHistory(userId, name, t)`
 
 *Notifications:*
 - `recomputeNotifications(token)` — POST to edge function with timezone
@@ -712,13 +733,15 @@ Update the portfolio entry to reflect the current `/design-system` URL and any c
 
 ### Highest priority
 
-**1. Apple HIG remaining gaps (foundational pass shipped May 12, color contrast shipped May 15).**
-The foundational pass shipped touch targets, reduced-motion, focus states, and Modal keyboard. Color contrast (text.muted → text.secondary) shipped May 15. Remaining:
-- **Empty states:** several views show blank space when empty (no supplements, no logs). Add minimal copy per ORIGIN-DESIGN-RULES.md Category 14.
+**1. Apple HIG remaining gaps (foundational pass shipped May 12, color contrast shipped May 15, empty states shipped May 17).**
+The foundational pass shipped touch targets, reduced-motion, focus states, and Modal keyboard. Color contrast (text.muted → text.secondary) shipped May 15. Empty states tokenized + decorative-emoji replaced with `◯` glyph May 17 (commit `565eaea`). Remaining:
 - **`aria-live` regions:** Toast announcements and loading state changes not announced to screen readers.
 - **Keyboard skip links:** no skip-to-content link for keyboard-only desktop navigation.
 - **Form patterns:** Auth ✓, SettingsScreen ✓ (commit `3bdedb3`). EditForm — closed, intentionally not a form: no credentials so no autofill payoff, validation is already in JS, Enter inside Notes should produce a newline not a submit, and save is a deliberate footer-button action.
-Estimated: 1 session for empty states + aria-live.
+Estimated: 1 session for aria-live + skip links.
+
+**1a. DB perimeter — DONE May 17 (Supabase Dashboard work, no git commit).**
+RLS enabled on all 9 tables in public schema (user_schedule, daily_logs, user_supplement_history, supplements, protocols, user_profiles, protocol_sends, push_subscriptions, notifications_queue). 22 policies live — original owner-only + clinician_reads_patient_* policies preserved; my proposed duplicates dropped during cleanup. UNIQUE constraints added on `user_schedule(user_id)`, `daily_logs(user_id, log_date)`, `user_supp_history_user_name_unique` on `user_supplement_history(user_id, name)`. The DELETE-then-INSERT in dbSaveSchedule is now belt-and-suspenders; the constraint enforces uniqueness at the DB.
 
 ### Medium priority
 

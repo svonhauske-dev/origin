@@ -20,10 +20,19 @@ Origin is a precision instrument for tracking supplements and medications. Voice
 - **Accent:** pure white (no chroma)
 - **Status colors:** muted green for success (`#5FE090`), cool red for danger, amber for warning, white for "now"
 - **Radius:** zero across all UI elements (`radius.full: 9999` reserved for genuinely circular shapes only)
-- **Borders:** 1px sharp, no shadows
+- **Borders:** 1px sharp. Shadows sparingly — `shadows.elevated` for selected list tiles (DayCell), `shadows.modal`/`shadows.popover` for modal-tier surfaces. Default surfaces have no shadow.
 - **Depth via tonal value, not material effects.**
 
 These foundation choices inform every rule in this document.
+
+### Where tokens live
+
+`src/design-system.js` is the single source of truth. It exports flat-named modules:
+- `spacing`, `radius`, `typography`, `touch`, `layout`, `shadows`, `zIndex`, `effects`, `breakpoints` — static design tokens
+- `themes.achromatic` — the only production theme (dev themes were deleted May 17)
+- `makeSegBtnStyle(theme)` — reusable curry for segmented buttons (Cat 12)
+
+Production components MUST source colors/borders/radius via `theme.*` (the active theme), and source everything else via the flat token modules. There is no top-level `colors` export; the historical one was deleted May 17.
 
 ---
 
@@ -36,6 +45,11 @@ These foundation choices inform every rule in this document.
 - **Mobile:** 44 × 44pt minimum hit area, all interactive elements.
 - **Desktop:** 32 × 32pt minimum hit area (cursor-based, smaller acceptable).
 - **Dense list exception:** if a row is 44pt+ tall and the row itself is the tap target, individual icons within don't need their own 44pt zones.
+
+### Tokens
+- `touch.min` (44) — single-line touch target. Buttons, icon buttons, tab buttons (enforced at TabBar primitive), single-line list rows.
+- `touch.row` (52) — multi-line touch target. Apply when a row stacks two lines of content (e.g. supplement name + dose in ProtocolDetailScreen's Stopped tab, SlotCard supplement rows).
+- Tap-area expansion for sub-44pt visuals: use the formula `(touch.min - VISUAL_SIZE) / 2` as padding with matching negative margin, so the button's content-box stays the visual size while the hit-box expands to `touch.min`. Pattern in SlotCard checkbox (May 17).
 
 ### Implementation pattern
 Hit area is the button/element's `minWidth` and `minHeight`. Visual content (icon, label) stays its natural size within. Padding inside the element creates the expansion.
@@ -546,8 +560,28 @@ All variants implement default, hover (desktop), focus, pressed, disabled.
 - Adjacent buttons: `spacing.sm` (12px) gap minimum
 - Button group on mobile: prefer vertical stack over horizontal row if more than 2 buttons
 
+### Segmented buttons (not via Button primitive)
+For inline horizontal segmented controls (e.g. mode pickers in ScheduleTab, Onboarding, IFMigrationScreen — buttons that don't quite fit `Button variant="selector"` because they're inside meal-config rows), use the shared `makeSegBtnStyle(theme)` helper from `design-system.js`:
+
+```js
+import { makeSegBtnStyle } from '../design-system';
+// inside the component:
+const segBtnStyle = makeSegBtnStyle(theme);
+// usage:
+<button style={segBtnStyle(isActive)}>Label</button>
+```
+
+This replaced three identical local copies on May 17. Don't redefine `segBtnStyle` locally — if you need a variant, extend the DS helper rather than fork it.
+
+### Disabled state per state-systems Cat 2
+- `opacity: 0.4`
+- `cursor: not-allowed`
+- `pointer-events: none`
+The Button primitive enforces this. Custom buttons must match — drift seen earlier (opacity 0.5) was corrected on May 17.
+
 ### Required for new work
 - All buttons use Button primitive (no raw `<button>` with custom styles)
+- For inline segmented pickers: use `makeSegBtnStyle(theme)` from DS, not a local copy
 - Variant chosen based on action type
 - Loading state implemented for async actions
 - Disabled state for unavailable actions
