@@ -246,7 +246,7 @@ export default function ProtocolDetailScreen({
                         onClick={() => setDeletingSupp(supp)}
                         style={{ border: 'none' }}
                       >
-                        <Trash2 size={18} color={theme.text.secondary} />
+                        <Trash2 size={18} color={theme.status.danger} />
                       </Button>
                     </div>
                   );
@@ -352,7 +352,7 @@ export default function ProtocolDetailScreen({
                             onClick={() => setDeletingSupp(supp)}
                             style={{ border: 'none', marginRight: spacing.xs }}
                           >
-                            <Trash2 size={18} color={theme.text.secondary} />
+                            <Trash2 size={18} color={theme.status.danger} />
                           </Button>
                           <Button variant="secondary" size="compact" onClick={() => onResumeSupp(supp)}>
                             Resume

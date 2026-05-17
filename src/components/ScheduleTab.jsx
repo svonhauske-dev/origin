@@ -476,8 +476,11 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         </>
       )}
 
-      {/* Fasting: fixed-schedule eating window config */}
-      {localMode === 'fasting' && (
+      {/* Fasting: fixed-schedule eating window config.
+          Gated on selectedCard, not localMode — when the user clicks Anchor while previously
+          on fasting, localMode stays 'fasting' until a sub-mode is picked, but the fasting
+          form should immediately disappear. */}
+      {selectedCard === 'fasting' && (
         <div style={{ marginBottom: spacing.lg }}>
           <div style={{ marginBottom: spacing.md }}>
             <Label>Eating window start</Label>
@@ -551,8 +554,9 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         </div>
       )}
 
-      {/* Fixed: meal time pickers + global pre-meal window */}
-      {localMode === 'fixed' && (
+      {/* Fixed: meal time pickers + global pre-meal window. Gated on selectedCard for the same
+          reason as the fasting block above. */}
+      {selectedCard === 'fixed' && (
         <>
           <div style={{ marginBottom: spacing.md }}>
             <Label>Fixed times</Label>
@@ -590,8 +594,13 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
         </>
       )}
 
-      {/* Live preview */}
+      {/* Live preview — hidden until the visible form matches saved state (e.g. Anchor card
+          picked but no sub-mode chosen yet). */}
       {localMode !== 'none' && (
+        (selectedCard === 'anchor' && isOffsetMode) ||
+        (selectedCard === 'fasting' && localMode === 'fasting') ||
+        (selectedCard === 'fixed' && localMode === 'fixed')
+      ) && (
         <div style={{ marginBottom: spacing.lg }}>
           <Label>{(localMode === 'fixed' || localMode === 'fasting') ? 'Schedule preview' : 'Preview — 7:00 am anchor'}</Label>
           <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
