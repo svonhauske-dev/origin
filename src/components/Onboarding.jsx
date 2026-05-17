@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { spacing, typography, layout } from "../design-system";
+import { spacing, typography, layout, makeSegBtnStyle } from "../design-system";
 import { useTheme } from "../lib/theme";
 import { DEFAULT_CONFIG, FIXED_SLOTS, DISPLAY_MODES, ANCHOR_SUB_MODES } from "../config";
 import Button from "./Button";
@@ -106,19 +106,7 @@ export default function Onboarding({ onComplete }) {
 
   const isOffsetMode = selectedMode === "medication" || selectedMode === "wakeup";
 
-  const segBtnStyle = (on) => ({
-    flex: 1,
-    padding: `${spacing.sm}px`,
-    borderRadius: theme.radius.button,
-    cursor: "pointer",
-    fontSize: typography.caption,
-    fontFamily: typography.fontBody,
-    background: on ? theme.accent.subtle : "transparent",
-    color: on ? theme.accent.onSubtle : theme.text.secondary,
-    border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`,
-    fontWeight: on ? typography.semibold : typography.regular,
-    minHeight: layout.segHeight,
-  });
+  const segBtnStyle = makeSegBtnStyle(theme);
 
   const screenStyle = {
     fontFamily: typography.fontBody,

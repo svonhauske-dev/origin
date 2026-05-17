@@ -122,7 +122,7 @@ export default function Sidebar({ pushScreen, displayName, isClinician, activeNa
 
           {/* Patient sub-list */}
           {patientsOpen && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xxxs }}>
               {patients.length === 0 ? (
                 <div style={{ paddingLeft: 36 + spacing.sm, fontSize: typography.caption, color: theme.text.secondary }}>
                   No patients yet

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { spacing, typography, layout } from '../design-system';
+import { spacing, typography, layout, makeSegBtnStyle } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Card from './Card';
@@ -34,19 +34,7 @@ export default function IFMigrationScreen({ oldConfig = {}, consistentTime, hasL
 
   const canConfirm = !!windowStart;
 
-  const segBtnStyle = (on) => ({
-    flex: 1,
-    padding: `${spacing.sm}px`,
-    cursor: 'pointer',
-    fontSize: typography.caption,
-    fontFamily: typography.fontBody,
-    background: on ? theme.accent.subtle : 'transparent',
-    color: on ? theme.accent.onSubtle : theme.text.secondary,
-    border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`,
-    fontWeight: on ? typography.semibold : typography.regular,
-    minHeight: 36,
-    WebkitTapHighlightColor: 'transparent',
-  });
+  const segBtnStyle = makeSegBtnStyle(theme);
 
   const handleConfirm = () => {
     onComplete({

@@ -195,7 +195,7 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                           <>
                             <div
                               onClick={() => onEdit(supp)}
-                              style={{ flex: 1, cursor: "pointer", userSelect: "none", WebkitTapHighlightColor: "transparent", paddingRight: spacing.sm, display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}
+                              style={{ flex: 1, cursor: "pointer", userSelect: "none", WebkitTapHighlightColor: "transparent", paddingRight: spacing.sm, display: "flex", alignItems: "center", gap: spacing.xs2, minWidth: 0 }}
                             >
                               <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
                                 {supp.name}
@@ -259,7 +259,7 @@ export default function ManageProtocolScreen({ isOpen, onBack, supplements, toke
                       ) : (
                         <div style={{ display: "flex", alignItems: "flex-start", gap: spacing.sm }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs, display: "flex", alignItems: "center", gap: "6px" }}>
+                            <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs, display: "flex", alignItems: "center", gap: spacing.xs2 }}>
                               {supp.name}
                               <CategoryIcon category={supp.category} color={theme.text.secondary} />
                             </div>

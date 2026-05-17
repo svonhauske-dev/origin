@@ -638,7 +638,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         const savedName = form.name.trim();
         if (savedName) {
           setSupplementHistory(h => h.includes(savedName) ? h : [savedName, ...h]);
-          dbAddSupplementHistory(savedName, token).catch(() => {});
+          dbAddSupplementHistory(user.id, savedName, token).catch(() => {});
         }
       }
       recomputeNotifications(token);

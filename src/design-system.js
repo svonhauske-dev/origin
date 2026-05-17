@@ -161,18 +161,22 @@ export const effects = {
 
 // ── Reusable style objects ──────────────────────────────────────────────────────
 
-export const segBtnStyle = (on) => ({
+// Segmented-button style. Curry over `theme` so consumers get a function that
+// matches their existing `segBtnStyle(on)` call sites. Replaces three identical
+// local definitions across ScheduleTab / Onboarding / IFMigrationScreen.
+export const makeSegBtnStyle = (theme) => (on) => ({
   flex: 1,
   padding: `${spacing.sm}px`,
-  borderRadius: radius.md,
+  borderRadius: theme.radius.button,
   cursor: "pointer",
   fontSize: typography.caption,
   fontFamily: typography.fontBody,
-  background: on ? colors.accentSubtle : "transparent",
-  color: on ? colors.accent : colors.textSecondary,
-  border: `1px solid ${on ? colors.accent : colors.borderSubtle}`,
+  background: on ? theme.accent.subtle : "transparent",
+  color: on ? theme.accent.onSubtle : theme.text.secondary,
+  border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`,
   fontWeight: on ? typography.semibold : typography.regular,
   minHeight: layout.segHeight,
+  WebkitTapHighlightColor: "transparent",
 });
 
 // ── Theme tokens ───────────────────────────────────────────────────────────────

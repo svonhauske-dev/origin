@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { spacing, typography, layout, touch } from '../design-system';
+import { spacing, typography, layout, touch, makeSegBtnStyle } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { parseHHMM, fmtTime, addMins } from '../lib/time';
 import { DEFAULT_CONFIG, ANCHOR_NOTES, MODES, DISPLAY_MODES, ANCHOR_SUB_MODES, deriveOffsets, computeIFSlotTimes } from '../config';
@@ -223,20 +223,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
     scheduleSave(localMode, localConfig, localBehavior, time);
   };
 
-  const segBtnStyle = (on) => ({
-    flex: 1,
-    padding: `${spacing.sm}px`,
-    borderRadius: theme.radius.button,
-    cursor: 'pointer',
-    fontSize: typography.caption,
-    fontFamily: typography.fontBody,
-    background: on ? theme.accent.subtle : 'transparent',
-    color: on ? theme.accent.onSubtle : theme.text.secondary,
-    border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`,
-    fontWeight: on ? typography.semibold : typography.regular,
-    minHeight: layout.segHeight,
-    WebkitTapHighlightColor: 'transparent',
-  });
+  const segBtnStyle = makeSegBtnStyle(theme);
 
   const previewBase = parseHHMM('07:00');
   const derived     = (localMode !== 'fixed' && localMode !== 'fasting') ? deriveOffsets(localMode, localConfig) : null;

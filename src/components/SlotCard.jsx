@@ -59,7 +59,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                   </div>
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xs2 }}>
                     {supp.name}
                     <CategoryIcon category={supp.category} color={theme.text.secondary} />
                   </div>

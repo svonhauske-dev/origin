@@ -241,7 +241,10 @@ export const dbGetDailyLogsRange     = (userId, start, end, t) => supa("GET", `/
 // Filter by user so autocomplete only suggests this user's prior names (RLS
 // not enforced at DB; without the filter every user sees everyone's history).
 export const dbGetSupplementHistory  = (userId, t) => supa("GET",  `/rest/v1/user_supplement_history?user_id=eq.${userId}&select=name&order=created_at.desc`, null, t);
-export const dbAddSupplementHistory  = (name, t)   => supa("POST", "/rest/v1/user_supplement_history?on_conflict=user_id,name", { name }, t);
+// Include user_id in the body — without it the row inserts as user_id=NULL,
+// the on_conflict check then never matches (NULL ≠ NULL in SQL), and the
+// table fills up with duplicates that pollute autocomplete.
+export const dbAddSupplementHistory  = (userId, name, t) => supa("POST", "/rest/v1/user_supplement_history?on_conflict=user_id,name", { user_id: userId, name }, t);
 
 export const dbGetProfile    = (userId, t)       => supa("GET",   `/rest/v1/user_profiles?id=eq.${userId}&select=*`, null, t).then(r => r?.[0] || null);
 export const dbCreateProfile = (data, t)         => supa("POST",  "/rest/v1/user_profiles", data, t);

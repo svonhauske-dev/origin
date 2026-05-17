@@ -232,7 +232,7 @@ export default function ProtocolDetailScreen({
                           flex: 1, cursor: 'pointer', userSelect: 'none',
                           WebkitTapHighlightColor: 'transparent',
                           paddingRight: spacing.sm, display: 'flex', alignItems: 'center',
-                          gap: '6px', minWidth: 0,
+                          gap: spacing.xs2, minWidth: 0,
                         }}
                       >
                         <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
@@ -290,7 +290,7 @@ export default function ProtocolDetailScreen({
                               flex: 1, cursor: 'pointer', userSelect: 'none',
                               WebkitTapHighlightColor: 'transparent',
                               paddingRight: spacing.sm, display: 'flex', alignItems: 'center',
-                              gap: '6px', minWidth: 0,
+                              gap: spacing.xs2, minWidth: 0,
                             }}
                           >
                             <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
@@ -340,7 +340,7 @@ export default function ProtocolDetailScreen({
                           }}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: typography.body, color: theme.text.secondary, fontWeight: typography.medium, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ fontSize: typography.body, color: theme.text.secondary, fontWeight: typography.medium, display: 'flex', alignItems: 'center', gap: spacing.xs2 }}>
                               {supp.name}
                               <CategoryIcon category={supp.category} color={theme.text.secondary} />
                             </div>
