@@ -378,16 +378,17 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     });
   }, [checked, dk, isDesktop]);
 
-  // Auto-save
+  // Auto-save — skip on read-only past days to avoid overwriting history with empty state
   useEffect(() => {
     if (loading) return;
+    if (isPast && !pastDayEditing) return;
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const pt = pillTimes[dk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk)));
       dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again"));
     }, 200);
-  }, [checked, pillTimes, dk, loading]);
+  }, [checked, pillTimes, dk, loading, isPast, pastDayEditing]);
 
   // Streak
   useEffect(() => {
