@@ -12,8 +12,10 @@ import {
   getModeSlotLabel,
   getAnchorTitle,
   isSupplementActiveOn,
+  computeIFSlotTimesHHMM,
   SLOT_LABELS,
   TIMED_SLOT_IDS,
+  IF_TIMED_SLOT_IDS,
 } from "../_shared/helpers.ts";
 
 const CORS_HEADERS = {
@@ -181,7 +183,146 @@ Deno.serve(async (req: Request) => {
       continue; // done with this day for fixed mode
     }
 
-    // ── Offset-based modes (medication / wakeup / fasting) ──────────────────────
+    // ── IF v2 (fasting, migrated) ────────────────────────────────────────────────
+    if (mode === "fasting" && cfg._if_v2_migrated) {
+      const wsHHMM = cfg.eating_window_start as string | undefined;
+      if (!wsHHMM) continue;
+
+      const durationMins = ((cfg.eating_window_duration_hours as number) ?? 8) * 60;
+      const slotTimes    = computeIFSlotTimesHHMM(cfg);
+
+      // fasted — unconditional window-opening warning, body lists fasted supplements if any
+      if (slotTimes.fasted) {
+        const fastedAt = parseLocalHHMM(dateStr, slotTimes.fasted, tz);
+        if (fastedAt > now) {
+          const fastedSupps = supps.filter(
+            (s) => Array.isArray(s.slots) && s.slots.includes("fasted") &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
+          rows.push({
+            user_id:            userId,
+            fire_at:            fastedAt.toISOString(),
+            scheduled_for_date: fastedAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+            title:              "Your eating window opens in 30 minutes",
+            body:               fastedSupps.map((s) => s.name).join(", "),
+            slot_id:            "fasted",
+            tag:                `${dateStr}_fasted`,
+            fired:              false,
+          });
+        }
+      }
+
+      // meal_1 / window open — unconditional state transition, lists meal_1 supplements
+      const windowOpenAt = parseLocalHHMM(dateStr, wsHHMM, tz);
+      if (windowOpenAt > now) {
+        const meal1Supps = supps.filter(
+          (s) => Array.isArray(s.slots) && s.slots.includes("meal_1") &&
+                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                 isSupplementActiveOn(s, dateStr),
+        );
+        rows.push({
+          user_id:            userId,
+          fire_at:            windowOpenAt.toISOString(),
+          scheduled_for_date: windowOpenAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+          title:              "Your eating window is open",
+          body:               meal1Supps.map((s) => s.name).join(", "),
+          slot_id:            "meal_1",
+          tag:                `${dateStr}_meal_1`,
+          fired:              false,
+        });
+      }
+
+      // window_closing — 30-min warning, unless a meal slot with supplements fires at the same minute
+      // (e.g. with default pre_meal_window=30, the last meal fires at window_end - 30, which is identical
+      // to the closing time — the meal notification covers the closing message, so skip the duplicate).
+      const closingAt    = addMins(windowOpenAt, durationMins - 30);
+      const closingTime  = closingAt.getTime();
+      const closingCoveredByMeal = IF_TIMED_SLOT_IDS.some((slotId) => {
+        if (slotId === "evening") return false;
+        const hhmm = slotTimes[slotId as string];
+        if (!hhmm) return false;
+        const at = parseLocalHHMM(dateStr, hhmm, tz);
+        if (Math.abs(at.getTime() - closingTime) >= 60_000) return false;
+        return supps.some(
+          (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
+                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                 isSupplementActiveOn(s, dateStr),
+        );
+      });
+      if (closingAt > now && !closingCoveredByMeal) {
+        rows.push({
+          user_id:            userId,
+          fire_at:            closingAt.toISOString(),
+          scheduled_for_date: closingAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+          title:              "Your eating window closes in 30 minutes",
+          body:               "",
+          slot_id:            "window_closing",
+          tag:                `${dateStr}_window_closing`,
+          fired:              false,
+        });
+      }
+
+      // fasted, pre_meal_2, meal_2, pre_meal_3, meal_3 — conditional on supplements
+      for (const slotId of IF_TIMED_SLOT_IDS) {
+        if (slotId === "evening") continue; // handled separately below
+        const hhmm = slotTimes[slotId as string];
+        if (!hhmm) continue;
+        const fireAt = parseLocalHHMM(dateStr, hhmm, tz);
+        if (fireAt <= now) continue;
+        const slotSupps = supps.filter(
+          (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
+                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                 isSupplementActiveOn(s, dateStr),
+        );
+        if (!slotSupps.length) continue;
+        rows.push({
+          user_id:            userId,
+          fire_at:            fireAt.toISOString(),
+          scheduled_for_date: fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+          title:              `Time for ${SLOT_LABELS[slotId] ?? slotId}`,
+          body:               slotSupps.map((s) => s.name).join(", "),
+          slot_id:            slotId,
+          tag:                `${dateStr}_${slotId}`,
+          fired:              false,
+        });
+      }
+
+      // evening — conditional on evening_mode and supplements
+      {
+        let eveningAt: Date | null = null;
+        const em = cfg.evening_mode;
+        if (em === "fixed" && cfg.evening_time) {
+          eveningAt = parseLocalHHMM(dateStr, cfg.evening_time as string, tz);
+        } else if (em === "before_sleep" && cfg.sleep_time) {
+          const offsetMins = ((cfg.evening_offset_hours as number) ?? 1) * 60 + ((cfg.evening_offset_minutes as number) ?? 0);
+          eveningAt = addMins(parseLocalHHMM(dateStr, cfg.sleep_time as string, tz), -offsetMins);
+        }
+        if (eveningAt && eveningAt > now) {
+          const slotSupps = supps.filter(
+            (s) => Array.isArray(s.slots) && s.slots.includes("evening") &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
+          if (slotSupps.length) {
+            rows.push({
+              user_id:            userId,
+              fire_at:            eveningAt.toISOString(),
+              scheduled_for_date: eveningAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+              title:              "Time for Evening",
+              body:               slotSupps.map((s) => s.name).join(", "),
+              slot_id:            "evening",
+              tag:                `${dateStr}_evening`,
+              fired:              false,
+            });
+          }
+        }
+      }
+
+      continue; // done with this day for IF v2
+    }
+
+    // ── Offset-based modes (medication / wakeup / fasting v1) ───────────────────
 
     // Determine anchor time for this day
     let anchorHHMM: string | null = null;

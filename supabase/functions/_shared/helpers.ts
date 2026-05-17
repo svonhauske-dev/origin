@@ -82,6 +82,16 @@ export const TIMED_SLOT_IDS = [
   "after_dinner",
 ] as const;
 
+/** IF v2 slot IDs that receive supplement-conditional notifications.
+ *  fasted is excluded — it fires unconditionally (like window_open/window_closing). */
+export const IF_TIMED_SLOT_IDS = [
+  "pre_meal_2",
+  "meal_2",
+  "pre_meal_3",
+  "meal_3",
+  "evening",
+] as const;
+
 export const SLOT_LABELS: Record<string, string> = {
   rx:            "Anchor Medication",
   pre_breakfast: "Before Breakfast",
@@ -91,7 +101,48 @@ export const SLOT_LABELS: Record<string, string> = {
   pre_dinner:    "Before Dinner",
   dinner:        "With Dinner",
   after_dinner:  "Evening",
+  fasted:        "Fasted",
+  meal_1:        "Meal 1",
+  pre_meal_2:    "Pre-Meal 2",
+  meal_2:        "Meal 2",
+  pre_meal_3:    "Pre-Meal 3",
+  meal_3:        "Meal 3",
+  evening:       "Evening",
 };
+
+/**
+ * IF v2: compute absolute slot times from eating window config.
+ * Mirrors computeIFSlotTimes in src/config.js.
+ */
+// deno-lint-ignore no-explicit-any
+export function computeIFSlotTimesHHMM(cfg: Record<string, any>): Record<string, string> {
+  const ws = cfg.eating_window_start as string | undefined;
+  if (!ws) return {};
+  const durationMins = ((cfg.eating_window_duration_hours as number) ?? 8) * 60;
+  const mealCount    = (cfg.meal_count as number) ?? 3;
+  const pmw          = (cfg.pre_meal_window as number) ?? 30;
+  const [wh, wm]     = ws.split(":").map(Number);
+  const wsMins       = wh * 60 + wm;
+  const toHHMM = (mins: number): string => {
+    const t = ((mins % 1440) + 1440) % 1440;
+    return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  };
+  const result: Record<string, string> = {
+    fasted: toHHMM(wsMins - pmw),
+    meal_1: ws,
+  };
+  if (mealCount >= 2) {
+    const meal2Mins = mealCount === 2 ? wsMins + durationMins - pmw : wsMins + durationMins / 2;
+    result.pre_meal_2 = toHHMM(meal2Mins - pmw);
+    result.meal_2     = toHHMM(meal2Mins);
+  }
+  if (mealCount >= 3) {
+    const meal3Mins   = wsMins + durationMins - pmw;
+    result.pre_meal_3 = toHHMM(meal3Mins - pmw);
+    result.meal_3     = toHHMM(meal3Mins);
+  }
+  return result;
+}
 
 /** Mode-aware label for a slot (mirrors getSlotLabelForMode in src/config.js). */
 export function getModeSlotLabel(slotId: string, mode: string): string {
