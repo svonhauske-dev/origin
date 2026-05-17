@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 17, 2026 — IF v2 shipped: intermittent fasting migrated from anchor-relative offsets to a fixed-schedule eating window (start time + duration + meal count + evening). Includes new IF slot vocabulary, IFMigrationScreen for existing v1 users, edge-function notification scheduling, and a daily_logs slot-key migration SQL (not yet run).*
+*Last updated: May 17, 2026 — IF v2 shipped (anchor-relative → fixed-schedule eating window, IFMigrationScreen, edge-function support, daily_logs migration SQL); follow-up bug fixes (ScheduleTab mode-switch form sync, archived protocol editing, delete in Stopped tab, red trash icons); post-IF-v2 audit corrections (adherence + streak now count IF slots, IFMigrationScreen prompts for evening config, Onboarding fasting gained the Evening picker, cleanup of dead labels / unreachable branches).*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -584,7 +584,18 @@ Server-side `computeIFSlotTimesHHMM` mirrors the client. New IF v2 branch in `re
 *Data migration (`supabase/if-logs-migration.sql`, not yet run):*
 One-shot SQL that renames slot keys inside `daily_logs.checked` JSONB for users with `_if_v2_migrated = true`. CASE branches ordered longer-prefix-first to avoid double-substitution (e.g. `pre_breakfast` matched before `breakfast`). Intended to be run manually via Supabase Dashboard once all real IF users (currently just Bego) have completed the in-app migration. Without this, past daily logs would show as un-checked under v2 slot IDs even though they were completed under v1 slot IDs — adherence history would visually regress.
 
-*Commits (May 17):* `80a386d` core, `d091e5b` UI, `ee5d94c` home surface + migration screen, `25e0a36` notification scheduling, `82d2ef8` daily_logs migration SQL.
+*Commits (May 17 — IF v2 base):* `80a386d` core, `d091e5b` UI, `ee5d94c` home surface + migration screen, `25e0a36` notification scheduling, `82d2ef8` daily_logs migration SQL.
+
+**Follow-up — bug fixes from real use (May 17, same session):**
+- `5aa7ce9` — ScheduleTab seeds cascade/fasting/fixed defaults when switching modes, so the editor no longer renders empty inputs when you flip from one mode to another.
+- `7770c27` — Protocol creation now auto-pushes to the detail screen and opens the add-supp modal. Archived protocols get a `+` button, lose the Active/Stopped tabs, and gain inline delete per row. Stopped tab on Active/Paused protocols also got an inline delete. New `deleteSuppById` helper for delete-without-edit-form. Mobile ProtocolLibrary call site got the missing `token` / `onActivateReceived` props (clinician-sent protocols were invisible on mobile).
+- `3d049f4` — Schedule editor blocks gate on `selectedCard` not `localMode` (clicking Anchor while previously on fasting kept rendering the fasting form). Trash icons in ProtocolDetailScreen use `theme.status.danger` red.
+
+**Follow-up — post-IF-v2 audit (May 17, same session):**
+- `1a0f5fb` — `calculateAdherenceForDate` and the inline App.jsx streak loop now iterate per-supplement instead of per-CORE_SLOT. IF v2 users were seeing 0% adherence rings and inflated 30-day streaks because IF slot IDs aren't in CORE_SLOTS. Also fixes the pre-existing miss where anytime supps weren't gating the streak.
+- `716b51d` — IFMigrationScreen now exposes an Evening picker (Off / Fixed time / Before sleep). Pre-selects "Before sleep" with default 22:00 + 1hr offset when the user has any legacy `after_dinner` supps — those supps were getting orphaned post-migration because they'd remap to "evening" slot while `evening_mode` stayed null.
+- `f5af642` — Onboarding fasting block gains the same Evening picker (cascade modes already had it).
+- `2c07e5e` — Cleanup: removed unreachable `START_LABELS.fasting` / `START_SUBTITLES.fasting` in Hero, removed the unreachable `rx + fasting → "Anchor"` branch in `getSlotLabelForMode` / `getModeSlotLabel`, fixed stale loop comment in `recompute_notifications`, and `seedConfigForMode` now defaults `eating_window_start` to "12:00" (DEFAULT_CONFIG value) instead of null when switching INTO fasting, so the resulting schedule is immediately notifiable.
 
 ---
 
