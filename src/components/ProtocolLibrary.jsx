@@ -79,32 +79,33 @@ function IntentOption({ label, description, onClick, theme }) {
   );
 }
 
-const DURATION_UNITS = ["weeks", "months"];
+const DURATION_UNITS = ["days", "weeks", "months"];
 
 export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements, onAddProtocol, onOpenDetail }) {
   const { theme } = useTheme();
   const today = new Date().toISOString().split('T')[0];
 
-  const [tab, setTab]           = useState('active');
-  const [showNew, setShowNew]   = useState(false);
-  const [step, setStep]         = useState('form');
-  const [newName, setNewName]   = useState('');
-  const [txMode, setTxMode]     = useState('indefinite');
-  const [startsAt, setStartsAt] = useState('');
-  const [endsAt, setEndsAt]     = useState('');
-  const [durValue, setDurValue] = useState('');
-  const [durUnit, setDurUnit]   = useState('weeks');
-  const [creating, setCreating] = useState(false);
+  const [tab, setTab]               = useState('active');
+  const [showNew, setShowNew]       = useState(false);
+  const [step, setStep]             = useState('form');
+  const [newName, setNewName]       = useState('');
+  const [txMode, setTxMode]         = useState('indefinite');
+  const [schedSub, setSchedSub]     = useState('duration');
+  const [startsAt, setStartsAt]     = useState('');
+  const [endsAt, setEndsAt]         = useState('');
+  const [durValue, setDurValue]     = useState('');
+  const [durUnit, setDurUnit]       = useState('weeks');
+  const [creating, setCreating]     = useState(false);
 
   const activeProtocols   = protocols.filter(p => p.status === 'active');
   const archivedProtocols = protocols.filter(p => p.status !== 'active').sort((a, b) => a.name.localeCompare(b.name));
   const suppCount = (pid) => supplements.filter(s => s.protocol_id === pid).length;
 
-  const dateError = txMode === 'scheduled' && startsAt && endsAt && endsAt <= startsAt;
+  const dateError = txMode === 'scheduled' && schedSub === 'dates' && startsAt && endsAt && endsAt <= startsAt;
   const step1Valid = newName.trim() && (
     txMode === 'indefinite' ||
-    (txMode === 'scheduled' && startsAt && endsAt && !dateError) ||
-    (txMode === 'duration'  && Number(durValue) > 0)
+    (txMode === 'scheduled' && schedSub === 'dates'    && startsAt && endsAt && !dateError) ||
+    (txMode === 'scheduled' && schedSub === 'duration' && Number(durValue) > 0)
   );
 
   const resetNew = () => {
@@ -112,6 +113,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
     setStep('form');
     setNewName('');
     setTxMode('indefinite');
+    setSchedSub('duration');
     setStartsAt('');
     setEndsAt('');
     setDurValue('');
@@ -123,12 +125,12 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
     if (creating) return;
     setCreating(true);
     const computedStartsAt = txMode === 'indefinite' ? null : (startsAt || today);
-    const computedEndsAt = txMode === 'indefinite'  ? null
-      : txMode === 'duration'   ? addDuration(today, Number(durValue), durUnit)
+    const computedEndsAt = txMode === 'indefinite' ? null
+      : (txMode === 'scheduled' && schedSub === 'duration') ? addDuration(today, Number(durValue), durUnit)
       : endsAt || null;
     await onAddProtocol({
       name: newName.trim(),
-      treatment_mode: txMode === 'duration' ? 'scheduled' : txMode,
+      treatment_mode: txMode,
       starts_at: computedStartsAt,
       ends_at: computedEndsAt,
     }, intent);
@@ -266,7 +268,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
             <div style={{ marginBottom: spacing.md }}>
               <Label>Duration</Label>
               <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.sm }}>
-                {[['indefinite', 'Indefinite'], ['scheduled', 'Scheduled'], ['duration', 'For a set time']].map(([val, label]) => (
+                {[['indefinite', 'Indefinite'], ['scheduled', 'Scheduled']].map(([val, label]) => (
                   <Button
                     key={val}
                     variant="selector"
@@ -280,58 +282,78 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
               </div>
 
               {txMode === 'scheduled' && (
-                <div style={{ display: "flex", gap: spacing.xs }}>
-                  <div style={{ flex: 1 }}>
-                    <Label style={{ marginBottom: spacing.xxs }}>Starts</Label>
-                    <Input
-                      type="date"
-                      value={startsAt}
-                      onChange={e => setStartsAt(e.target.value)}
-                      style={{ height: touch.min, boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <Label style={{ marginBottom: spacing.xxs }}>Ends</Label>
-                    <Input
-                      type="date"
-                      value={endsAt}
-                      onChange={e => setEndsAt(e.target.value)}
-                      style={{ height: touch.min, boxSizing: "border-box" }}
-                    />
-                  </div>
-                </div>
-              )}
-              {dateError && (
-                <div style={{ fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs }}>
-                  End date must be after start date
-                </div>
-              )}
-
-              {txMode === 'duration' && (
                 <div>
-                  <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
-                    <Input
-                      variant="number"
-                      value={durValue}
-                      placeholder="0"
-                      min="1"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      onChange={e => setDurValue(e.target.value)}
-                      style={{ width: 72 }}
-                    />
-                    <div style={{ display: "flex", gap: spacing.xs, flex: 1 }}>
-                      {DURATION_UNITS.map(u => (
-                        <Button key={u} variant="selector" active={durUnit === u} style={{ flex: 1 }} onClick={() => setDurUnit(u)}>
-                          {u}
-                        </Button>
-                      ))}
-                    </div>
+                  <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.sm }}>
+                    {[['duration', 'For a duration'], ['dates', 'Specific dates']].map(([val, label]) => (
+                      <Button
+                        key={val}
+                        variant="selector"
+                        active={schedSub === val}
+                        style={{ flex: 1 }}
+                        onClick={() => setSchedSub(val)}
+                      >
+                        {label}
+                      </Button>
+                    ))}
                   </div>
-                  {durValue > 0 && (
-                    <HelperText style={{ marginTop: spacing.xxs }}>
-                      Ends {formatDate(addDuration(today, Number(durValue), durUnit))}
-                    </HelperText>
+
+                  {schedSub === 'duration' && (
+                    <div>
+                      <div style={{ display: "flex", gap: spacing.xs, alignItems: "center" }}>
+                        <Input
+                          variant="number"
+                          value={durValue}
+                          placeholder="0"
+                          min="1"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          onChange={e => setDurValue(e.target.value)}
+                          style={{ width: 72 }}
+                        />
+                        <div style={{ display: "flex", gap: spacing.xs, flex: 1 }}>
+                          {DURATION_UNITS.map(u => (
+                            <Button key={u} variant="selector" active={durUnit === u} style={{ flex: 1 }} onClick={() => setDurUnit(u)}>
+                              {u}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      {durValue > 0 && (
+                        <HelperText style={{ marginTop: spacing.xxs }}>
+                          Ends {formatDate(addDuration(today, Number(durValue), durUnit))}
+                        </HelperText>
+                      )}
+                    </div>
+                  )}
+
+                  {schedSub === 'dates' && (
+                    <div>
+                      <div style={{ display: "flex", gap: spacing.xs }}>
+                        <div style={{ flex: 1 }}>
+                          <Label style={{ marginBottom: spacing.xxs }}>Starts</Label>
+                          <Input
+                            type="date"
+                            value={startsAt}
+                            onChange={e => setStartsAt(e.target.value)}
+                            style={{ height: touch.min, boxSizing: "border-box" }}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <Label style={{ marginBottom: spacing.xxs }}>Ends</Label>
+                          <Input
+                            type="date"
+                            value={endsAt}
+                            onChange={e => setEndsAt(e.target.value)}
+                            style={{ height: touch.min, boxSizing: "border-box" }}
+                          />
+                        </div>
+                      </div>
+                      {dateError && (
+                        <div style={{ fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs }}>
+                          End date must be after start date
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
