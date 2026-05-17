@@ -128,23 +128,23 @@ export default function PatientsPanel({ userId, token }) {
         </div>
       ) : (
         <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}` }}>
-          {patients.map(p => (
+          {patients.map(p => (<>
             <PatientRow
               key={p.id}
               patient={p}
               theme={theme}
-              onClick={() => setSelectedPatient(p)}
+              onClick={() => setSelectedPatient(prev => prev?.id === p.id ? null : p)}
             />
-          ))}
+            {selectedPatient?.id === p.id && (
+              <PatientDetailPanel
+                key={`detail-${p.id}`}
+                patient={p}
+                token={token}
+              />
+            )}
+          </>))}
         </div>
       )}
-
-      <PatientDetailPanel
-        isOpen={!!selectedPatient}
-        onBack={() => setSelectedPatient(null)}
-        patient={selectedPatient}
-        token={token}
-      />
     </div>
   );
 }
