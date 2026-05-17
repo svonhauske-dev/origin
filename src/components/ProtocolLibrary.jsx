@@ -83,7 +83,7 @@ function IntentOption({ label, description, onClick, theme }) {
 
 const DURATION_UNITS = ["days", "weeks", "months"];
 
-export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements, onAddProtocol, onOpenDetail, token, onActivateReceived }) {
+export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements, onAddProtocol, onOpenDetail, onProtocolCreated, token, onActivateReceived }) {
   const { theme } = useTheme();
   const today = new Date().toISOString().split('T')[0];
 
@@ -138,13 +138,14 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
     const computedEndsAt = txMode === 'indefinite' ? null
       : (txMode === 'scheduled' && schedSub === 'duration') ? addDuration(today, Number(durValue), durUnit)
       : endsAt || null;
-    await onAddProtocol({
+    const created = await onAddProtocol({
       name: newName.trim(),
       treatment_mode: txMode,
       starts_at: computedStartsAt,
       ends_at: computedEndsAt,
     }, intent);
     resetNew();
+    if (created) onProtocolCreated?.(created);
   };
 
   const handleStep1Continue = () => {

@@ -642,6 +642,19 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }
   };
 
+  const deleteSuppById = async (suppId) => {
+    const supp = supps.find(s => s.id === suppId);
+    if (!supp) return;
+    try {
+      await dbDeleteSupp(suppId, token);
+      setSupps(s => s.filter(x => x.id !== suppId));
+      showToast(`Deleted ${supp.name}`);
+    } catch (err) {
+      showToast("Couldn't delete — try again");
+      console.error(err);
+    }
+  };
+
   const stopSupp = async () => {
     if (!editingId) return;
     const supp = supps.find(s => s.id === editingId);
@@ -1093,6 +1106,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           supplements={visibleSupps}
           onAddProtocol={addProtocol}
           onOpenDetail={(protocol) => { setSelectedProtocol(protocol); pushScreen('protocol_detail'); }}
+          onProtocolCreated={(p) => { setSelectedProtocol(p); pushScreen('protocol_detail'); openAddToProtocol(p); }}
           token={token}
           onActivateReceived={activateReceived}
         />
@@ -1110,6 +1124,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           onEditSupp={openEdit}
           onTogglePauseSupp={togglePause}
           onResumeSupp={resumeSupp}
+          onDeleteSupp={deleteSuppById}
           isClinician={isClinician}
           patients={patients}
           onSendToPatient={sendProtocol}
@@ -1222,6 +1237,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         supplements={visibleSupps}
         onAddProtocol={addProtocol}
         onOpenDetail={(protocol) => { setSelectedProtocol(protocol); pushScreen('protocol_detail'); }}
+        onProtocolCreated={(p) => { setSelectedProtocol(p); pushScreen('protocol_detail'); openAddToProtocol(p); }}
+        token={token}
+        onActivateReceived={activateReceived}
       />
       <ProtocolDetailScreen
         isOpen={screenStack.some(s => s.name === 'protocol_detail')}
@@ -1237,6 +1255,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         onEditSupp={openEdit}
         onTogglePauseSupp={togglePause}
         onResumeSupp={resumeSupp}
+        onDeleteSupp={deleteSuppById}
       />
       <Modal
         open={formOpen}

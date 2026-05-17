@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Plus, Pause, Play } from "lucide-react";
+import { ChevronLeft, Plus, Pause, Play, Trash2 } from "lucide-react";
 import { Pill, Syringe, Droplet } from "lucide-react";
 import { spacing, typography, touch, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
@@ -26,16 +26,17 @@ const CONFIRM_COPY = {
 export default function ProtocolDetailScreen({
   isOpen, onBack, protocol, supplements,
   onUpdateProtocol, onPauseProtocol, onArchiveProtocol, onActivateProtocol, onDeleteProtocol,
-  onAddSupp, onEditSupp, onTogglePauseSupp, onResumeSupp,
+  onAddSupp, onEditSupp, onTogglePauseSupp, onResumeSupp, onDeleteSupp,
   isClinician, patients = [], onSendToPatient,
 }) {
   const { theme } = useTheme();
-  const [tab, setTab]                     = useState('active');
-  const [editingName, setEditingName]     = useState(false);
-  const [nameVal, setNameVal]             = useState('');
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [sendModalOpen, setSendModalOpen] = useState(false);
-  const [sending, setSending]             = useState(false);
+  const [tab, setTab]                       = useState('active');
+  const [editingName, setEditingName]       = useState(false);
+  const [nameVal, setNameVal]               = useState('');
+  const [confirmAction, setConfirmAction]   = useState(null);
+  const [sendModalOpen, setSendModalOpen]   = useState(false);
+  const [sending, setSending]               = useState(false);
+  const [deletingSupp, setDeletingSupp]     = useState(null); // supp pending delete confirm
   const nameInputRef = useRef(null);
   const scrollRef    = useRef(null);
 
@@ -44,6 +45,7 @@ export default function ProtocolDetailScreen({
       setNameVal(protocol?.name || '');
       setEditingName(false);
       setConfirmAction(null);
+      setDeletingSupp(null);
       setTab('active');
       if (scrollRef.current) scrollRef.current.scrollTo(0, 0);
     }
@@ -150,7 +152,7 @@ export default function ProtocolDetailScreen({
           </button>
         )}
 
-        {isActive ? (
+        {(isActive || isArchived) ? (
           <button
             onClick={onAddSupp}
             aria-label="Add supplement"
@@ -203,24 +205,17 @@ export default function ProtocolDetailScreen({
             )}
           </div>
 
-          {/* Tab bar */}
-          <TabBar
-            tabs={[{ value: 'active', label: 'Active' }, { value: 'stopped', label: 'Stopped' }]}
-            active={tab}
-            onChange={setTab}
-            style={{ marginBottom: spacing.lg }}
-          />
-
-          {/* ── Active tab ── */}
-          {tab === 'active' && (
-            activeSupps.length === 0 ? (
+          {/* Archived: flat list (no pause/resume, since archive resets all supps to active state).
+              Active / Paused: Active / Stopped tabs. */}
+          {isArchived ? (
+            protocolSupps.length === 0 ? (
               <div style={{ fontSize: typography.body, color: theme.text.secondary, paddingBottom: spacing.xl }}>
-                {isActive ? 'No supplements yet. Tap + to add one.' : 'No supplements.'}
+                No supplements yet. Tap + to add one.
               </div>
             ) : (
               <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.xl }}>
-                {activeSupps.map((supp, i) => {
-                  const isLast = i === activeSupps.length - 1;
+                {protocolSupps.map((supp, i) => {
+                  const isLast = i === protocolSupps.length - 1;
                   return (
                     <div
                       key={supp.id}
@@ -229,7 +224,6 @@ export default function ProtocolDetailScreen({
                         padding: `${spacing.sm}px 0`,
                         borderBottom: isLast ? 'none' : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
                         minHeight: touch.min,
-                        opacity: isPausedSupp(supp) ? 0.5 : 1,
                       }}
                     >
                       <div
@@ -245,63 +239,131 @@ export default function ProtocolDetailScreen({
                           {supp.name}
                         </span>
                         <CategoryIcon category={supp.category} color={theme.text.secondary} />
-                        {isPausedSupp(supp) && <Badge variant="neutral">Paused</Badge>}
                       </div>
-                      {isActive && (
-                        <Button
-                          variant="icon"
-                          aria-label={isPausedSupp(supp) ? `Resume ${supp.name}` : `Pause ${supp.name}`}
-                          onClick={() => onTogglePauseSupp(supp)}
-                          style={{ border: 'none' }}
-                        >
-                          {isPausedSupp(supp)
-                            ? <Play  size={18} color={theme.text.secondary} />
-                            : <Pause size={18} color={theme.text.secondary} />
-                          }
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          )}
-
-          {/* ── Stopped tab ── */}
-          {tab === 'stopped' && (
-            stoppedSupps.length === 0 ? (
-              <div style={{ fontSize: typography.body, color: theme.text.secondary, paddingBottom: spacing.xl }}>
-                No stopped supplements.
-              </div>
-            ) : (
-              <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.xl }}>
-                {stoppedSupps.map((supp, i) => {
-                  const isLast = i === stoppedSupps.length - 1;
-                  return (
-                    <div
-                      key={supp.id}
-                      style={{
-                        display: 'flex', alignItems: 'center',
-                        padding: `${spacing.sm}px 0`,
-                        borderBottom: isLast ? 'none' : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-                        minHeight: touch.min,
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: typography.body, color: theme.text.secondary, fontWeight: typography.medium, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {supp.name}
-                          <CategoryIcon category={supp.category} color={theme.text.secondary} />
-                        </div>
-                        {supp.dose && <div style={{ fontSize: typography.caption, color: theme.text.faint }}>{supp.dose}</div>}
-                      </div>
-                      <Button variant="secondary" size="compact" onClick={() => onResumeSupp(supp)}>
-                        Resume
+                      <Button
+                        variant="icon"
+                        aria-label={`Delete ${supp.name}`}
+                        onClick={() => setDeletingSupp(supp)}
+                        style={{ border: 'none' }}
+                      >
+                        <Trash2 size={18} color={theme.text.secondary} />
                       </Button>
                     </div>
                   );
                 })}
               </div>
             )
+          ) : (
+            <>
+              {/* Tab bar */}
+              <TabBar
+                tabs={[{ value: 'active', label: 'Active' }, { value: 'stopped', label: 'Stopped' }]}
+                active={tab}
+                onChange={setTab}
+                style={{ marginBottom: spacing.lg }}
+              />
+
+              {/* ── Active tab ── */}
+              {tab === 'active' && (
+                activeSupps.length === 0 ? (
+                  <div style={{ fontSize: typography.body, color: theme.text.secondary, paddingBottom: spacing.xl }}>
+                    {isActive ? 'No supplements yet. Tap + to add one.' : 'No supplements.'}
+                  </div>
+                ) : (
+                  <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.xl }}>
+                    {activeSupps.map((supp, i) => {
+                      const isLast = i === activeSupps.length - 1;
+                      return (
+                        <div
+                          key={supp.id}
+                          style={{
+                            display: 'flex', alignItems: 'center',
+                            padding: `${spacing.sm}px 0`,
+                            borderBottom: isLast ? 'none' : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+                            minHeight: touch.min,
+                            opacity: isPausedSupp(supp) ? 0.5 : 1,
+                          }}
+                        >
+                          <div
+                            onClick={() => onEditSupp(supp)}
+                            style={{
+                              flex: 1, cursor: 'pointer', userSelect: 'none',
+                              WebkitTapHighlightColor: 'transparent',
+                              paddingRight: spacing.sm, display: 'flex', alignItems: 'center',
+                              gap: '6px', minWidth: 0,
+                            }}
+                          >
+                            <span style={{ fontSize: typography.body, color: theme.text.primary, fontWeight: typography.medium }}>
+                              {supp.name}
+                            </span>
+                            <CategoryIcon category={supp.category} color={theme.text.secondary} />
+                            {isPausedSupp(supp) && <Badge variant="neutral">Paused</Badge>}
+                          </div>
+                          {isActive && (
+                            <Button
+                              variant="icon"
+                              aria-label={isPausedSupp(supp) ? `Resume ${supp.name}` : `Pause ${supp.name}`}
+                              onClick={() => onTogglePauseSupp(supp)}
+                              style={{ border: 'none' }}
+                            >
+                              {isPausedSupp(supp)
+                                ? <Play  size={18} color={theme.text.secondary} />
+                                : <Pause size={18} color={theme.text.secondary} />
+                              }
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {/* ── Stopped tab ── */}
+              {tab === 'stopped' && (
+                stoppedSupps.length === 0 ? (
+                  <div style={{ fontSize: typography.body, color: theme.text.secondary, paddingBottom: spacing.xl }}>
+                    No stopped supplements.
+                  </div>
+                ) : (
+                  <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, marginBottom: spacing.xl }}>
+                    {stoppedSupps.map((supp, i) => {
+                      const isLast = i === stoppedSupps.length - 1;
+                      return (
+                        <div
+                          key={supp.id}
+                          style={{
+                            display: 'flex', alignItems: 'center',
+                            padding: `${spacing.sm}px 0`,
+                            borderBottom: isLast ? 'none' : `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+                            minHeight: touch.min,
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: typography.body, color: theme.text.secondary, fontWeight: typography.medium, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {supp.name}
+                              <CategoryIcon category={supp.category} color={theme.text.secondary} />
+                            </div>
+                            {supp.dose && <div style={{ fontSize: typography.caption, color: theme.text.faint }}>{supp.dose}</div>}
+                          </div>
+                          <Button
+                            variant="icon"
+                            aria-label={`Delete ${supp.name}`}
+                            onClick={() => setDeletingSupp(supp)}
+                            style={{ border: 'none', marginRight: spacing.xs }}
+                          >
+                            <Trash2 size={18} color={theme.text.secondary} />
+                          </Button>
+                          <Button variant="secondary" size="compact" onClick={() => onResumeSupp(supp)}>
+                            Resume
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+            </>
           )}
 
         </div>
@@ -379,6 +441,33 @@ export default function ProtocolDetailScreen({
       >
         <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
           {confirmAction ? CONFIRM_COPY[confirmAction].body : ''}
+        </p>
+      </Modal>
+
+      {/* Delete supplement confirmation */}
+      <Modal
+        open={!!deletingSupp}
+        onClose={() => setDeletingSupp(null)}
+        title="Delete supplement?"
+        footer={
+          <div style={{ display: 'flex', gap: spacing.xs }}>
+            <Button variant="tertiary" fullWidth onClick={() => setDeletingSupp(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              fullWidth
+              onClick={async () => {
+                const supp = deletingSupp;
+                setDeletingSupp(null);
+                if (supp && onDeleteSupp) await onDeleteSupp(supp.id);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+          This permanently deletes <strong style={{ color: theme.text.primary }}>{deletingSupp?.name}</strong>. This cannot be undone.
         </p>
       </Modal>
     </div>
