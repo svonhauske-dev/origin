@@ -441,7 +441,7 @@ export default function ProtocolDetailScreen({
         title="Send to patient"
       >
         {patients.length === 0 ? (
-          <p style={{ fontSize: typography.body, color: theme.text.secondary, margin: 0 }}>
+          <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, margin: 0 }}>
             No patients yet.
           </p>
         ) : (
@@ -490,6 +490,7 @@ export default function ProtocolDetailScreen({
       <Modal
         open={!!confirmAction}
         onClose={() => setConfirmAction(null)}
+        size="compact"
         title={confirmAction ? CONFIRM_COPY[confirmAction].title(protocol?.name) : ''}
         footer={
           <div style={{ display: 'flex', gap: spacing.xs }}>
@@ -504,7 +505,7 @@ export default function ProtocolDetailScreen({
           </div>
         }
       >
-        <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.6, margin: 0 }}>
           {confirmAction ? CONFIRM_COPY[confirmAction].body() : ''}
         </p>
       </Modal>
@@ -513,6 +514,7 @@ export default function ProtocolDetailScreen({
       <Modal
         open={!!deletingSupp}
         onClose={() => setDeletingSupp(null)}
+        size="compact"
         title="Delete supplement?"
         footer={
           <div style={{ display: 'flex', gap: spacing.xs }}>
@@ -531,7 +533,7 @@ export default function ProtocolDetailScreen({
           </div>
         }
       >
-        <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.6, margin: 0 }}>
           This permanently deletes <strong style={{ color: theme.text.primary }}>{deletingSupp?.name}</strong>. This cannot be undone.
         </p>
       </Modal>

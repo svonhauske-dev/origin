@@ -1719,6 +1719,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         <Modal
           open={confirmArchivePatient}
           onClose={() => setConfirmArchivePatient(false)}
+          size="compact"
           title={`Archive ${selectedPatient?.display_name || 'patient'}?`}
           footer={
             <div style={{ display: 'flex', gap: spacing.xs }}>
@@ -1731,7 +1732,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             </div>
           }
         >
-          <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.6, margin: 0 }}>
             Hides them from your patient list. You'll keep access to their data and can restore from the Archived section in the sidebar. The patient isn't notified.
           </p>
         </Modal>
@@ -1796,7 +1797,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
               <div style={{ fontSize: typography.display, color: theme.text.secondary, marginBottom: spacing.md, fontFamily: typography.fontHeading, lineHeight: 1 }}>◯</div>
               <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, marginBottom: spacing.xs }}>No items yet</div>
-              <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
+              <div style={{ fontSize: typography.caption, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
               {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
             </div>
           ) : slotCardsContent}

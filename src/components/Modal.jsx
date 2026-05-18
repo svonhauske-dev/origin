@@ -22,7 +22,16 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-export default function Modal({ open, onClose, title, children, footer, leftAction }) {
+// Desktop card width keyed by content shape:
+//   compact (360) — confirms / pickers (Stop, Delete, Archive, Discard)
+//   default (480) — most forms / standard modals
+// Mobile bottom-sheet ignores this (always full-width).
+const SIZE_TO_WIDTH = {
+  compact: 360,
+  default: 480,
+};
+
+export default function Modal({ open, onClose, title, children, footer, leftAction, size = "default" }) {
   const { theme } = useTheme();
   const isDesktop = useIsDesktop();
   const depth = useContext(ModalDepthCtx);
@@ -142,11 +151,12 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
 
   if (!mounted) return null;
 
+  const desktopMaxWidth = SIZE_TO_WIDTH[size] ?? SIZE_TO_WIDTH.default;
   const desktopSheetStyle = {
     position: "fixed",
     top: "50%",
     left: "50%",
-    width: "min(480px, calc(100vw - 48px))",
+    width: `min(${desktopMaxWidth}px, calc(100vw - 48px))`,
     maxHeight: "80dvh",
     borderRadius: theme.radius.surface,
     border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,

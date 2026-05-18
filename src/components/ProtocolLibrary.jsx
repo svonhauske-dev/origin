@@ -520,6 +520,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
       <Modal
         open={!!activateModalSend}
         onClose={() => { if (!activating) setActivateModalSend(null); }}
+        size="compact"
         title={activateModalSend?.name || ''}
         footer={
           <div style={{ display: 'flex', gap: spacing.xs }}>
@@ -541,7 +542,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
           </div>
         }
       >
-        <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.6, margin: 0 }}>
           This will add <strong style={{ color: theme.text.primary }}>{activateModalSend?.name}</strong> with {(activateModalSend?.supplements_snapshot || []).length} supplement{(activateModalSend?.supplements_snapshot || []).length !== 1 ? 's' : ''} to your active protocols.
         </p>
       </Modal>
