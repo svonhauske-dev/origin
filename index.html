@@ -26,6 +26,13 @@
       .selector-label { position: relative; display: inline-block; }
       .selector-label::before { content: attr(data-text); font-weight: 600; visibility: hidden; height: 0; display: block; overflow: hidden; pointer-events: none; }
       button:active { opacity: 0.75; transition: opacity 60ms ease-out; }
+      /* Hide the native clock/calendar picker indicator on time and date inputs.
+         The HH:MM text is sufficient and the icon doesn't add value on Origin's
+         compact surfaces (Hero anchor edit, schedule editor, etc.). */
+      input[type="time"]::-webkit-calendar-picker-indicator,
+      input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+      input[type="time"]::-webkit-inner-spin-button,
+      input[type="time"]::-webkit-clear-button { display: none; }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
           transition-duration: 0.01ms !important;

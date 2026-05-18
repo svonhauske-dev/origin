@@ -16,10 +16,18 @@ function convertToDays(value, unit) {
 }
 
 export function isSupplementActiveOn(supp, date) {
+  const checkDate = startOfDay(date);
+
+  // Don't show a supplement on days before it was added. created_at is the implicit
+  // start date for indefinite supps; explicit starts_at takes priority for scheduled/cycled.
+  if (supp.created_at) {
+    const createdLocal = startOfDay(new Date(supp.created_at));
+    if (checkDate < createdLocal) return false;
+  }
+
   if (!supp.treatment_mode || supp.treatment_mode === "indefinite") return true;
 
   const parseLocalDate = (s) => { const [y, m, d] = s.split("-").map(Number); return startOfDay(new Date(y, m - 1, d)); };
-  const checkDate = startOfDay(date);
   const startsAt  = supp.starts_at ? parseLocalDate(supp.starts_at) : null;
   const endsAt    = supp.ends_at   ? parseLocalDate(supp.ends_at)   : null;
 

@@ -17,6 +17,8 @@ import SlotRow from '../SlotRow';
 import SupplementRow from '../SupplementRow';
 import { DayCell } from '../WeekStrip';
 import InsightsPanel from '../InsightsPanel';
+import InlineTip from '../InlineTip';
+import LogAtSheet from '../LogAtSheet';
 
 // ── Stub helpers ───────────────────────────────────────────────────────────────
 
@@ -199,7 +201,7 @@ export const componentRegistry = {
 
     AdherenceRing: {
       component: AdherenceRing,
-      description: 'SVG circular progress ring. 100% flips stroke to status.success (muted green).',
+      description: 'SVG circular progress ring. 100% flips stroke to status.success (muted green). Pass showText={false} to render as a clean arc (used by mobile WeekStrip compact mode).',
       variants: [
         { name: '0%',    props: { percentage: 0,   size: 56 } },
         { name: '35%',   props: { percentage: 35,  size: 56 } },
@@ -207,6 +209,21 @@ export const componentRegistry = {
         { name: '100%',  props: { percentage: 100, size: 56 } },
         { name: 'lg 80', props: { percentage: 60,  size: 80 } },
         { name: 'xl 120',props: { percentage: 60,  size: 120 } },
+        { name: 'compact 28 (mobile week strip)',           props: { percentage: 60,  size: 28, showText: false } },
+        { name: 'compact 28 — 100% (success)',              props: { percentage: 100, size: 28, showText: false } },
+      ],
+    },
+
+    InlineTip: {
+      component: InlineTip,
+      description: 'Dismissible inline tip — left accent border + uppercase label + body + top-right X. Dismissal persisted in localStorage under `origin.tip.<id>`. Powers the Day-1 anchor-explainer on the empty home and the take-all first-run hint above the slot list. Once dismissed for a given id it never re-appears for that user.',
+      variants: [
+        { name: 'Day-1 — medication anchor',
+          props: { id: 'demo-day1-medication', label: 'how anchors work', children: 'Each morning, tap "I took my meds" to set today\'s anchor. Origin cascades pre-meal, meal, and evening items from there.' } },
+        { name: 'Take-all hint',
+          props: { id: 'demo-take-all', label: 'Tip', children: 'Tap the icon at the left of a slot to log every item in it at once.' } },
+        { name: 'No label (body only)',
+          props: { id: 'demo-no-label', children: 'A short single-line tip without a heading.' } },
       ],
     },
 
@@ -243,27 +260,39 @@ export const componentRegistry = {
 
     Hero: {
       component: Hero,
-      description: 'Top card on mobile Home. Progress ring, anchor time, Start my day CTA, past-day read-only state.',
+      description: 'Top card on mobile Home. Single state-driven shape across all modes + past/today/future. Eyebrow always carries the date (with read-only/editing suffix on past). Status row holds the primary state ("Started at HH:MM" mid-day, "Done for today" green when all-done, "Not started yet" when no anchor). Submeta carries the secondary line (completion count, anchor info, or schedule context). Locked min-height; success-green only ever on the status row.',
       examples: [
         {
-          name: 'Day not started — medication anchor',
+          name: 'Today · anchor mode · no anchor set (Set anchor pill)',
           props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 0,   coreTotal: 4, coreDone: 0, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
-          name: 'In progress (35%) — anchor set',
+          name: 'Today · anchor set · in progress (35%)',
           props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 35,  coreTotal: 4, coreDone: 1, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
-          name: '100% complete',
+          name: 'Today · anchor set · all done (green status)',
           props: { ...heroBase, scheduleMode: 'medication', isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 100, coreTotal: 4, coreDone: 4, pillTime: '08:30', isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
         },
         {
-          name: 'Past day — read-only',
+          name: 'Past · anchor mode · read-only (partial)',
           props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: YEST,  shortDate: fmt(YEST), pct: 75,  coreTotal: 4, coreDone: 3, pillTime: '08:15', isFuture: false, isPast: true,  isReadOnly: true,  viewDay: YEST.getDay() },
         },
         {
-          name: 'No schedule mode',
+          name: 'Past · anchor mode · all done · Completed (green primary)',
+          props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: YEST,  shortDate: fmt(YEST), pct: 100, coreTotal: 4, coreDone: 4, pillTime: '08:15', isFuture: false, isPast: true,  isReadOnly: true,  viewDay: YEST.getDay() },
+        },
+        {
+          name: 'Past · editing mode (anchor suffix accent)',
+          props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: YEST,  shortDate: fmt(YEST), pct: 75,  coreTotal: 4, coreDone: 3, pillTime: '08:15', isFuture: false, isPast: true,  isReadOnly: false, viewDay: YEST.getDay() },
+        },
+        {
+          name: 'Today · none mode',
           props: { ...heroBase, scheduleMode: 'none',       isToday: true, viewDate: TODAY, shortDate: fmt(TODAY), pct: 50,  coreTotal: 2, coreDone: 1, pillTime: null,   isFuture: false, isPast: false, isReadOnly: false, viewDay: TODAY.getDay() },
+        },
+        {
+          name: 'Future day',
+          props: { ...heroBase, scheduleMode: 'medication', isToday: false, viewDate: TOMOR, shortDate: fmt(TOMOR), pct: 0,   coreTotal: 4, coreDone: 0, pillTime: null,   isFuture: true,  isPast: false, isReadOnly: false, viewDay: TOMOR.getDay() },
         },
       ],
     },
@@ -383,6 +412,35 @@ export const componentRegistry = {
         {
           name: 'Consistent schedule + no streak',
           props: { supplements: [SUPP_VITAMIN],            weekDates: WEEK_DATES, weekLogs: WEEK_LOGS, streak: 0, scheduleMode: 'wakeup',     anchorBehavior: 'consistent', consistentTime: '07:30', onConfigureSchedule: noop, onManageProtocol: noop },
+        },
+      ],
+    },
+
+    LogAtSheet: {
+      component: LogAtSheet,
+      description: 'Bottom-sheet (mobile) / centered modal (desktop) time picker for logging a missed supplement at the actual time it was taken. Captures real-world adherence data without forcing the user into past-day edit mode. Opened from the "log at…" pill on missed SlotCard rows. Writes `{ checked: true, at: "HH:MM" }` to daily_logs.checked.',
+      examples: [
+        {
+          name: 'Open — Magnesium, due at 11:50, Lunch slot',
+          props: {
+            open: true,
+            target: { sid: 'lunch', suppId: 'ds-mag', name: 'Magnesium Glycinate', dueTime: '11:50', slotLabel: 'Lunch' },
+            onClose: noop,
+            onConfirm: noop,
+          },
+        },
+        {
+          name: 'Open — no due time (anytime slot)',
+          props: {
+            open: true,
+            target: { sid: 'anytime', suppId: 'ds-vit', name: 'Vitamin D3', dueTime: null, slotLabel: null },
+            onClose: noop,
+            onConfirm: noop,
+          },
+        },
+        {
+          name: 'Closed (no target)',
+          props: { open: false, target: null, onClose: noop, onConfirm: noop },
         },
       ],
     },

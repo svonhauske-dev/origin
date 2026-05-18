@@ -14,6 +14,7 @@ import {
 } from '../lib/notifications';
 import { dbUpdateScheduleField, dbUpdateProfile, updateEmail, updatePassword } from '../lib/api';
 import ScheduleTab from './ScheduleTab';
+import Modal from './Modal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -73,6 +74,9 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
   const [newPassword, setNewPassword] = useState('');
   const [confirmPw, setConfirmPw]     = useState('');
   const [pwSaving, setPwSaving]       = useState(false);
+
+  // Sign-out confirmation
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -301,7 +305,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
             {divider}
 
-            <Button variant="secondary" fullWidth onClick={onSignOut}>Sign out</Button>
+            <Button variant="secondary" fullWidth onClick={() => setShowSignOutConfirm(true)}>Sign out</Button>
           </>
         )}
 
@@ -390,6 +394,22 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         )}
 
       </div>
+
+      <Modal
+        open={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        title="Sign out of Origin?"
+        footer={
+          <div style={{ display: 'flex', gap: spacing.xs }}>
+            <Button variant="secondary" fullWidth onClick={() => setShowSignOutConfirm(false)}>Cancel</Button>
+            <Button variant="primary" fullWidth onClick={() => { setShowSignOutConfirm(false); onSignOut?.(); }}>Sign out</Button>
+          </div>
+        }
+      >
+        <div style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.5 }}>
+          You'll need to sign in again to access your protocol. Your data stays safe.
+        </div>
+      </Modal>
     </div>
   );
 }

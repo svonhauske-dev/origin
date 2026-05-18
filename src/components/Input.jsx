@@ -18,6 +18,10 @@ export default function Input({ variant = "text", width, style, type, onFocus, o
     WebkitAppearance: "none",
     boxSizing: "border-box",
     transition: "border-color 150ms ease",
+    // Tell the browser to render native form-control UI (time picker icon,
+    // calendar dropdown, etc.) with dark-theme styling so the clock glyph
+    // doesn't render as dark-on-dark on Origin's Achromatic surface.
+    colorScheme: "dark",
   };
 
   const v = variant === "number"

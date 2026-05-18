@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { spacing, typography, layout, makeSegBtnStyle } from "../design-system";
 import { useTheme } from "../lib/theme";
-import { DEFAULT_CONFIG, FIXED_SLOTS, DISPLAY_MODES, ANCHOR_SUB_MODES } from "../config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, DISPLAY_MODES, ANCHOR_SUB_MODES, computeIFSlotTimes } from "../config";
 import Button from "./Button";
 import Card from "./Card";
 import HelperText from "./HelperText";
@@ -14,6 +14,67 @@ const applyCascade = (cfg) => {
   const interval  = (cfg.meal_interval_hours ?? 4) * 60 + (cfg.meal_interval_minutes ?? 0);
   return { ...cfg, breakfast: firstMeal, lunch: firstMeal + interval, dinner: firstMeal + 2 * interval };
 };
+
+// Live preview helper — builds the "Your day will look like" rows shown below
+// the Step-2 config inputs. Closes the abstraction gap between numeric inputs
+// ("4 hr interval") and the actual schedule the user is configuring.
+function buildPreviewRows(selectedMode, cfg) {
+  const fmtOffset = (mins) => `+${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, "0")}`;
+  if (selectedMode === "medication" || selectedMode === "wakeup") {
+    const firstMeal = (cfg.first_meal_offset_hours ?? 1) * 60 + (cfg.first_meal_offset_minutes ?? 0);
+    const interval  = (cfg.meal_interval_hours ?? 4) * 60 + (cfg.meal_interval_minutes ?? 0);
+    const preWin    = cfg.pre_meal_window ?? 30;
+    const rows = [
+      { icon: "◐", label: "Anchor",       value: selectedMode === "wakeup" ? "when you wake" : "when you tap" },
+      { icon: "◎", label: "Pre-Breakfast", value: fmtOffset(Math.max(0, firstMeal - preWin)) },
+      { icon: "◐", label: "Breakfast",     value: fmtOffset(firstMeal) },
+      { icon: "◎", label: "Pre-Lunch",     value: fmtOffset(Math.max(0, firstMeal + interval - preWin)) },
+      { icon: "◐", label: "Lunch",         value: fmtOffset(firstMeal + interval) },
+      { icon: "◎", label: "Pre-Dinner",    value: fmtOffset(Math.max(0, firstMeal + 2 * interval - preWin)) },
+      { icon: "◐", label: "Dinner",        value: fmtOffset(firstMeal + 2 * interval) },
+    ];
+    if (cfg.evening_mode === "fixed" && cfg.evening_time) {
+      rows.push({ icon: "●", label: "Evening", value: cfg.evening_time });
+    } else if (cfg.evening_mode === "before_sleep" && cfg.sleep_time) {
+      const offHrs = cfg.evening_offset_hours ?? 1;
+      const offMins = cfg.evening_offset_minutes ?? 0;
+      rows.push({ icon: "●", label: "Evening", value: `${offHrs}h ${offMins}m before bed` });
+    }
+    return rows;
+  }
+  if (selectedMode === "fasting") {
+    const times = computeIFSlotTimes(cfg);
+    const mealCount = cfg.meal_count ?? 3;
+    const rows = [
+      { icon: "◎", label: "Fasted (30 min before)", value: times.fasted || "--:--" },
+      { icon: "◐", label: "Window opens",            value: times.meal_1 || "--:--" },
+    ];
+    if (mealCount >= 2) {
+      rows.push({ icon: "◎", label: "Pre-Meal 2", value: times.pre_meal_2 || "--:--" });
+      rows.push({ icon: "◐", label: "Meal 2",     value: times.meal_2     || "--:--" });
+    }
+    if (mealCount >= 3) {
+      rows.push({ icon: "◎", label: "Pre-Meal 3", value: times.pre_meal_3 || "--:--" });
+      rows.push({ icon: "◐", label: "Meal 3",     value: times.meal_3     || "--:--" });
+    }
+    if (cfg.evening_mode === "fixed" && cfg.evening_time) {
+      rows.push({ icon: "●", label: "Evening", value: cfg.evening_time });
+    } else if (cfg.evening_mode === "before_sleep" && cfg.sleep_time) {
+      const offHrs = cfg.evening_offset_hours ?? 1;
+      const offMins = cfg.evening_offset_minutes ?? 0;
+      rows.push({ icon: "●", label: "Evening", value: `${offHrs}h ${offMins}m before bed` });
+    }
+    return rows;
+  }
+  if (selectedMode === "fixed") {
+    return FIXED_SLOTS.map(({ key, label }) => ({
+      icon: key.startsWith("pre_") ? "◎" : (key === "evening" || key === "after_dinner" ? "●" : "◐"),
+      label,
+      value: cfg.fixed_times?.[key] || "--:--",
+    }));
+  }
+  return [];
+}
 
 const STEP2_SUBTITLES = {
   wakeup:     "Set your meal timing. You can change these anytime.",
@@ -469,6 +530,51 @@ export default function Onboarding({ onComplete }) {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Live preview — Session 6 / Rec 9. Closes the gap between numeric
+            cascade inputs ("4 hr interval") and the actual schedule. Rows
+            update as the user changes inputs. Skipped for "none" mode (no
+            schedule to preview). */}
+        {selectedMode && selectedMode !== "none" && (
+          <Card style={{ padding: `${spacing.sm}px ${spacing.md}px`, marginBottom: spacing.md }}>
+            <div style={{
+              fontSize: typography.label,
+              color: theme.text.secondary,
+              fontWeight: typography.semibold,
+              letterSpacing: typography.labelSpacingWide,
+              textTransform: "uppercase",
+              fontFamily: typography.fontBody,
+              marginBottom: spacing.sm,
+            }}>
+              Your day will look like
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {buildPreviewRows(selectedMode, config).map((row, i, arr) => (
+                <div key={`${row.label}-${i}`} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: `${spacing.xxs}px 0`,
+                  borderBottom: i < arr.length - 1 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : "none",
+                  fontSize: typography.caption,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, color: theme.text.primary }}>
+                    <span style={{ color: theme.text.muted, width: 14, textAlign: "center" }}>{row.icon}</span>
+                    <span>{row.label}</span>
+                  </div>
+                  <span style={{
+                    fontFamily: typography.fontData,
+                    color: theme.text.secondary,
+                    fontWeight: typography.semibold,
+                    fontVariantNumeric: "tabular-nums",
+                  }}>
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
 
         {/* Footer: Back + Get started */}
