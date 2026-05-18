@@ -1,6 +1,8 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 17, 2026 (long day) — IF v2 shipped + follow-up bugs fixed + full frontend/backend audit done across three rounds. Critical: schedule-not-saving bug traced to `dbGetSchedule` returning every user's rows because RLS wasn't on; client-side `user_id=eq.` filter added to dbGetSchedule + dbGetAdherenceCounts + dbGetSupplementHistory + dbGetReceivedProtocols; RLS enabled at the DB perimeter via Supabase Dashboard; UNIQUE constraints added on `user_schedule(user_id)`, `daily_logs(user_id, log_date)`, `user_supplement_history(user_id, name)`. Design system tightened: dead Light/Dark/Terminal-* themes deleted (production bundle −10.5KB), single makeSegBtnStyle helper replaces three local copies, shadows.elevated added, touch.row applied to multi-line rows. Backend hardened: cascade-delete on protocol delete, transactional rollback on activateReceived, refreshSession memoized, recomputeNotifications surfaces failures via toast.*
+*Last updated: May 18, 2026 — full mobile patient UX/UI audit shipped end-to-end across 6 sessions on branch `worktree-session-2-autocomplete-expand`. All 12 audit recommendations + 4 audit-discovered bugs + the design decision ladder (D1–D5) implemented. Highlights: mobile week strip (extracted DayCell with compact mode), Hero rewritten around a single state-helper (anchor-aware copy ladder, Start-day decoupled per D1, anchor-info as primary status line, success-green unified to status row, inline-edit preserves prefix), past-day pattern (eyebrow inside Hero card with read-only/editing suffix, Edit in header), Day-1 inline tip + reusable `InlineTip` primitive, log-at pill + `LogAtSheet` time-picker with per-supplement timestamp persistence in `daily_logs.checked` (new `{ checked: true, at: "HH:MM" }` shape coexists with legacy `true` via backwards-compat reads — no DB migration needed), take-all on slot icon with first-run InlineTip hint, Onboarding Step 2 live "Your day will look like" preview. Production bundle 384 KB. Branch in fresh worktree, not yet merged to main.*
+
+*Previous milestone (May 17): IF v2 shipped + follow-up bugs fixed + full frontend/backend audit done across three rounds. Critical: schedule-not-saving bug traced to `dbGetSchedule` returning every user's rows because RLS wasn't on; client-side `user_id=eq.` filter added to dbGetSchedule + dbGetAdherenceCounts + dbGetSupplementHistory + dbGetReceivedProtocols; RLS enabled at the DB perimeter via Supabase Dashboard; UNIQUE constraints added on `user_schedule(user_id)`, `daily_logs(user_id, log_date)`, `user_supplement_history(user_id, name)`. Design system tightened: dead Light/Dark/Terminal-* themes deleted (production bundle −10.5KB), single makeSegBtnStyle helper replaces three local copies, shadows.elevated added, touch.row applied to multi-line rows. Backend hardened: cascade-delete on protocol delete, transactional rollback on activateReceived, refreshSession memoized, recomputeNotifications surfaces failures via toast.*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -417,6 +419,13 @@ Locked direction: responsive (same content, broader layout on desktop). Hard bre
 - **Anchor helper text rendering before selection** — `ANCHOR_NOTES` HelperText in ScheduleTab rendered immediately above the card grid for any user already on `medication` or `wakeup` mode, before any interaction. Moved to inside the Anchor sub-selector block, below the two buttons, conditional on `localMode` having a value. Commit `71b62d0`.
 - **Grid layout remaining span** — after the first grid fix (`fb5a9ce`), `gridColumn: "1 / -1"` spread was still left in both Onboarding and ScheduleTab card style objects. Full-width span caused No Schedule to occupy its own row, Fixed Times to be stranded. Removed spread entirely. Commit `42b3eaa`.
 - **Sign-in nav stack stale** — `NavigationProvider` is mounted above both `Auth` and `ProtocolApp` and survives sign-out. When user signed in after signing out, `ProtocolApp` remounted and read the stale `screenStack` (e.g. `[home, settings]`), rendering Settings open. Navigation state is not persisted to localStorage — purely in-memory. Fixed by adding `resetStack()` to `NavigationProvider` and calling it in `ProtocolApp`'s mount effect (fires on every sign-in, harmless on refresh since stack already starts at home). Commit `f7b8bb8`.
+- **New supplements appearing on past days as unchecked (May 18 audit)** — `isSupplementActiveOn` returned `true` for any indefinite-mode supp regardless of date, ignoring `created_at`. Net effect: a supp added today appeared on every past day too, marked as unchecked, dragging past-day adherence rings down. Fix in `src/lib/time.js`: added `created_at` floor at the top of `isSupplementActiveOn` (applies across all treatment modes — indefinite, scheduled, cycled).
+- **Protocol detail title not centered on screen (May 18 audit)** — `ProtocolDetailScreen` header used `flex justify-content: space-between` with the title at `flex: 1, text-align: center`. Because the right-side group had 1–2 icons while the left had 1, the title centered to the *available flex space*, not the screen. Fix: CSS grid `gridTemplateColumns: minmax(60px, 1fr) minmax(0, auto) minmax(60px, 1fr)` — outer columns equal-flex, title in auto-sized center column always screen-centered. Added overflow ellipsis for long names. `ProtocolLibrary` header unaffected (its title is a plain span and the side buttons are balanced).
+- **Late badge stayed bright under read-only past-day dim (May 18 audit)** — the `theme.status.warningSubtle` / `theme.status.warning` ochre on the "late" badge didn't dim uniformly with the 0.6 opacity parent wrapper, so late slots looked highlighted in read-only mode. Fix in `SlotCard.jsx`: when `isReadOnly`, switch Badge from `variant="missed"` to `variant="neutral"` (achromatic). Edit mode + today retain the warning ochre. (The deeper fix — replacing the opacity dim with an in-Hero eyebrow — followed in Session 3 of the mobile audit.)
+- **Week strip cells too tight at 320px viewport (May 18 audit)** — at iPhone SE 1st gen width, each cell rendered ~38px wide; with the 28px compact ring + `xs` (8) horizontal padding, the ring overflowed the cell content area. Fix in `WeekStrip.jsx`: compact mode now uses `xxs` (4) horizontal padding while keeping `xs` (8) vertical. Ring fits with 4+px breathing room at 320px, 9+px at 375px, 11+px at 390px.
+- **TODAY badge straddled the cell border / staggered cell heights (May 18 mobile audit)** — initial absolute-positioning approach put the badge half above / half overlapping the cell's top border, and in-flow rendering pre-fix added 2–3px of extra height to the today cell. Final fix: reserved-height top slot inside every cell (compact: 14px + `xxs` marginBottom) — today renders the badge inside that slot, non-today cells get an empty slot of identical height. Badge sized down to 8px font + tight padding to fit cell width.
+- **Hero card "looked empty" on today vs past (May 18 mobile audit)** — content was anchored to the top of a `minHeight: 132` card with extra space below. Fix: Card itself is now `display: flex, flexDirection: column, justifyContent: center` so content always vertically centers regardless of how many lines (no submeta vs with submeta) — past and today render at the same visual shape.
+- **"Started at" text jumped when entering anchor edit (May 18 mobile audit)** — display-mode status div had `lineHeight: 1.2`; edit-mode prefix span inherited a different line-height. Parent flex also switched from `alignItems: baseline` to `alignItems: center`. Fix: extracted a single `statusTextStyle` object used by both display and edit-mode prefix; unified parent alignment to `alignItems: center`. Edit input slimmed with `padding: xxs xs` so its natural height matches the title-text row.
 
 ---
 
@@ -616,6 +625,90 @@ Full frontend/backend audit (acting as HoD/FED + backend reviewer) produced a pu
 
 ---
 
+### Session of May 18 — Mobile patient UX/UI audit shipped end-to-end
+
+**Context.** Full mobile patient experience audit performed against best-in-class daily-ritual apps (Streaks, Habitify, Apple Reminders, Apple Health Meds, Things 3, MyFitnessPal, Epsy, GoodRx, Hims, etc., via Mobbin discovery). 5-part audit produced 12 recommendations + 5 design decisions (D1–D5). All ranked by leverage; locked decisions before implementation. Sessions run sequentially in one branch (`worktree-session-2-autocomplete-expand`, off main).
+
+**Locked design decisions (binding):**
+- **D1** — Cascade math with no anchor set: slot times read `--:--`; notifications dormant; user can still log without anchor. Logging fully decoupled from anchor.
+- **D2** — Hero copy ladder voice: anchor-aware, contextual ("Started at 05:50" / "Not started yet" / "Done for today").
+- **D3** — Take-all on slot icon: ship it with a first-run InlineTip hint.
+- **D4** — Day-1 teaching tip: yes, schedule-mode-specific copy, dismissible via InlineTip primitive.
+- **D5** — Log-at schema: per-supplement timestamp persistence in `daily_logs.checked` jsonb. New shape `{ checked: true, at: "HH:MM" }` coexists with legacy `true` — backwards-compat read in `isChecked`; no DB migration needed.
+
+**Pass — Session 1 (week strip + sign-out confirm + eyebrow cleanup).**
+- Mobile branch in App.jsx replaced single-day chevron date row with `<WeekStrip compact>`. `dbGetDailyLogsRange` fetch + `weekLogs` sync effects' `isDesktop` gates removed so mobile fetches the rolling 7-day window.
+- `WeekStrip.jsx` got a `compact` prop. `DayCell` now accepts `compact`, switches between 56px (desktop) and 28px (mobile) ring sizes, tighter cell padding, smaller TODAY badge styling. Compact horizontal cell padding is `xxs` (4) so the ring fits comfortably at 320px viewport (iPhone SE 1st gen). TODAY badge sits in a reserved-height top slot to keep all cells the same height.
+- `AdherenceRing` gained `showText` prop (default true preserves desktop) — passed `showText={!compact}` on mobile so the ring renders as a clean arc (no `%` text inside the 28px ring).
+- "MY PROTOCOL" eyebrow + `dayLabel` + `goDay` chevron handlers removed; `ChevronLeft/ChevronRight` imports cleaned from App.jsx (now used only inside WeekStrip).
+- `SettingsScreen.jsx` sign-out wired through a confirmation `Modal`: "Sign out of Origin? · You'll need to sign in again to access your protocol. Your data stays safe." Cancel + Sign out buttons.
+
+**Pass — Session 2 (recents on autocomplete + remove forced auto-expand).**
+- `SupplementNameAutocomplete.jsx` now tracks a `focused` state. When the field is focused-and-empty AND `history.length > 0`, renders top-4 recents below the input as Button `variant="selector"` chips. Empty-state chips dismiss when user types ≥1 char; existing 3+ char matching dropdown unchanged.
+- `SlotCard.jsx` initial expanded state changed from `useState(!allDone)` + `useEffect` forced re-sync to `useState(status === 'now' || status === 'missed')`. Only actionable slots auto-expand on mount; user toggles freely after — no forced re-expansion when a check flips.
+
+**Pass — Audit-discovered bug fixes (4).**
+- **Bug 1** — `isSupplementActiveOn` returned `true` for all indefinite supps regardless of date. Result: any new supp appeared on every past day as unchecked. Fix: added `created_at` floor filter at the top of `isSupplementActiveOn` — applies to all treatment modes. New supps only render on days ≥ their creation date.
+- **Bug 2** — `ProtocolDetailScreen.jsx` header used `flex justify-content: space-between` with a `flex: 1` title between back chevron (1 button) and right group (1–2 buttons). Title was centered to the *available flex space*, not the screen. Fix: converted to CSS grid `gridTemplateColumns: minmax(60px, 1fr) minmax(0, auto) minmax(60px, 1fr)`. Outer columns equal-flex; title in auto-sized center column stays screen-centered regardless of right-side button count. Added `overflow: hidden; text-overflow: ellipsis` for long names.
+- **Bug 3** — "late" badge on past-day read-only slots used warning ochre that didn't dim uniformly with the parent `opacity: 0.6` wrapper. Fix in `SlotCard.jsx`: when `isReadOnly`, switch the badge from `variant="missed"` (warning) to `variant="neutral"` (achromatic). In edit mode (and on today), warning ochre returns.
+- **Bug 4 / Audit polish** — `WeekStrip` compact cell padding (vertical `xs`/horizontal `xxs`) and 28px ring sized to fit cleanly at 320px viewport with breathing room.
+
+**Pass — Session 3 (past-day Edit-in-header + Day-1 tip + InlineTip primitive).**
+- New `src/components/InlineTip.jsx` primitive: dismissible inline tip with left accent border, uppercase label, body, top-right X. Dismissal persisted in `localStorage` under `origin.tip.<id>`. Reusable: powers both the Day-1 tip and the take-all first-run hint.
+- App.jsx mobile header right-side actions now conditional on past/today. Past: Edit/Done icon (Pencil → "Done" with accent treatment). Today/future: [+] icon. Library icon stays in both cases.
+- 0.6 opacity dim on past-day content wrapper REMOVED. Replaced by an eyebrow inside the Hero card showing "Viewing [date] · read-only" (suffix `text.muted`) or "Viewing [date] · editing" (suffix accent white).
+- `Hero.jsx` `pastDayEditing`/`setPastDayEditing` props removed (Edit lives in App header now).
+- `isDay1` derived from `profile.created_at === today`. New `DAY1_TIP` constant in App.jsx keyed by schedule mode (medication / wakeup / fasting / fixed — no tip for "none"). Tip renders below the empty-state CTA when `!isPast && isDay1 && DAY1_TIP[scheduleMode]`. Schedule-mode-aware copy explaining how anchors / windows / fixed times work.
+
+**Pass — Session 4 (anchor-aware Hero copy ladder + Start-day decoupling + size consistency).**
+- `Hero.jsx` fully rewritten around a single `getHeroState({...})` helper that returns `{ eyebrow, status, submeta, statusKind, statusIsDone, showSetAnchor, editAnchorOn, anchorPrefix, anchorTime }`. Six prior nested-ternary mode branches collapsed into one state object consumed by a single render template.
+- **D1 implementation** — gating "Start my day" CTA removed. Replaced by an inline `+ Set anchor` pill (calls existing `startDay()` action). Logging fully decoupled from anchor: slot times read `--:--` in anchor mode without `pillTime`; checkbox + toggleCheck + log-at all work without the anchor being set.
+- **D2 implementation** — anchor-aware copy ladder:
+  - Today, anchor mode, no anchor: `Viewing Today, [date]` / `Not started yet` / "Set your meds time…" + `+ Set anchor` pill
+  - Today, anchor mode, anchor set, partial: `Viewing Today, [date]` / `Started at 05:50` + inline `edit` / `X of Y done`
+  - Today, anchor mode, all done: `Viewing Today, [date]` / `Done for today` (green) / `Started at 05:50` + edit
+  - Today, fixed: `Viewing Today, [date]` / next slot time (big) / `Next · [slot label]`
+  - Today, fasting: `Viewing Today, [date]` / eating window time (big) / `Eating window opens`
+  - Today, none: `Viewing Today, [date]` / day name / completion
+  - Past: `Viewing [date] · read-only` / completion (green if done) / anchor info
+  - Future: `Viewing [date]` / day name
+- **Hero size consistency** — Card has `display: flex, flexDirection: column, justifyContent: center, minHeight: 132`. Content centers vertically within the card; shorter states (e.g. fasting with just a time) read as the same shape as busier states (anchor + completion + edit).
+- **Success-green unified** — green now always lives on the status row (primary celebration position). Submeta is always neutral grey.
+- **Eyebrow consistency** — past + today both render eyebrow inside the Hero card via the same slot (`{ text, suffix?, suffixTone? }` shape). Identical visual line on every state.
+- **Anchor edit affordance** — anchor info (`Started at 05:50`) is now a `{ prefix, time }` structure. In-line edit replaces only the time portion with a slim Input + Save button; the `Started at` prefix stays in place. `statusTextStyle` is extracted as a single style object used by both the display div and the edit prefix span so typography is identical between states — eliminates the previous "Started at jumps" issue. Single parent flex with `alignItems: "center"` everywhere — no baseline/center alignment switching.
+- **Input clock icon hidden globally** — `input[type="time"]::-webkit-calendar-picker-indicator { display: none }` rule added in `index.html`. Applies to all time/date inputs (Hero, schedule editor, EditForm cycle dates, etc.).
+- `Input` primitive now sets `colorScheme: dark` so any native UI that does render (e.g. accessible time picker fallbacks) uses dark-theme styling.
+- Hero `minHeight: 96` on the inner flex container reserved for the ring + status; `STATUS_ROW_MIN_HEIGHT: 44` reserves the status row height so the slim time input doesn't reflow the card.
+
+**Pass — Session 5 (log-at pill + LogAtSheet + per-supp timestamp schema).**
+- New `src/components/LogAtSheet.jsx` — `Modal`-based bottom sheet (mobile) / centered modal (desktop) for logging a missed supplement at a specific time. Shows the supplement name in the title, the original slot due time + slot label as reference text, a time input defaulted to current time, and a primary `Log at HH:MM` button with live label updates.
+- App.jsx schema-compat reads:
+  - `checkValue(sid, suppId)` raw read
+  - `isChecked(sid, suppId)` truthy for both `true` (legacy) and `{ checked: true, at: "HH:MM" }` (new)
+  - `checkedAtTime(sid, suppId)` returns the `at` string when present, else null
+  - `toggleCheck` writes `true` for normal toggle, deletes the key on uncheck, preserves prior `at` on re-check
+  - `logCheckAt(sid, suppId, atTime)` writes the new structured shape
+- `SlotCard.jsx` "log at…" pill renders on rows where status is `missed`, supp isn't checked, not read-only, not future. Warning-ochre border + Clock icon. Tapping calls `openLogAt(slot.id, supp, slot.label)` which sets `logAtTarget` and opens the `LogAtSheet`. Supp rows that were checked via log-at display "at HH:MM" with a small Clock icon next to the dose line.
+- `App.jsx` `submitLogAt(time)` calls `logCheckAt(target.sid, target.suppId, time)`.
+- **Schema:** `daily_logs.checked` jsonb column now stores either `true` (legacy / normal-toggle) or `{ checked: true, at: "HH:MM" }` (log-at). Adherence math (`countExpectedChecks` in `src/lib/adherence.js`) uses truthy checks which work for both shapes — no migration required.
+
+**Pass — Session 6 (take-all on slot icon + first-run hint + Onboarding Step 2 live preview).**
+- App.jsx `takeAllInSlot(sid, supps)` — bulk-complete all incomplete supps in a slot. Preserves prior `at` timestamps. Skips already-checked supps. No-op on read-only days.
+- `SlotCard.jsx` header split into TWO side-by-side `<button>` elements: slot icon button (left, take-all) + expand button (rest of header). Both have proper aria-labels. Icon button is `disabled` (visually + non-clickable) when read-only, future, or already all-done. Nested-button HTML invalidity avoided.
+- First-run hint: `InlineTip id="take-all-hint"` rendered at the top of the slot list when `hasMultiSuppSlot && !isReadOnly && !isPast && !isFuture`. Copy: "Tip · Tap the icon at the left of a slot to log every item in it at once." Dismissed via the X — never returns once dismissed.
+- `Onboarding.jsx` Step 2 live preview — new `buildPreviewRows(mode, cfg)` helper computes a row list `{ icon, label, value }` based on selected schedule mode:
+  - Anchor (medication / wakeup): rows show offsets from anchor (e.g. `+0:30`, `+1:00`, `+5:00`) with `Pre-Breakfast`/`Breakfast`/etc. labels
+  - Fasting: rows show absolute times from `computeIFSlotTimes(cfg)` — fasted, meal_1, optional pre_meal_2/meal_2/pre_meal_3/meal_3, evening (Fixed / Before sleep)
+  - Fixed: rows from `FIXED_SLOTS` with their `fixed_times` values
+- Preview card sits below the configuration inputs, above the footer. Updates live as the user adjusts inputs. No preview for "none" mode (no schedule to preview).
+- **InlineTip primitive reused for both Day-1 tip (Session 3) and take-all hint (Session 6)** — single dismissal mechanism, single storage key pattern (`origin.tip.<id>`).
+
+**Production bundle.** 384.16 KB (102.43 KB gzipped) — up from May 17's 373 KB. +~11 KB for all of: WeekStrip compact mode + Hero state helper + InlineTip + LogAtSheet + take-all logic + Onboarding live preview. No regressions in build or tests.
+
+**Branch:** `worktree-session-2-autocomplete-expand` (uncommitted as of session end — pending PR).
+
+---
+
 ## Codebase Health
 
 **App.jsx is ~1340 lines** (May 17 measurement). Still pure orchestration — state, effects, handlers, home screen layout container. Every major rendering concern is in its own focused file.
@@ -632,11 +725,11 @@ Full frontend/backend audit (acting as HoD/FED + backend reviewer) produced a pu
 - `src/design-system.js` — single source of truth for tokens. Exports: `spacing`, `radius`, `typography`, `touch`, `layout`, `shadows`, `zIndex`, `effects`, `breakpoints`, `themes` (Achromatic only), and the reusable `makeSegBtnStyle(theme)` curry that emits `(on) => style` for segmented buttons. The dead Light/Dark/Terminal themes were deleted May 17.
 - `src/data/supplements-database.js` — autocomplete static list (~300 entries)
 - `src/components/`:
-  - Primitives: Button, Card, Input, Label, Badge, Modal, Toast, Loader, InlineLoader, TabBar
+  - Primitives: Button, Card, Input, Label, Badge, Modal, Toast, Loader, InlineLoader, TabBar, InlineTip (NEW May 18 — dismissible inline tip, localStorage-backed; powers Day-1 tip + take-all hint)
   - Auth & onboarding: Auth, PromptName, Onboarding, NotificationPrompt, IFMigrationScreen
-  - Home (mobile): Hero, SlotCard, WeekStrip (mobile date picker)
+  - Home (mobile): Hero, SlotCard, WeekStrip (now compact-mode on mobile, full-size on desktop — both call sites share the same component)
   - Home (desktop): Sidebar, WeekStrip, AdherenceRing, TodayPanel (+ TodayPanelHeader sub-component), SlotRow, SupplementRow, InsightsPanel; DayCell is a named export from WeekStrip.jsx (no standalone file)
-  - Modals & screens: EditForm, ScheduleTab, SettingsScreen, ProtocolLibrary, ProtocolDetailScreen
+  - Modals & screens: EditForm, ScheduleTab, SettingsScreen, ProtocolLibrary, ProtocolDetailScreen, LogAtSheet (NEW May 18 — bottom-sheet time-picker for logging missed supps at the actual time)
   - Shared: HelperText, SupplementNameAutocomplete, DevThemePicker, ToastContext
   - Design system page (dev + portfolio): `design-system-page/DesignSystemPage.jsx`, `design-system-page/registry.js`
 
@@ -753,23 +846,42 @@ Service Worker, VAPID subscription flow, `recompute_notifications` + `process_no
 **4. Configurable meal count — IF side addressed (May 17).**
 IF v2 makes meal_count a first-class user-facing setting (2 or 3 meals, with the slot picker filtering accordingly). Cascade-mode meal count (Medication / Wakeup) is still hard-coded to 3 — separate decision if/when that becomes friction.
 
-### Lower priority (parked from various sessions)
+### Mobile audit (May 18) — DONE
+**Full audit shipped end-to-end across 6 sessions on `worktree-session-2-autocomplete-expand`. Awaiting real-use validation and PR merge.** See "Session of May 18" in Today's Major Work for the detailed implementation log. Items shipped:
 
-- **Injectables-as-event-log** — instead of daily checkboxes, log doses with timestamps + units. Useful for Tirzepatide titration.
+| Rec | What | Where to see it |
+|---|---|---|
+| 1 | Week strip on mobile (compact mode) | Mobile home above Hero |
+| 2 | Decouple Start-day from logging (D1) | Hero "+ Set anchor" pill in no-anchor state |
+| 3 | Log-at pill + time picker sheet (D5) | Missed slot rows → `LogAtSheet` |
+| 4 | Recents on empty autocomplete | EditForm Name field, focused + empty |
+| 5 | Remove forced auto-expand on SlotCard | Slot cards on home |
+| 6 | Past-day Edit in header (replaces opacity dim) | Mobile header right-side on past days |
+| 7 | Take-all on slot icon (D3) | Slot icon left of header on mobile |
+| 8 | Sign-out confirmation modal | Settings → Sign out |
+| 9 | Onboarding Step 2 live preview | New-user onboarding step 2 |
+| 10 | Hero composition cleanup | Single `getHeroState` helper + render template |
+| 11 | Anchor-aware Hero copy ladder (D2) | All Hero states |
+| Polish | Day-1 inline tip (D4) + InlineTip primitive | Home empty state for new users |
+| Polish | "MY PROTOCOL" eyebrow + chevron date row gone | Mobile header |
+
+### Other lower-priority items (parked from various sessions)
+
+- **Injectables-as-event-log** — instead of daily checkboxes, log doses with timestamps + units. Useful for Tirzepatide titration. (Note: log-at flow now captures the actual log time for any supp — partially overlaps but doesn't fully replace dose-log UX for injectables.)
 - **Symptom logging** — free-text journal vs structured ratings. Open design questions.
 - **Motion graphics pass** — skeleton screens, checkbox tick animation, hero progress ring fill animation, page transitions. Real polish moment.
-- **Accessibility hardening** — `aria-live` regions, keyboard skip links, focus management refinement.
-- **Mobile design refresh under Achromatic** — desktop got the new identity, mobile may need explicit alignment. Verify Hero card, slot cards, slot picker, all primary surfaces under Achromatic. Likely already works (token-based theme) but visual check needed.
+- **Accessibility hardening** — `aria-live` regions for toasts + loading; keyboard skip links; focus management refinement. (HIG foundational pass shipped May 12 covered touch targets, reduced-motion, focus states, Modal keyboard.)
 - **Name field required on sign-up** — currently shipped optional, spec was required.
 - **Rename "Name" / "display_name" to "Full name"** — clearer ask.
 - **`icon-bare` Button variant** — encapsulate inline border:none overrides on icon buttons.
+- **Real-use period for mobile audit branch** — Sofia uses the app for several days on `worktree-session-2-autocomplete-expand` before PR merge to catch any friction signals from the new Hero / log-at / take-all / live-preview surfaces.
 
 ### Parked from past sessions (lower urgency)
 
 - **MOB-026 — DONE** accessibility role/aria markup shipped: `aria-expanded` on SlotCard expand header, `aria-label` + `aria-pressed` on SlotCard and SupplementRow checkboxes. Commit `f2b3da4`.
-- **MOB-009 — slot card chevron discoverability** on mobile (no visual cue that headers are tappable).
+- **MOB-009 — slot card chevron discoverability** — partially addressed by the take-all split header (May 18) which makes the slot icon and chevron each their own button with cursor + hover affordance.
 - **MOB-019 — skeleton screens during initial app load.**
-- **B3 persona finding** — left chevron one-handed reach issue, swipe gesture on date row could help right-handed one-handed use.
+- **B3 persona finding** — left chevron one-handed reach issue, swipe gesture on date row could help right-handed one-handed use. (Chevron date row removed May 18; week strip is the new date nav — re-evaluate this finding under the new pattern.)
 
 ---
 
@@ -867,7 +979,12 @@ Optional consent toggle at import time. Per-user drill-down for creators with 7-
 **`daily_logs`:**
 - `id`, `user_id`, `log_date`
 - `pill_time` (time — anchor time for flexible mode, set when user taps Start Day)
-- `checked` (jsonb, default `'{}'`) — keys: `${date}_${slotId}_${suppId}` or `${date}_anytime_${suppId}`
+- `checked` (jsonb, default `'{}'`) — keys: `${date}_${slotId}_${suppId}` or `${date}_anytime_${suppId}`.
+  - **Values (post-May 18 mobile audit):**
+    - `true` — legacy on-time check (pre-Session 5)
+    - `{ checked: true, at: "HH:MM" }` — new shape written by `logCheckAt` when user taps the "log at…" pill on a missed slot row
+    - missing key — unchecked (uncheck via `toggleCheck` removes the entry rather than writing `false`)
+  - Both shapes coexist in the same column. `isChecked` in App.jsx returns truthy for either. Adherence math (`countExpectedChecks`) does a truthy test → both work. No `ALTER`/`UPDATE` migration was required.
 
 **`user_profiles`:**
 - `id` (FK to auth.users)

@@ -6,7 +6,7 @@ import {
 import { ThemeProvider, useTheme } from './lib/theme';
 import DevThemePicker from "./components/DevThemePicker";
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS } from "./config";
-import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library } from "lucide-react";
+import { Trash2, Pause, Play, Plus, Library, Pencil } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
 import Card from "./components/Card";
@@ -30,6 +30,8 @@ import Hero from "./components/Hero";
 import Sidebar, { AccountAvatar } from "./components/Sidebar";
 import PatientDetailPanel from "./components/PatientDetailPanel";
 import WeekStrip from "./components/WeekStrip";
+import InlineTip from "./components/InlineTip";
+import LogAtSheet from "./components/LogAtSheet";
 import TodayPanel from "./components/TodayPanel";
 import InsightsPanel from "./components/InsightsPanel";
 import {
@@ -61,6 +63,29 @@ import DesignSystemPage from "./components/design-system-page/DesignSystemPage";
 
 // Non-IF core slot IDs. IF uses IF_SLOT_IDS from config.js (mode-aware, filtered by meal_count).
 const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
+
+// Day-1 inline tip content keyed by schedule mode. Renders once per user in the
+// home empty state then disappears after dismiss (or after the user adds their
+// first item, since the empty state stops rendering). No tip for "none" mode —
+// there's no scheduling concept to explain.
+const DAY1_TIP = {
+  medication: {
+    label: "how anchors work",
+    body: "Each morning, tap \"I took my meds\" to set today's anchor. Origin cascades pre-meal, meal, and evening items from there.",
+  },
+  wakeup: {
+    label: "how anchors work",
+    body: "Each morning, tap \"I woke up\" to set today's anchor. Origin cascades pre-meal, meal, and evening items from there.",
+  },
+  fasting: {
+    label: "how your day works",
+    body: "Items appear in slots based on your eating window. Origin schedules pre-meal items, meals, and evening items from the window you set.",
+  },
+  fixed: {
+    label: "how your day works",
+    body: "Items appear at the fixed times you set in your schedule. Edit them anytime from Settings.",
+  },
+};
 
 // ANYTIME_SLOT color is set inside ProtocolApp after theme is available
 
@@ -210,6 +235,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [weekLogs, setWeekLogs] = useState([]);
   const [viewedWeekEnd, setViewedWeekEnd] = useState(() => startOfDay(TODAY));
   const [selectedProtocol, setSelectedProtocol]   = useState(null);
+  // Log-at sheet target: { sid, suppId, name, dueTime, slotLabel } or null when closed.
+  const [logAtTarget, setLogAtTarget]             = useState(null);
   const [activeNavItem, setActiveNavItem]         = useState('home');
   const [patients, setPatients]                   = useState([]);
   const [selectedPatient, setSelectedPatient]     = useState(null);
@@ -236,6 +263,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const isReadOnly = isPast && !pastDayEditing;
   const pillTime   = pillTimes[dk] || null;
   const viewDay    = viewDate.getDay();
+  // Day 1 = the user's profile was created today. Triggers the home-screen
+  // inline tip in the empty state to teach the schedule mental model in context.
+  const isDay1 = !!profile?.created_at && dateKey(new Date(profile.created_at)) === dateKey(TODAY);
 
   // fixed mode: always active; consistent mode: pre-populate with set time
   const effectivePillTime = scheduleMode === "fixed"
@@ -359,9 +389,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }).catch(e => console.error(e));
   }, [dk]);
 
-  // Load week logs for desktop adherence rings + pre-populate past day state
+  // Load week logs for the week strip (mobile + desktop) + pre-populate past day state.
+  // Week strip ships on both surfaces as of Session 1 (mobile audit).
   useEffect(() => {
-    if (loading || !isDesktop) return;
+    if (loading) return;
     const start = dateKey(viewedWeekStart);
     const end = dateKey(viewedWeekEnd);
     dbGetDailyLogsRange(user.id, start, end, token).then(rows => {
@@ -375,11 +406,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       if (Object.keys(mergedChecked).length > 0) setChecked(c => ({ ...c, ...mergedChecked }));
       if (Object.keys(mergedPillTimes).length > 0) setPillTimes(pt => ({ ...pt, ...mergedPillTimes }));
     }).catch(e => console.error('Week logs fetch failed:', e));
-  }, [viewedWeekEnd, loading, isDesktop]);
+  }, [viewedWeekEnd, loading]);
 
   // Keep weekLogs in sync with checked state so rings update immediately after toggling
   useEffect(() => {
-    if (!isDesktop) return;
     const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk + '_')));
     setWeekLogs(prev => {
       const idx = prev.findIndex(l => l.log_date === dk);
@@ -392,7 +422,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       updated[idx] = { ...updated[idx], checked: dayChecked };
       return updated;
     });
-  }, [checked, dk, isDesktop]);
+  }, [checked, dk]);
 
   // Auto-save — skip on read-only past days to avoid overwriting history with empty state.
   // When the viewed day changes mid-debounce, flush the previous day's pending save
@@ -464,7 +494,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     return d > todayCap ? todayCap : d;
   });
 
-  const goDay         = (offset) => { const d = new Date(viewDate); d.setDate(d.getDate() + offset); setViewDate(startOfDay(d)); setPastDayEditing(false); };
   const setPillForDay = (t) => {
     setPillTimes(pt => ({ ...pt, [dk]: t }));
     recomputeNotifications(token);
@@ -514,8 +543,63 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   };
 
   const slotTimeStr     = (sid) => { const t = getSlotTime(sid); return t ? fmtTime(t) : "--:--"; };
-  const toggleCheck     = (sid, suppId) => { if (isReadOnly) return; const k = `${dk}_${sid}_${suppId}`; setChecked(c => ({ ...c, [k]: !c[k] })); };
-  const isChecked       = (sid, suppId) => !!checked[`${dk}_${sid}_${suppId}`];
+  // Schema: an entry in `checked` can be:
+  //   true                              — legacy on-time check (pre-Session 5)
+  //   false / undefined                 — unchecked
+  //   { checked: boolean, at?: "HH:MM" } — new shape, captures actual log time
+  //                                        for late or retro logs
+  // Read helpers treat both shapes as equivalent for the boolean check.
+  const checkValue      = (sid, suppId) => checked[`${dk}_${sid}_${suppId}`];
+  const isChecked       = (sid, suppId) => {
+    const v = checkValue(sid, suppId);
+    if (v === true) return true;
+    if (v && typeof v === "object" && v.checked) return true;
+    return false;
+  };
+  const checkedAtTime   = (sid, suppId) => {
+    const v = checkValue(sid, suppId);
+    return v && typeof v === "object" ? v.at || null : null;
+  };
+  const toggleCheck     = (sid, suppId) => {
+    if (isReadOnly) return;
+    const k = `${dk}_${sid}_${suppId}`;
+    setChecked(c => {
+      const nextChecked = !isChecked(sid, suppId);
+      // Toggling off — remove the entry entirely (cleaner persistence than `false`).
+      if (!nextChecked) {
+        const { [k]: _omit, ...rest } = c;
+        return rest;
+      }
+      // Toggling on — preserve any prior `at` timestamp the user set via log-at.
+      const prev = c[k];
+      const prevAt = prev && typeof prev === "object" ? prev.at : null;
+      return { ...c, [k]: prevAt ? { checked: true, at: prevAt } : true };
+    });
+  };
+  // Explicit log-at-time: stamps the entry with a specific time and marks checked.
+  const logCheckAt      = (sid, suppId, atTime) => {
+    if (isReadOnly) return;
+    const k = `${dk}_${sid}_${suppId}`;
+    setChecked(c => ({ ...c, [k]: { checked: true, at: atTime } }));
+  };
+  // Bulk-complete all incomplete supps in a slot (Session 6 / D3 — take-all).
+  // Preserves any prior `at` timestamps that were set via log-at. Skips supps
+  // that are already checked. No-op on read-only days.
+  const takeAllInSlot   = (sid, supps) => {
+    if (isReadOnly) return;
+    setChecked(c => {
+      const next = { ...c };
+      for (const supp of supps) {
+        const k = `${dk}_${sid}_${supp.id}`;
+        const prev = next[k];
+        const alreadyChecked = prev === true || (prev && typeof prev === "object" && prev.checked);
+        if (alreadyChecked) continue;
+        const prevAt = prev && typeof prev === "object" ? prev.at : null;
+        next[k] = prevAt ? { checked: true, at: prevAt } : true;
+      }
+      return next;
+    });
+  };
   const getSuppsForSlot = (sid) => homeSupps.filter(s => s.slots.includes(sid) && s.days.includes(viewDay));
 
   const startDay = () => {
@@ -591,6 +675,23 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     setFormOpen(true);
   };
   const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...(supp.slots || [])], days: [...(supp.days || [])], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', protocol_id: supp.protocol_id || null, treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
+
+  // Log-at sheet helpers — opens the time-picker sheet for a specific
+  // (slot, supplement) pair and writes the picked time to the daily log.
+  const openLogAt = (sid, supp, slotLabel) => {
+    if (isReadOnly) return;
+    setLogAtTarget({
+      sid,
+      suppId: supp.id,
+      name: supp.name,
+      dueTime: slotTimeStr(sid),
+      slotLabel: slotLabel || null,
+    });
+  };
+  const submitLogAt = (atTime) => {
+    if (!logAtTarget) return;
+    logCheckAt(logAtTarget.sid, logAtTarget.suppId, atTime);
+  };
   const closeForm = () => { setFormOpen(false); setEditingId(null); };
 
   const openAddToProtocol = (protocol) => {
@@ -941,7 +1042,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     onSignOut();
   };
 
-  const dayLabel  = isToday ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const shortDate = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   if (loading) return null;
@@ -1035,8 +1135,20 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       })
     : SLOTS;
 
+  // Take-all first-run hint condition: visible only when at least one slot
+  // has 2+ items (otherwise the affordance has no real value), not on past
+  // days, and not yet dismissed. The InlineTip primitive handles persistence.
+  const hasMultiSuppSlot =
+    anytimeSupps.length >= 2 ||
+    activeSlotList.some(s => getSuppsForSlot(s.id).length >= 2);
+
   const slotCardsContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs2 }}>
+      {hasMultiSuppSlot && !isReadOnly && !isPast && !isFuture && (
+        <InlineTip id="take-all-hint" label="Tip">
+          Tap the icon at the left of a slot to log every item in it at once.
+        </InlineTip>
+      )}
       {activeSlotList.map(slot => {
         const slotSupps = getSuppsForSlot(slot.id);
         if (!slotSupps.length) return null;
@@ -1052,10 +1164,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         const status = noSched ? "future" : slotStatus(slot.id);
         const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
         const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
-        return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
+        return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
       })}
       {anytimeSupps.length > 0 && (
-        <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} toggleCheck={toggleCheck} openEdit={openEdit} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
+        <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
       )}
     </div>
   );
@@ -1214,7 +1326,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   return (
     <div style={{ fontFamily: typography.fontBody, color: theme.text.primary, maxWidth: layout.maxContentWidth, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: BG_GRADIENT, minHeight: "100vh" }}>
 
-      {/* Header: [avatar] greeting · [+] [Library] */}
+      {/* Header: [avatar] greeting · right-side actions vary by past/today.
+          Past day: Edit/Done + Library (no [+] — items always create with today's
+          timestamp, so adding while viewing yesterday is misleading).
+          Today/future: [+] + Library. */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.md }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
           <AccountAvatar size="touch" displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
@@ -1223,58 +1338,74 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          <Button variant="icon" aria-label="Add item" onClick={openAdd}>
-            <Plus size={18} />
-          </Button>
+          {isPast ? (
+            <Button
+              variant="icon"
+              aria-label={pastDayEditing ? "Done editing" : "Edit past day"}
+              onClick={() => setPastDayEditing(!pastDayEditing)}
+              style={pastDayEditing ? { background: theme.accent.subtle, color: theme.accent.onSubtle, borderColor: theme.accent.default } : undefined}
+            >
+              {pastDayEditing ? <span style={{ fontSize: typography.label, fontWeight: typography.semibold, padding: `0 ${spacing.xxs}px` }}>Done</span> : <Pencil size={16} />}
+            </Button>
+          ) : (
+            <Button variant="icon" aria-label="Add item" onClick={openAdd}>
+              <Plus size={18} />
+            </Button>
+          )}
           <Button variant="icon" aria-label="Open Library" onClick={() => pushScreen('manage_protocol')}>
             <Library size={18} />
           </Button>
         </div>
       </div>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing.md }}>
-        <Button variant="icon" aria-label="Previous day" onClick={() => goDay(-1)}><ChevronLeft size={24} color={theme.text.secondary} style={{ marginRight: spacing.xxxs }} /></Button>
-        <div style={{ flex: 1, textAlign: "center", padding: `0 ${spacing.xs}px` }}>
-          <div style={{ fontSize: typography.label, color: theme.text.secondary, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xxxs, fontFamily: typography.fontHeading }}>MY PROTOCOL</div>
-          <button onClick={() => { if (!isToday) { setViewDate(TODAY); setPastDayEditing(false); } }} style={{ fontSize: typography.title, fontWeight: typography.bold, letterSpacing: typography.headingLetterSpacing, background: "none", border: "none", cursor: isToday ? "default" : "pointer", color: isToday ? theme.text.primary : theme.accent.default, padding: 0, display: "block", width: "100%", textAlign: "center", fontFamily: typography.fontHeading }}>{dayLabel}</button>
-          <div style={{ fontSize: typography.caption2, color: theme.text.faint, marginTop: spacing.xxxs, minHeight: 14, letterSpacing: typography.labelSpacingTight }}>{isToday ? shortDate : "tap to return to today"}</div>
-        </div>
-        <Button variant="icon" aria-label="Next day" onClick={() => goDay(1)}><ChevronRight size={24} color={theme.text.secondary} style={{ marginLeft: spacing.xxxs }} /></Button>
+      {/* Week strip — date nav + glanceable adherence (Session 1 of mobile audit). */}
+      <div style={{ marginBottom: spacing.md }}>
+        <WeekStrip
+          weekDates={weekDates}
+          weekLogs={weekLogs}
+          supplements={visibleSupps}
+          selectedDate={viewDate}
+          onSelectDate={(date) => { setViewDate(startOfDay(date)); setPastDayEditing(false); }}
+          onPrev={handlePrevWeek}
+          onNext={handleNextWeek}
+          canNavigateNext={canNavigateNext}
+          compact
+        />
       </div>
 
-      {/* CTA row removed — Add (+) and Library moved into the header (May 17). */}
+      {/* Hero card */}
+      <Hero
+        scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
+        pct={pct} coreTotal={coreTotal} coreDone={coreDone}
+        pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
+        eatingWindowStart={scheduleConfig.eating_window_start}
+        editPillTime={editPillTime} setEditPillTime={setEditPillTime}
+        tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
+        isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}
+        isPast={isPast} isReadOnly={isReadOnly}
+        nextFixedSlot={nextFixedSlot}
+      />
 
-      {/* Content area — visually muted on read-only past days */}
-      <div style={{ opacity: isReadOnly ? 0.6 : 1, transition: "opacity 200ms ease-out" }}>
-
-        {/* Hero card */}
-        <Hero
-          scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
-          pct={pct} coreTotal={coreTotal} coreDone={coreDone}
-          pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
-          eatingWindowStart={scheduleConfig.eating_window_start}
-          editPillTime={editPillTime} setEditPillTime={setEditPillTime}
-          tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
-          isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}
-          isPast={isPast} isReadOnly={isReadOnly}
-          pastDayEditing={pastDayEditing} setPastDayEditing={setPastDayEditing}
-          nextFixedSlot={nextFixedSlot}
-        />
-
-        {/* Main slot list */}
-        <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, marginBottom: spacing.md }}>
-          {homeSupps.length === 0 ? (
-            <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
-              <div style={{ fontSize: typography.display, color: theme.text.secondary, marginBottom: spacing.md, fontFamily: typography.fontHeading, lineHeight: 1 }}>◯</div>
-              <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, marginBottom: spacing.xs }}>No items yet</div>
-              <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
-              {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
-            </div>
-          ) : slotCardsContent}
-        </div>
-
-      </div>{/* end opacity wrapper */}
+      {/* Main slot list */}
+      <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, marginBottom: spacing.md }}>
+        {homeSupps.length === 0 ? (
+          <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
+            <div style={{ fontSize: typography.display, color: theme.text.secondary, marginBottom: spacing.md, fontFamily: typography.fontHeading, lineHeight: 1 }}>◯</div>
+            <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, marginBottom: spacing.xs }}>No items yet</div>
+            <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
+            {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
+            {/* Day-1 inline tip — only on the home empty state for first-day users.
+                Schedule-mode-specific copy. Dismissible, never returns once dismissed. */}
+            {!isPast && isDay1 && DAY1_TIP[scheduleMode] && (
+              <div style={{ marginTop: spacing.md }}>
+                <InlineTip id={`day1-${scheduleMode}`} label={DAY1_TIP[scheduleMode].label}>
+                  {DAY1_TIP[scheduleMode].body}
+                </InlineTip>
+              </div>
+            )}
+          </div>
+        ) : slotCardsContent}
+      </div>
 
       {/* Screens */}
       <SettingsScreen
@@ -1340,6 +1471,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       >
         <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} mealCount={mealCount} eveningMode={scheduleConfig.evening_mode ?? null} supplementHistory={supplementHistory} activeProtocols={protocols.filter(p => p.status === 'active')} />
       </Modal>
+      <LogAtSheet
+        open={!!logAtTarget}
+        target={logAtTarget}
+        onClose={() => setLogAtTarget(null)}
+        onConfirm={submitLogAt}
+      />
     </div>
   );
 }

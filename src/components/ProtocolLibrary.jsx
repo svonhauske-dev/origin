@@ -214,7 +214,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
           color: theme.text.primary, display: "flex", alignItems: "center",
           WebkitTapHighlightColor: "transparent",
         }}>
-          <ChevronLeft size={24} />
+          <ChevronLeft size={18} />
         </button>
         <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary }}>
           Protocols
@@ -225,7 +225,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
           color: theme.accent.default, display: "flex", alignItems: "center",
           WebkitTapHighlightColor: "transparent",
         }}>
-          <Plus size={22} />
+          <Plus size={18} />
         </button>
       </div>
 

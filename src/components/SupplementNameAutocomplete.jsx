@@ -1,15 +1,21 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { spacing, typography, shadows } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { SUPPLEMENTS_DATABASE } from '../data/supplements-database';
 import Input from './Input';
+import Button from './Button';
 
 export default function SupplementNameAutocomplete({ value, onChange, history = [], onBlur, ...rest }) {
   const { theme } = useTheme();
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [focused, setFocused] = useState(false);
   const debounceRef = useRef(null);
   const blurTimerRef = useRef(null);
+
+  // Top-4 recents from history. History is already de-duped at write time.
+  const recents = useMemo(() => history.slice(0, 4), [history]);
+  const showRecents = focused && !value && recents.length > 0;
 
   const computeSuggestions = useCallback((text) => {
     if (!text || text.length < 3) {
@@ -55,11 +61,12 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
 
   const handleFocus = () => {
     clearTimeout(blurTimerRef.current);
+    setFocused(true);
     if (suggestions.length > 0) setOpen(true);
   };
 
   const handleBlur = (e) => {
-    blurTimerRef.current = setTimeout(() => setOpen(false), 200);
+    blurTimerRef.current = setTimeout(() => { setOpen(false); setFocused(false); }, 200);
     onBlur?.(e);
   };
 
@@ -77,6 +84,31 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
         onKeyDown={handleKeyDown}
         {...rest}
       />
+      {showRecents && (
+        <div style={{ marginTop: spacing.sm }}>
+          <div style={{
+            fontSize: typography.label,
+            color: theme.text.muted,
+            letterSpacing: typography.labelSpacingWide,
+            textTransform: 'uppercase',
+            fontWeight: typography.semibold,
+            marginBottom: spacing.xs,
+          }}>
+            Recent
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
+            {recents.map((name) => (
+              <Button
+                key={name}
+                variant="selector"
+                onPointerDown={(e) => { e.preventDefault(); handleSelect(name); }}
+              >
+                {name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
       {open && (
         <div style={{
           position: 'absolute',

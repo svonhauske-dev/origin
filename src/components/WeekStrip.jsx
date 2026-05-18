@@ -16,10 +16,18 @@ function formatWeekRange(start, end) {
     : `${sm} ${start.getDate()} – ${em} ${end.getDate()}`;
 }
 
-export function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClick }) {
+export function DayCell({ date, log, supplements, isSelected, isFuture, isToday, onClick, compact = false }) {
   const { theme } = useTheme();
   const pct = isFuture ? null : calculateAdherenceForDate(date, supplements, log);
   const dayName = DAYS_SHORT[date.getDay()];
+  // Compact tuning for mobile. Horizontal cell padding is xxs (4px) so the 28px
+  // ring fits comfortably inside the cell content area even at 320px viewport
+  // (iPhone SE 1st gen, ~38px cell width). Vertical padding stays xs (8px) for
+  // touch-target height. Reverts to standard md padding in non-compact (desktop).
+  const ringSize = compact ? 28 : 56;
+  const padCellV = compact ? spacing.xs  : spacing.md;
+  const padCellH = compact ? spacing.xxs : spacing.md;
+  const numGap   = compact ? spacing.xs  : spacing.md;
 
   return (
     <button
@@ -29,7 +37,7 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: spacing.md,
+        padding: `${padCellV}px ${padCellH}px`,
         background: isSelected ? theme.status.nowHover : theme.surface.card,
         border: isSelected
           ? `${theme.borderWidth.accent}px solid ${theme.status.nowBorder}`
@@ -46,32 +54,39 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
         transition: 'background 150ms ease, border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease',
       }}
     >
-      {/* TODAY badge — always on today's cell, independent of selection */}
-      {isToday ? (
-        <div style={{
-          background: theme.status.nowBadgeBg,
-          color: theme.status.nowBadgeText,
-          fontSize: typography.label,
-          fontWeight: typography.semibold,
-          fontFamily: typography.fontBody,
-          letterSpacing: typography.labelSpacing,
-          textTransform: 'uppercase',
-          padding: `${spacing.xxxs}px ${spacing.xs}px`,
-          borderRadius: theme.radius.pill,
-          marginBottom: spacing.xxs,
-          lineHeight: 1.4,
-          whiteSpace: 'nowrap',
-        }}>
-          TODAY
-        </div>
-      ) : (
-        // Non-today cells have a spacer to keep consistent height
-        <div style={{ height: 20, marginBottom: spacing.xxs }} />
-      )}
+      {/* Top slot — reserved height across all cells so the badge doesn't
+          stagger the today cell. Renders the TODAY badge in-flow on today's
+          cell only; non-today cells get an empty slot of identical height. */}
+      <div style={{
+        height: compact ? 14 : 20,
+        marginBottom: spacing.xxs,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+      }}>
+        {isToday && (
+          <div style={{
+            background: theme.status.nowBadgeBg,
+            color: theme.status.nowBadgeText,
+            fontSize: compact ? 8 : typography.label,
+            fontWeight: typography.semibold,
+            fontFamily: typography.fontBody,
+            letterSpacing: compact ? '0.06em' : typography.labelSpacing,
+            textTransform: 'uppercase',
+            padding: compact ? `1px 4px` : `${spacing.xxxs}px ${spacing.xs}px`,
+            borderRadius: theme.radius.pill,
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+          }}>
+            TODAY
+          </div>
+        )}
+      </div>
 
       {/* Day abbreviation — consistent across all cells */}
       <span style={{
-        fontSize: typography.label,
+        fontSize: compact ? typography.caption2 : typography.label,
         color: theme.text.secondary,
         fontFamily: typography.fontBody,
         marginBottom: spacing.xxs,
@@ -81,22 +96,22 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
 
       {/* Date number */}
       <span style={{
-        fontSize: typography.body,
+        fontSize: compact ? typography.caption : typography.body,
         color: theme.text.primary,
         fontWeight: isSelected ? typography.semibold : typography.regular,
         fontFamily: typography.fontBody,
-        marginBottom: spacing.md,
+        marginBottom: numGap,
       }}>
         {date.getDate()}
       </span>
 
       {/* Adherence ring */}
       {pct !== null ? (
-        <AdherenceRing percentage={pct} size={56} />
+        <AdherenceRing percentage={pct} size={ringSize} showText={!compact} />
       ) : (
         <div style={{
-          width: 56,
-          height: 56,
+          width: ringSize,
+          height: ringSize,
           borderRadius: '50%',
           border: `2px solid ${theme.border.subtle}`,
           flexShrink: 0,
@@ -111,6 +126,7 @@ export default function WeekStrip({
   weekDates, weekLogs, supplements,
   selectedDate, onSelectDate,
   onPrev, onNext, canNavigateNext,
+  compact = false,
 }) {
   const { theme } = useTheme();
 
@@ -175,7 +191,7 @@ export default function WeekStrip({
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',
-        gap: spacing.sm,
+        gap: compact ? spacing.xxs : spacing.sm,
       }}>
         {weekDates.map(date => {
           const dk = dateKey(date);
@@ -195,6 +211,7 @@ export default function WeekStrip({
               isFuture={isFuture}
               isToday={isToday}
               onClick={() => onSelectDate(date)}
+              compact={compact}
             />
           );
         })}

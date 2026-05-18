@@ -128,31 +128,36 @@ export default function ProtocolDetailScreen({
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Header */}
+      {/* Header — grid keeps the title centered to the screen even when the
+          right side has more icons than the left. */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(60px, 1fr) minmax(0, auto) minmax(60px, 1fr)',
+        alignItems: 'center',
         padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px ${spacing.sm}px`,
         background: theme.surface.canvas,
         borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
         position: 'sticky', top: 0, zIndex: 1,
       }}>
-        <button
-          onClick={onBack}
-          aria-label="Back"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: `${spacing.xs}px`, marginLeft: -spacing.xs,
-            color: theme.text.primary, display: 'flex', alignItems: 'center',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <ChevronLeft size={24} />
-        </button>
+        <div style={{ justifySelf: 'start' }}>
+          <button
+            onClick={onBack}
+            aria-label="Back"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: `${spacing.xs}px`, marginLeft: -spacing.xs,
+              color: theme.text.primary, display: 'flex', alignItems: 'center',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+        </div>
 
         {editingName ? (
           <form
             onSubmit={e => { e.preventDefault(); saveName(); }}
-            style={{ flex: 1, margin: `0 ${spacing.sm}px` }}
+            style={{ minWidth: 0, padding: `0 ${spacing.sm}px` }}
           >
             <input
               ref={nameInputRef}
@@ -174,8 +179,10 @@ export default function ProtocolDetailScreen({
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: typography.body, fontWeight: typography.semibold,
-              color: theme.text.primary, flex: 1, textAlign: 'center',
+              color: theme.text.primary, textAlign: 'center',
               padding: `${spacing.xs}px ${spacing.sm}px`,
+              minWidth: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
@@ -183,7 +190,7 @@ export default function ProtocolDetailScreen({
           </button>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xxs }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xxs, justifySelf: 'end' }}>
           {menuItems.length > 0 && (
             <button
               onClick={() => setMenuOpen(true)}
@@ -195,7 +202,7 @@ export default function ProtocolDetailScreen({
                 WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <MoreHorizontal size={22} />
+              <MoreHorizontal size={18} />
             </button>
           )}
           {(isActive || isArchived) ? (
@@ -209,7 +216,7 @@ export default function ProtocolDetailScreen({
                 WebkitTapHighlightColor: 'transparent',
               }}
             >
-              <Plus size={22} />
+              <Plus size={18} />
             </button>
           ) : (
             <div style={{ width: 40 }} />
