@@ -177,10 +177,30 @@ function convertToDays(value: number, unit: string): number {
 
 // deno-lint-ignore no-explicit-any
 export function isSupplementActiveOn(supp: any, checkDateStr: string): boolean {
+  const checkMs = parseDateMs(checkDateStr);
+
+  // created_at floor — don't queue notifications for supps that didn't exist
+  // on the date being computed. Mirrors src/lib/time.js (May 18 audit fix).
+  if (supp.created_at) {
+    // created_at is a timestamptz; truncate to its date portion (UTC slice is
+    // close enough here — exact local-day boundary handling lives in the
+    // frontend version since cron has no per-user TZ at this layer).
+    const createdMs = parseDateMs(String(supp.created_at).slice(0, 10));
+    if (checkMs < createdMs) return false;
+  }
+
+  // deleted_at ceiling — soft-deleted supps stop firing notifications from the
+  // deletion date forward. Mirrors src/lib/time.js (May 18 W3 soft delete).
+  // Defense in depth: the query in recompute_notifications also filters
+  // deleted_at IS NULL, so this only fires if a deleted row leaks through.
+  if (supp.deleted_at) {
+    const deletedMs = parseDateMs(String(supp.deleted_at).slice(0, 10));
+    if (checkMs >= deletedMs) return false;
+  }
+
   const mode: string = supp.treatment_mode ?? "indefinite";
   if (mode === "indefinite") return true;
 
-  const checkMs  = parseDateMs(checkDateStr);
   const startsMs = supp.starts_at ? parseDateMs(supp.starts_at) : null;
   const endsMs   = supp.ends_at   ? parseDateMs(supp.ends_at)   : null;
 

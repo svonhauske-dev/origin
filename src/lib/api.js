@@ -213,8 +213,15 @@ export const dbUpsertLog    = (log, t)  => supa("POST",   "/rest/v1/daily_logs?o
 // the new one, in case duplicates leaked through prior buggy upserts.
 export const dbGetSchedule  = (userId, t) => supa("GET",    `/rest/v1/user_schedule?user_id=eq.${userId}&select=*&order=updated_at.desc.nullslast,created_at.desc`, null, t).then(r => r?.[0] || null);
 export const dbSaveSchedule = async (data, t) => {
+  // Capture the browser's IANA timezone on every save so the daily pg_cron
+  // refill of notifications_queue knows what timezone to compute slot times
+  // in. Without this the cron job has no way to know whether "8:00 AM" means
+  // Denver, Bogotá, or UTC. Updated on every save so it tracks the user's
+  // current device — if they travel and re-save their schedule, the cron
+  // catches up.
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   await supa("DELETE", `/rest/v1/user_schedule?user_id=eq.${data.user_id}`, null, t).catch(() => {});
-  return supa("POST", "/rest/v1/user_schedule", { ...data, updated_at: new Date().toISOString() }, t);
+  return supa("POST", "/rest/v1/user_schedule", { ...data, timezone, updated_at: new Date().toISOString() }, t);
 };
 
 export const dbUpdateScheduleField = (field, value, userId, token) =>
