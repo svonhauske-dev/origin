@@ -1,6 +1,6 @@
 # Origin — Project Handoff Document
 
-*Last updated: May 17, 2026 (evening, clinician-surfaces pass) — Mobbin-informed audit of desktop dashboard → phased plan → shipped Phases 0–2 of clinician surfaces. New primitives: Sparkline (single-color trend line for dense rows) + StatusDot (colored dot for at-a-glance severity). Sidebar rewritten: brand wordmark hoisted to a new top bar, Patients dropdown toggle removed (flat list), patient rows redesigned left-aligned with avatar + name + `● 7d% · N protocols` + 30-day sparkline + "N need review" caption + search input. Patient enrichment lifted from PatientsPanel (unused) into App.jsx — fetches protocols + supps + schedule + 30d logs per patient and computes real adherence + sparkline. Patient detail polish: PatientIdentityBlock (avatar + name + joined date · protocols · last log recency) replaces bare-name header; PatientAnalyticsPanel moved out of right aside into main column under the cockpit; InsightsPanel lost the duplicate "Configure schedule / Manage protocol" buttons; TodayPanelHeader gained a "VIEW ONLY" chip in read-only mode and `whiteSpace: nowrap` on the day label. Desktop layout restructured: new full-width top bar above the panel row (Origin wordmark + clinician avatar); greeting moved to a heading inside the personal cockpit only, so clinician context doesn't shadow patient context. Reverted a planned 40/60 Today/Insights ratio in patient view to 50/50 after real-screen evaluation — analytics weight comes from the stacked PatientAnalyticsPanel below instead.*
+*Last updated: May 18, 2026 (working-tree cleanup, all clinician work pushed to main) — Three bundled commits landed and pushed: `961d2d6` clinician backend (DB migrations: `clinician-link-migration.sql` adds `shares_adherence_with_clinician` consent toggle + patient↔clinician RLS, `clinician-notes-migration.sql` adds `clinician_patient_notes` table; analytics math in `lib/adherence.js`: `calculateProtocolAdherence` + per-supp + per-slot + `getUpcomingEndings` + `buildActivityLog`; notes API in `lib/api.js`: `dbGetClinicianNote` / `dbUpsertClinicianNote` / `dbGetClinicianNotes`; demo-seed stamps demo patients with `shares_adherence_with_clinician=true`). `738956c` clinician surfaces (PatientAnalyticsPanel new; ProtocolLibrary gains adherence-per-row + send-to-patient; ProtocolDetailScreen send-to-patient flow in overflow menu; SettingsScreen `desktop` prop swaps container shape; Modal primitive `useIsDesktop` → centered 480px / 80dvh card on desktop instead of bottom sheet; WeekStrip `activeSlotIds` plumbed through DayCell so IF v2 ring math doesn't inflate; index.html hides native scrollbars globally). `2ce9af7` chore (gitignore `supabase/.temp/`, untrack `cli-latest` tool artifact). Plus yesterday's `c94792d` clinician desktop — primitives + sidebar revival + top bar restructure (see prior session entry). Note for tomorrow's chat: the Modal desktop variant in `738956c` already exists in code — the §748 design-call inventory revealed it. Open §748 decisions still on the table: (1) modal sizing variants (compact/default/wide), (2) Onboarding + IFMigrationScreen desktop treatment, (3) Settings/Library/Detail host when aside collapses on roster view, (4) EditForm duplication across desktop/mobile branches. Next implementation: Phase 3 (Patient Roster as default landing).*
 *Owner: Sofia von Hauske (sofiavonhauske@gmail.com)*
 *Purpose: Hand this document to a fresh AI chat to pick up Origin work without losing context.*
 
@@ -666,6 +666,33 @@ Mobbin-informed UX/UI audit of the desktop clinician dashboard. Reference scans:
 - `src/components/Sparkline.jsx` — NEW.
 - `src/components/StatusDot.jsx` — NEW.
 - `src/components/design-system-page/registry.js` — Sparkline + StatusDot variants.
+
+*Commit:* `c94792d` — pushed to main on May 18.
+
+### Session of May 18
+
+**Working-tree cleanup — three bundled commits + push.**
+The working tree had a backlog of pending clinician work that hadn't been committed yet. Sorted into three logical commits and pushed all of them.
+
+*Commit `961d2d6` — clinician backend.*
+- `supabase/clinician-link-migration.sql` (NEW) — adds `shares_adherence_with_clinician` opt-in toggle on `user_profiles`. Adds patient↔clinician RLS so a clinician can read a patient's supplements, protocols, daily_logs, and schedule only when (1) `user_profiles.clinician_user_id = auth.uid()` AND (2) `shares_adherence_with_clinician = true`. Patient-side writes remain owner-only.
+- `supabase/clinician-notes-migration.sql` (NEW) — new `clinician_patient_notes` table (one row per (clinician, patient) pair, holding `notes` text + nullable `archived_at`). RLS restricts read+write to the owning clinician. Unique index on `(clinician_id, patient_id)` so PostgREST upserts work via `on_conflict`.
+- `supabase/demo-seed.sql` — stamps the four demo patients with `shares_adherence_with_clinician = true` so the clinician demo surface shows full data without each demo patient flipping the toggle.
+- `src/lib/api.js` — `dbGetClinicianNote(clinicianId, patientId, t)`, `dbUpsertClinicianNote(row, t)`, `dbGetClinicianNotes(clinicianId, t)`.
+- `src/lib/adherence.js` — gained `calculateProtocolAdherence` (per-protocol avg over a window that starts at the protocol's start_date, capped at `daysWindow` days), `calculateSupplementAdherence` (per-supp avg + expected/taken counts), `calculateSlotAdherence` (per-slot aggregated across all supps in that slot), `getUpcomingEndings` (supps with `ends_at` in the next N days for the Insights panel), `buildActivityLog` (recent pause/stop/resume/add/archive events). Also: `countExpectedChecks` + `calculateAdherenceForDate` now accept an optional `activeSlotIds` Set to filter the denominator — fixes the IF v2 case where stale legacy slot ids in a supp's `slots` array inflated expected counts.
+
+*Commit `738956c` — clinician surfaces.*
+- `src/components/PatientAnalyticsPanel.jsx` (NEW) — three stacked cards inside the patient detail surface: By supplement (30-day adherence, worst-first, colored pct), By time of day (mode-aware slot set, worst-first), Recent activity (last 10 events from `buildActivityLog`). Plus a private notes textarea (save-on-blur, re-syncs on patient change).
+- `src/components/ProtocolLibrary.jsx` — adherence-per-row when an `adherenceMap` prop is provided (clinician patient view). Send-to-patient affordances when a patient is selected. `ProtocolRow` respects an optional disabled state for read-only contexts.
+- `src/components/ProtocolDetailScreen.jsx` — send-to-patient flow in the header overflow menu (clinician-only, hidden on mobile and patient-view drill-ins). Patient picker modal lists the clinician's active patients.
+- `src/components/SettingsScreen.jsx` — `desktop` prop swaps the container shape from a fixed slide-from-right takeover (mobile) to a flow-positioned panel that fills its host (the right aside in App.jsx). Back-button uses shared `Button variant="icon"` chrome for parity with other slide-ins.
+- `src/components/Modal.jsx` — `useIsDesktop` hook. On desktop (≥1024), the modal renders as a centered card (480px max, 80dvh max) with scale-in animation instead of the mobile bottom-sheet slide. Backdrop blur disabled on desktop. Drag-to-dismiss handlers are mobile-only.
+- `src/components/WeekStrip.jsx` — `activeSlotIds` prop plumbed through WeekStrip → DayCell → `calculateAdherenceForDate`. Without this, IF v2 patients' ring math inflates expected counts because their supps carry both legacy and v2 slot ids from migration.
+- `index.html` — hides native scrollbars globally (Firefox + WebKit). Content still scrolls; the visible track is suppressed so multiple scrollable panels rendering side-by-side on desktop don't draw a forest of scrollbars.
+
+*Commit `2ce9af7` — chore: gitignore `supabase/.temp/` and untrack the `cli-latest` tool artifact that was getting bumped on every CLI command.*
+
+All three commits pushed to `origin/main` (range `730a3e4..2ce9af7`).
 
 ---
 
