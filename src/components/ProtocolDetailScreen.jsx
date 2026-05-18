@@ -6,6 +6,7 @@ import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
 import Button from "./Button";
 import Modal from "./Modal";
+import Popover, { PopoverItem } from "./Popover";
 import TabBar from "./TabBar";
 import { isPausedSupp, isStoppedSupp } from "../lib/time";
 
@@ -49,6 +50,9 @@ export default function ProtocolDetailScreen({
   const [sending, setSending]               = useState(false);
   const [deletingSupp, setDeletingSupp]     = useState(null); // supp pending delete confirm
   const [menuOpen, setMenuOpen]             = useState(false); // overflow menu
+  // Anchor element for the overflow + send-to-patient popovers. Both anchor
+  // to the same ⋯ trigger so the picker visually replaces the menu in place.
+  const [menuAnchor, setMenuAnchor]         = useState(null);
   const nameInputRef = useRef(null);
   const scrollRef    = useRef(null);
 
@@ -199,7 +203,11 @@ export default function ProtocolDetailScreen({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
           {menuItems.length > 0 && (
-            <Button variant="icon" aria-label="Protocol actions" onClick={() => setMenuOpen(true)}>
+            <Button
+              variant="icon"
+              aria-label="Protocol actions"
+              onClick={(e) => { setMenuAnchor(e.currentTarget); setMenuOpen(true); }}
+            >
               <MoreHorizontal size={18} />
             </Button>
           )}
@@ -399,92 +407,73 @@ export default function ProtocolDetailScreen({
         </div>
       )}
 
-      {/* Overflow menu — bottom sheet with status-aware lifecycle actions */}
-      <Modal
+      {/* Overflow menu — popover anchored to the ⋯ trigger. */}
+      <Popover
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        title={protocol?.name || ''}
+        anchorRef={{ current: menuAnchor }}
+        placement="bottom-end"
+        width={220}
       >
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {menuItems.map((item, i) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={item.onSelect}
-              style={{
-                display: 'flex', alignItems: 'center',
-                width: '100%',
-                padding: `${spacing.md}px 0`,
-                background: 'transparent',
-                border: 'none',
-                borderTop: i > 0 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : 'none',
-                color: item.destructive ? theme.status.danger : theme.text.primary,
-                fontFamily: 'inherit',
-                fontSize: typography.body,
-                fontWeight: typography.medium,
-                textAlign: 'left',
-                cursor: 'pointer',
-                minHeight: touch.min,
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </Modal>
+        {menuItems.map((item) => (
+          <PopoverItem
+            key={item.key}
+            destructive={item.destructive}
+            onClick={item.onSelect}
+          >
+            {item.label}
+          </PopoverItem>
+        ))}
+      </Popover>
 
-      {/* Send to patient modal */}
-      <Modal
+      {/* Send-to-patient picker — popover anchored to the same ⋯ trigger so
+          the picker visually replaces the menu in place. */}
+      <Popover
         open={sendModalOpen}
         onClose={() => setSendModalOpen(false)}
-        title="Send to patient"
+        anchorRef={{ current: menuAnchor }}
+        placement="bottom-end"
+        width={260}
       >
         {patients.length === 0 ? (
-          <p style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontHeading, margin: 0 }}>
+          <div style={{
+            padding: `${spacing.sm}px ${spacing.sm}px`,
+            fontSize: typography.caption,
+            color: theme.text.secondary,
+            fontFamily: typography.fontHeading,
+          }}>
             No patients yet.
-          </p>
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {patients.map((p, i) => (
-              <button
-                key={p.id}
-                disabled={sending}
-                onClick={async () => {
-                  setSending(true);
-                  await onSendToPatient(protocol, p.id);
-                  setSending(false);
-                  setSendModalOpen(false);
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: spacing.sm,
-                  padding: `${spacing.sm}px 0`,
-                  borderTop: i > 0 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : 'none',
-                  background: 'none', border: 'none', borderRadius: 0,
-                  cursor: sending ? 'default' : 'pointer',
-                  textAlign: 'left', width: '100%',
-                  opacity: sending ? 0.5 : 1,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+          patients.map((p) => (
+            <PopoverItem
+              key={p.id}
+              disabled={sending}
+              onClick={async () => {
+                setSending(true);
+                await onSendToPatient(protocol, p.id);
+                setSending(false);
+                setSendModalOpen(false);
+              }}
+              icon={
+                <span style={{
+                  width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
                   background: theme.surface.cardSubtle,
                   border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: typography.caption, fontWeight: typography.semibold,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: typography.label, fontWeight: typography.semibold,
                   color: theme.text.primary,
+                  fontFamily: typography.fontData,
                 }}>
                   {(p.display_name || '?').charAt(0).toUpperCase()}
-                </div>
-                <span style={{ fontSize: typography.body, color: theme.text.primary }}>
-                  {p.display_name || 'Unnamed patient'}
                 </span>
-              </button>
-            ))}
-          </div>
+              }
+            >
+              {p.display_name || 'Unnamed patient'}
+            </PopoverItem>
+          ))
         )}
-      </Modal>
+      </Popover>
 
       {/* Confirmation modal (Archive / Delete) */}
       <Modal
