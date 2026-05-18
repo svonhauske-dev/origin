@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Search, LayoutDashboard } from 'lucide-react';
 import { spacing, typography, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Sparkline from './Sparkline';
@@ -153,6 +153,7 @@ export default function Sidebar({
   const { theme } = useTheme();
   const [query, setQuery] = useState('');
   const myOriginActive = activeNavItem === 'home' && !selectedPatient;
+  const overviewActive = activeNavItem === 'roster' && !selectedPatient;
 
   const filteredPatients = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -188,6 +189,29 @@ export default function Sidebar({
 
       {isClinician && (
         <>
+          {/* Overview — explicit nav back to the patient roster from any
+              patient detail view. Lives at the top of the sidebar so it's
+              the first thing the clinician sees + a clear "home" anchor. */}
+          <button
+            onClick={() => { onPatientSelect?.(null); onNavChange?.('roster'); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: spacing.sm,
+              padding: `${spacing.sm}px ${spacing.sm}px`,
+              background: overviewActive ? theme.surface.cardSubtle : 'transparent',
+              border: 'none', borderRadius: theme.radius.surface,
+              color: overviewActive ? theme.text.primary : theme.text.secondary,
+              fontFamily: typography.fontBody, fontSize: typography.caption,
+              fontWeight: overviewActive ? typography.semibold : typography.regular,
+              textAlign: 'left', width: '100%',
+              cursor: 'pointer',
+              transition: 'background 150ms ease, color 150ms ease',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <LayoutDashboard size={14} />
+            <span>Overview</span>
+          </button>
+
           {/* Search */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: spacing.xs,

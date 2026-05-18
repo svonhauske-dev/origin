@@ -31,6 +31,7 @@ import SlotCard from "./components/SlotCard";
 import EditForm from "./components/EditForm";
 import Hero from "./components/Hero";
 import Sidebar, { AccountAvatar } from "./components/Sidebar";
+import PatientRoster from "./components/PatientRoster";
 import PatientDetailPanel from "./components/PatientDetailPanel";
 import WeekStrip from "./components/WeekStrip";
 import InlineTip from "./components/InlineTip";
@@ -320,7 +321,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [selectedProtocol, setSelectedProtocol]   = useState(null);
   // Log-at sheet target: { sid, suppId, name, dueTime, slotLabel } or null when closed.
   const [logAtTarget, setLogAtTarget]             = useState(null);
-  const [activeNavItem, setActiveNavItem]         = useState('home');
+  // `activeNavItem` distinguishes the clinician's landing states:
+  //   'roster' — default landing for clinicians: Patient Roster (Overview).
+  //   'home'   — clicked "My Origin" in the sidebar footer: personal cockpit.
+  // Non-clinicians never see the sidebar so this value is inert for them.
+  const [activeNavItem, setActiveNavItem]         = useState('roster');
   const [patients, setPatients]                   = useState([]);
   // Per-patient summary stats for the sidebar: { [patientId]: { activeCount,
   // adherence7, adherence30, sparkline (30 daily values 0-100) } }. Fetched
@@ -424,11 +429,19 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           const v = arr.filter(x => x != null);
           return v.length === 0 ? null : Math.round(v.reduce((a, b) => a + b, 0) / v.length);
         };
+        // Most-recent log_date with any check recorded — drives the
+        // "Last log" column in the roster + the patient identity meta line.
+        let lastLogDate = null;
+        for (const l of (logs || [])) {
+          if (!l.checked || Object.keys(l.checked).length === 0) continue;
+          if (!lastLogDate || l.log_date > lastLogDate) lastLogDate = l.log_date;
+        }
         const stats = {
           activeCount,
           adherence7:  avg(sparkline.slice(-7)),
           adherence30: avg(sparkline),
           sparkline,
+          lastLogDate,
         };
         setPatientStats(prev => ({ ...prev, [p.id]: stats }));
       });
@@ -1487,6 +1500,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       topScreen === 'protocol_detail' ? 'protocol_detail' :
       'library';
     const firstName = profile?.display_name?.trim().split(" ")[0] || null;
+    // Default clinician landing: Patient Roster. My Origin click sets
+    // activeNavItem='home' which falls back to the personal cockpit.
+    // Non-clinicians never hit this branch — they always see their cockpit.
+    const showRoster = isClinician && !selectedPatient && activeNavItem === 'roster';
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: theme.surface.canvas, padding: spacing.lg, gap: spacing.md, boxSizing: "border-box", fontFamily: typography.fontBody, color: theme.text.primary, WebkitFontSmoothing: "antialiased" }}>
 
@@ -1559,7 +1576,13 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             </div>
           )}
 
-          {selectedPatient ? (
+          {showRoster ? (
+            <PatientRoster
+              patients={activePatients}
+              patientStats={patientStats}
+              onPatientSelect={(p) => setSelectedPatient(p)}
+            />
+          ) : selectedPatient ? (
             <>
               <PatientDetailPanel
                 patient={selectedPatient}
@@ -1657,6 +1680,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           </>)}
         </main>
 
+        {/* Right aside collapses on the clinician roster — there's no
+            patient-scoped content to host there. Reappears when a patient
+            is selected (their protocols / settings / detail) or when the
+            clinician explicitly enters personal mode via My Origin. */}
+        {!showRoster && (
         <aside style={{
           width: 420,
           flexShrink: 0,
@@ -1750,6 +1778,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             />
           )}
         </aside>
+        )}
         </div>
         {/* EditForm — context-preserving side panel on desktop, bottom sheet
             on mobile (delegated to Modal internally). Lets the clinician/user
