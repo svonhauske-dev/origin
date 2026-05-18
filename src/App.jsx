@@ -6,7 +6,7 @@ import {
 import { ThemeProvider, useTheme } from './lib/theme';
 import DevThemePicker from "./components/DevThemePicker";
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS } from "./config";
-import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library, MoreHorizontal } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
 import Card from "./components/Card";
@@ -19,6 +19,7 @@ import { ToastProvider, useToast } from "./components/ToastContext";
 import Toast from "./components/Toast";
 import ProtocolLibrary from "./components/ProtocolLibrary";
 import ProtocolDetailScreen from "./components/ProtocolDetailScreen";
+import PatientAnalyticsPanel from "./components/PatientAnalyticsPanel";
 import Onboarding from "./components/Onboarding";
 import Loader from "./components/Loader";
 import InlineLoader from "./components/InlineLoader";
@@ -45,11 +46,16 @@ import {
   dbGetSupplementHistory, dbAddSupplementHistory,
   dbGetDailyLogsRange,
   dbGetMyPatients,
+  dbGetPatientLogs,
   dbSendProtocol,
   dbGetReceivedProtocols,
   dbUpdateProtocolSend,
+  dbGetClinicianNote,
+  dbUpsertClinicianNote,
+  dbGetClinicianNotes,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isStoppedSupp, isPausedSupp } from './lib/time';
+import { calculateProtocolAdherence, calculateAdherenceForDate } from './lib/adherence';
 import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
 import IFMigrationScreen from "./components/IFMigrationScreen";
@@ -90,6 +96,81 @@ function PlaceholderSection({ title, style }) {
       fontFamily: typography.fontBody,
     }}>
       {title}
+    </div>
+  );
+}
+
+// Identity strip rendered in the desktop header when a clinician has a
+// patient selected. Externalizes context the clinician was previously
+// holding in their head (joined when, how many protocols, last activity).
+// Trailing controls (clinician avatar, patient overflow) live alongside in
+// App's header row; this block only owns the leading identity stack.
+function PatientIdentityBlock({ patient, activeCount, trendLogs, theme }) {
+  // Most-recent log date that has any check recorded. log_date is date-only,
+  // so the relative phrasing is at day granularity (today / yesterday / Nd ago).
+  let lastLog = null;
+  for (const l of (trendLogs || [])) {
+    if (!l.checked || Object.keys(l.checked).length === 0) continue;
+    if (!lastLog || l.log_date > lastLog) lastLog = l.log_date;
+  }
+
+  const formatLastLog = (logDate) => {
+    if (!logDate) return 'no logs yet';
+    const [y, m, d] = logDate.split('-').map(Number);
+    const then = new Date(y, m - 1, d);
+    then.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.round((today - then) / 86400000);
+    if (days <= 0)  return 'logged today';
+    if (days === 1) return 'logged yesterday';
+    if (days < 7)   return `logged ${days} days ago`;
+    if (days < 30)  return `logged ${Math.floor(days / 7)}w ago`;
+    return `logged ${Math.floor(days / 30)}mo ago`;
+  };
+
+  const formatJoined = (createdAt) => {
+    if (!createdAt) return null;
+    const d = new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return null;
+    const today = new Date();
+    const days = Math.round((today - d) / 86400000);
+    if (days < 7)  return 'joined this week';
+    if (days < 30) return `joined ${Math.floor(days / 7)}w ago`;
+    return `joined ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  };
+
+  const metaBits = [
+    formatJoined(patient.created_at),
+    activeCount != null ? `${activeCount} ${activeCount === 1 ? 'protocol' : 'protocols'}` : null,
+    formatLastLog(lastLog),
+  ].filter(Boolean);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
+      <AccountAvatar displayName={patient.display_name} />
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 2 }}>
+        <span style={{
+          fontSize: typography.heading,
+          fontWeight: typography.semibold,
+          color: theme.text.primary,
+          fontFamily: typography.fontHeading,
+          letterSpacing: typography.headingLetterSpacing,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {patient.display_name || 'Unnamed patient'}
+        </span>
+        {metaBits.length > 0 && (
+          <span style={{
+            fontSize: typography.caption,
+            color: theme.text.secondary,
+            fontFamily: typography.fontBody,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {metaBits.join(' · ')}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -212,7 +293,35 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [selectedProtocol, setSelectedProtocol]   = useState(null);
   const [activeNavItem, setActiveNavItem]         = useState('home');
   const [patients, setPatients]                   = useState([]);
+  // Per-patient summary stats for the sidebar: { [patientId]: { activeCount,
+  // adherence7, adherence30, sparkline (30 daily values 0-100) } }. Fetched
+  // lazily after the patients list resolves so the sidebar gains triage
+  // signal without blocking initial render.
+  const [patientStats, setPatientStats]           = useState({});
   const [selectedPatient, setSelectedPatient]     = useState(null);
+  const [patientSupps, setPatientSupps]           = useState([]);
+  const [patientProtos, setPatientProtos]         = useState([]);
+  const [patientSched, setPatientSched]           = useState(null);
+  // 60-day window of the patient's daily_logs — feeds both the 30-day
+  // headline trend in PatientDetailPanel and the per-protocol adherence
+  // map rendered in the right column. Fetched once in App.jsx so both
+  // surfaces share the same source.
+  const [patientTrendLogs, setPatientTrendLogs]   = useState([]);
+  // Clinician-private notes + archive state for the selected patient.
+  // Lives in clinician_patient_notes (RLS-restricted to owning clinician).
+  const [patientNote, setPatientNote]             = useState(null);
+  // Set of patient ids the clinician has archived. Sidebar filters them
+  // out of the main Patients list and surfaces them in a separate
+  // Archived section. Loaded once for the clinician + bumped after
+  // archive/un-archive actions.
+  const [archivedPatientIds, setArchivedPatientIds] = useState(new Set());
+  const [patientActionsOpen, setPatientActionsOpen]     = useState(false);
+  const [sendToPatientPickerOpen, setSendToPatientPickerOpen] = useState(false);
+  const [confirmArchivePatient, setConfirmArchivePatient]     = useState(false);
+  // When true, the patient-view ProtocolLibrary opens its internal
+  // new-protocol create modal; on successful creation we auto-send the
+  // result to the currently-selected patient.
+  const [createForPatientOpen, setCreateForPatientOpen]       = useState(false);
   const [needsIFMigration, setNeedsIFMigration]   = useState(false);
   const { show: showToast } = useToast();
 
@@ -221,7 +330,196 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   useEffect(() => {
     if (!isClinician || !user?.id || !token) return;
     dbGetMyPatients(user.id, token).catch(() => []).then(rows => setPatients(rows || []));
+    // Load the clinician's notes/archive rows so the sidebar can sort
+    // patients into Active vs Archived sections.
+    dbGetClinicianNotes(user.id, token).catch(() => []).then(rows => {
+      const archived = new Set();
+      for (const r of (rows || [])) {
+        if (r.archived_at) archived.add(r.patient_id);
+      }
+      setArchivedPatientIds(archived);
+    });
   }, [isClinician, user?.id]);
+
+  // Enrich each patient with 30-day adherence trend + counts so the sidebar
+  // can render rich rows (avatar + name + adherence% + sparkline + status).
+  // Fires after `patients` resolves; runs in parallel per-patient. Stats
+  // populate progressively as fetches complete. Selecting a patient does
+  // NOT re-trigger — those fetches live elsewhere for the detail view.
+  useEffect(() => {
+    if (!isClinician || !token || patients.length === 0) return;
+    const today    = startOfDay(new Date());
+    const startKey = dateKey(new Date(today.getTime() - 29 * 86400000));
+    const endKey   = dateKey(today);
+    let cancelled = false;
+
+    patients.forEach((p) => {
+      Promise.all([
+        dbGetProtocols(p.id, token).catch(() => []),
+        dbGetSupps(p.id, token).catch(() => []),
+        dbGetSchedule(p.id, token).catch(() => null),
+        dbGetPatientLogs(p.id, startKey, endKey, token).catch(() => []),
+      ]).then(([protos, supps, sched, logs]) => {
+        if (cancelled) return;
+        const activeCount = (protos || []).filter(pr => pr.status === 'active').length;
+        // activeSlotIds for this patient's schedule mode — IF v2 has its own slot vocab.
+        const mode = sched?.schedule_type || 'none';
+        const cfg  = { ...DEFAULT_CONFIG, ...(sched?.offsets || {}) };
+        const mc   = cfg.meal_count || 3;
+        const slotList = mode === 'fasting'
+          ? IF_SLOTS.filter(s => {
+              if (s.id === 'pre_meal_2' || s.id === 'meal_2') return mc >= 2;
+              if (s.id === 'pre_meal_3' || s.id === 'meal_3') return mc >= 3;
+              if (s.id === 'evening')                          return !!cfg.evening_mode;
+              return true;
+            })
+          : SLOTS;
+        const slotIds = new Set(slotList.map(s => s.id));
+        // Map logs by date for fast lookup
+        const logMap = {};
+        for (const l of (logs || [])) logMap[l.log_date] = l;
+        // Compute 30 daily values, oldest → newest
+        const sparkline = [];
+        for (let off = 29; off >= 0; off--) {
+          const d  = new Date(today.getTime() - off * 86400000);
+          const dk = dateKey(d);
+          sparkline.push(calculateAdherenceForDate(d, supps || [], logMap[dk] || null, slotIds));
+        }
+        // 7d and 30d averages from the sparkline (drop nulls just in case)
+        const avg = (arr) => {
+          const v = arr.filter(x => x != null);
+          return v.length === 0 ? null : Math.round(v.reduce((a, b) => a + b, 0) / v.length);
+        };
+        const stats = {
+          activeCount,
+          adherence7:  avg(sparkline.slice(-7)),
+          adherence30: avg(sparkline),
+          sparkline,
+        };
+        setPatientStats(prev => ({ ...prev, [p.id]: stats }));
+      });
+    });
+
+    return () => { cancelled = true; };
+  }, [isClinician, token, patients]);
+
+  // Fetch the selected patient's supplements, protocols, schedule, and a
+  // 60-day window of daily_logs once when they're selected. Both the cockpit
+  // (PatientDetailPanel) and the right column (ProtocolLibrary in patient
+  // mode) read from this shared state, so the two surfaces never disagree
+  // and the per-protocol adherence map is derived from a single source.
+  useEffect(() => {
+    if (!selectedPatient?.id || !token) {
+      setPatientSupps([]);
+      setPatientProtos([]);
+      setPatientSched(null);
+      setPatientTrendLogs([]);
+      setPatientNote(null);
+      return;
+    }
+    const today = startOfDay(new Date());
+    const windowStart = new Date(today);
+    windowStart.setDate(windowStart.getDate() - 59);
+    Promise.all([
+      dbGetSupps(selectedPatient.id, token).catch(() => []),
+      dbGetProtocols(selectedPatient.id, token).catch(() => []),
+      dbGetSchedule(selectedPatient.id, token).catch(() => null),
+      dbGetPatientLogs(selectedPatient.id, dateKey(windowStart), dateKey(today), token).catch(() => []),
+      dbGetClinicianNote(user.id, selectedPatient.id, token).catch(() => null),
+    ]).then(([supps, protos, sched, logs, note]) => {
+      setPatientSupps(supps || []);
+      setPatientProtos(protos || []);
+      setPatientSched(sched || null);
+      setPatientTrendLogs(logs || []);
+      setPatientNote(note);
+    });
+  }, [selectedPatient?.id, token]);
+
+  // Save clinician note text for the currently-selected patient. Optimistic:
+  // updates local state immediately, persists in background. Returns the
+  // upserted row so the caller can capture archived_at + timestamps too.
+  // Also keeps the sidebar's archived-set in sync.
+  const saveClinicianNote = async (partial) => {
+    if (!selectedPatient?.id || !token || !user?.id) return null;
+    const merged = {
+      clinician_id: user.id,
+      patient_id:   selectedPatient.id,
+      notes:        partial.notes ?? patientNote?.notes ?? '',
+      archived_at:  partial.archived_at !== undefined ? partial.archived_at : (patientNote?.archived_at ?? null),
+    };
+    setPatientNote(prev => ({ ...(prev || {}), ...merged }));
+    // Reflect archive change in the sidebar's filter immediately.
+    if (partial.archived_at !== undefined) {
+      setArchivedPatientIds(prev => {
+        const next = new Set(prev);
+        if (partial.archived_at) next.add(selectedPatient.id);
+        else                     next.delete(selectedPatient.id);
+        return next;
+      });
+    }
+    try {
+      const result = await dbUpsertClinicianNote(merged, token);
+      const row = Array.isArray(result) ? result[0] : result;
+      if (row) setPatientNote(row);
+      return row;
+    } catch (e) {
+      console.warn('saveClinicianNote failed', e);
+      return null;
+    }
+  };
+
+  // Un-archive a specific patient (only invoked from the Archived section
+  // in the sidebar — clears archived_at and brings them back to the main
+  // list). Bypasses saveClinicianNote because that one is scoped to the
+  // currently-selected patient.
+  const unarchivePatient = async (patientId) => {
+    if (!user?.id || !token) return;
+    setArchivedPatientIds(prev => {
+      const next = new Set(prev);
+      next.delete(patientId);
+      return next;
+    });
+    try {
+      await dbUpsertClinicianNote({
+        clinician_id: user.id,
+        patient_id:   patientId,
+        notes:        '', // safe — merge will preserve existing notes
+        archived_at:  null,
+      }, token);
+    } catch (e) { console.warn('unarchivePatient failed', e); }
+  };
+
+  // Split patients into Active vs Archived for the sidebar.
+  const activePatients   = patients.filter(p => !archivedPatientIds.has(p.id));
+  const archivedPatients = patients.filter(p =>  archivedPatientIds.has(p.id));
+
+  // Derive the patient's active slot ids (IF v2 vs standard) and the per-
+  // protocol adherence map. Both feed the right-column ProtocolLibrary and
+  // the patient cockpit.
+  const patientActiveSlotIds = (() => {
+    const mode = patientSched?.schedule_type || 'none';
+    const cfg  = { ...DEFAULT_CONFIG, ...(patientSched?.offsets || {}) };
+    const mc   = cfg.meal_count || 3;
+    const list = mode === 'fasting'
+      ? IF_SLOTS.filter(s => {
+          if (s.id === 'pre_meal_2' || s.id === 'meal_2') return mc >= 2;
+          if (s.id === 'pre_meal_3' || s.id === 'meal_3') return mc >= 3;
+          if (s.id === 'evening')                          return !!cfg.evening_mode;
+          return true;
+        })
+      : SLOTS;
+    return new Set(list.map(s => s.id));
+  })();
+
+  const patientProtocolAdherence = (() => {
+    if (!selectedPatient || patientProtos.length === 0) return null;
+    const map = {};
+    for (const p of patientProtos) {
+      if (p.status !== 'active') continue;
+      map[p.id] = calculateProtocolAdherence(p, patientSupps, patientTrendLogs, patientActiveSlotIds, 30);
+    }
+    return map;
+  })();
 
   // IF is absolute-time (not anchor-relative) — handled by computeIFSlotTimes in getSlotTime.
   const slotOffsets   = (scheduleMode === "fixed" || scheduleMode === "fasting") ? null : deriveOffsets(scheduleMode, scheduleConfig);
@@ -577,9 +875,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       };
     }
   }
-
-  const openManageSchedule = () => pushScreen('settings');
-  const openManageProtocol = () => pushScreen('manage_protocol');
 
   const blankForm = (protocol_id = null) => ({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', protocol_id, treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null });
 
@@ -1061,29 +1356,125 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   );
 
   if (isDesktop) {
+    // Right column has three possible states on desktop:
+    //   - default: ProtocolLibrary (always present surface on the right)
+    //   - settings: SettingsScreen, opened from the avatar
+    //   - protocol_detail: a single protocol drilled into from the library
+    // 'manage_protocol' as a nav target is no longer needed — the library is
+    // always visible — but the stack entry still exists for legacy back-nav.
+    const topScreen = screenStack[screenStack.length - 1]?.name;
+    const rightColumnView =
+      topScreen === 'settings' ? 'settings' :
+      topScreen === 'protocol_detail' ? 'protocol_detail' :
+      'library';
+    const firstName = profile?.display_name?.trim().split(" ")[0] || null;
     return (
-      <div style={{ display: "flex", flexDirection: "row", height: "100dvh", overflow: "hidden", background: theme.surface.canvas, fontFamily: typography.fontBody, color: theme.text.primary, WebkitFontSmoothing: "antialiased" }}>
-        <Sidebar
-          pushScreen={pushScreen}
-          displayName={profile?.display_name?.trim().split(" ")[0] || null}
-          isClinician={isClinician}
-          activeNavItem={activeNavItem}
-          onNavChange={(nav) => { setActiveNavItem(nav); setSelectedPatient(null); }}
-          patients={patients}
-          selectedPatient={selectedPatient}
-          onPatientSelect={(p) => setSelectedPatient(prev => prev?.id === p.id ? null : p)}
-        />
-        <main style={{ flex: 1, overflowY: "auto", padding: spacing.xl, minWidth: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: theme.surface.canvas, padding: spacing.lg, gap: spacing.md, boxSizing: "border-box", fontFamily: typography.fontBody, color: theme.text.primary, WebkitFontSmoothing: "antialiased" }}>
+
+        {/* Top bar — clinician chrome that spans all three panels below.
+            Brand · greeting · avatar. Patient identity (when selected) stays
+            inside the main column as in-context patient header. */}
+        <header style={{
+          display: "flex",
+          alignItems: "center",
+          gap: spacing.lg,
+          padding: `0 ${spacing.xs}px`,
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontFamily: typography.fontHeading,
+            fontSize: typography.title,
+            fontWeight: typography.semibold,
+            color: theme.text.primary,
+            letterSpacing: typography.headingLetterSpacing,
+          }}>
+            Origin
+          </span>
+          <div style={{ flex: 1 }} />
+          <AccountAvatar displayName={firstName} onClick={() => pushScreen('settings')} />
+        </header>
+
+        {/* Panel row */}
+        <div style={{ display: "flex", flexDirection: "row", flex: 1, minHeight: 0, gap: spacing.lg }}>
+        {isClinician && (
+          <Sidebar
+            pushScreen={pushScreen}
+            isClinician={isClinician}
+            activeNavItem={activeNavItem}
+            onNavChange={(nav) => { setActiveNavItem(nav); setSelectedPatient(null); }}
+            patients={activePatients}
+            archivedPatients={archivedPatients}
+            onUnarchivePatient={unarchivePatient}
+            selectedPatient={selectedPatient}
+            onPatientSelect={(p) => setSelectedPatient(prev => (p === null || prev?.id === p.id) ? null : p)}
+            patientStats={patientStats}
+          />
+        )}
+        <main style={{
+          flex: 1,
+          minWidth: 0,
+          overflowY: "auto",
+          background: theme.surface.card,
+          border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+          borderRadius: theme.radius.surface,
+          padding: spacing.xl,
+          boxSizing: "border-box",
+        }}>
+          {/* Inline patient identity + overflow (only in patient view).
+              Own-home view has no inline header — greeting is in the top bar. */}
+          {selectedPatient && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xl, gap: spacing.md }}>
+              <PatientIdentityBlock
+                patient={selectedPatient}
+                activeCount={patientStats[selectedPatient.id]?.activeCount}
+                trendLogs={patientTrendLogs}
+                theme={theme}
+              />
+              <Button variant="icon" aria-label="Patient actions" onClick={() => setPatientActionsOpen(true)}>
+                <MoreHorizontal size={18} />
+              </Button>
+            </div>
+          )}
+
           {selectedPatient ? (
-            <PatientDetailPanel patient={selectedPatient} token={token} />
+            <>
+              <PatientDetailPanel
+                patient={selectedPatient}
+                token={token}
+                patientSupps={patientSupps}
+                patientProtos={patientProtos}
+                patientSched={patientSched}
+                patientTrendLogs={patientTrendLogs}
+                activeSlotIds={patientActiveSlotIds}
+              />
+              {/* Diagnostic analytics stack lives in the main column under the
+                  cockpit — that's where the clinician's eye lands after the
+                  week strip. Right column stays focused on the patient's
+                  protocols (Phase 2 of clinician-surfaces audit). */}
+              <PatientAnalyticsPanel
+                supplements={patientSupps}
+                protocols={patientProtos}
+                trendLogs={patientTrendLogs}
+                activeSlotIds={patientActiveSlotIds}
+                scheduleMode={patientSched?.schedule_type || 'none'}
+                initialNotes={patientNote?.notes || ''}
+                onSaveNotes={(notes) => saveClinicianNote({ notes })}
+              />
+            </>
           ) : (<>
-          {/* Header: greeting left, avatar right */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xl }}>
-            <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading }}>
-              Hello, {profile?.display_name?.trim().split(" ")[0] || 'there'}
-            </span>
-            <AccountAvatar displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
-          </div>
+          {/* Personal home greeting — restrained, lives here so it only
+              appears in the clinician's own cockpit, not over patient views. */}
+          <h1 style={{
+            fontFamily: typography.fontHeading,
+            fontSize: typography.heading,
+            fontWeight: typography.semibold,
+            color: theme.text.primary,
+            letterSpacing: typography.headingLetterSpacing,
+            margin: 0,
+            marginBottom: spacing.lg,
+          }}>
+            Hello, {firstName || 'there'}
+          </h1>
           <WeekStrip
             weekDates={weekDates}
             weekLogs={weekLogs}
@@ -1093,6 +1484,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
             onPrev={handlePrevWeek}
             onNext={handleNextWeek}
             canNavigateNext={canNavigateNext}
+            activeSlotIds={new Set(coreSlotIds)}
           />
           <div style={{ display: "flex", flexDirection: "row", gap: spacing.xl, marginTop: spacing.xl, alignItems: "flex-start" }}>
             <div style={{ flex: 1 }}>
@@ -1135,61 +1527,107 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 scheduleMode={scheduleMode}
                 anchorBehavior={anchorBehavior}
                 consistentTime={consistentTime}
-                onConfigureSchedule={openManageSchedule}
-                onManageProtocol={openManageProtocol}
+                activeSlotIds={new Set(coreSlotIds)}
               />
             </div>
           </div>
           </>)}
         </main>
 
-        <SettingsScreen
-          isOpen={screenStack.some(s => s.name === 'settings')}
-          onBack={popScreen}
-          onSignOut={handleSignOut}
-          user={user}
-          token={token}
-          profile={profile}
-          onProfileUpdate={(updated) => setProfile(updated)}
-          onNotificationsEnabled={recomputeWithToast}
-          scheduleMode={scheduleMode}
-          scheduleConfig={scheduleConfig}
-          anchorBehavior={anchorBehavior}
-          consistentTime={consistentTime}
-          onSaveSchedule={saveSchedule}
-          supplements={visibleSupps}
-        />
-        <ProtocolLibrary
-          isOpen={screenStack.some(s => s.name === 'manage_protocol')}
-          onBack={popScreen}
-          protocols={protocols}
-          supplements={visibleSupps}
-          onAddProtocol={addProtocol}
-          onOpenDetail={(protocol) => { setSelectedProtocol(protocol); pushScreen('protocol_detail'); }}
-          onProtocolCreated={(p) => { setSelectedProtocol(p); pushScreen('protocol_detail'); openAddToProtocol(p); }}
-          userId={user.id}
-          token={token}
-          onActivateReceived={activateReceived}
-        />
-        <ProtocolDetailScreen
-          isOpen={screenStack.some(s => s.name === 'protocol_detail')}
-          onBack={popScreen}
-          protocol={selectedProtocol}
-          supplements={visibleSupps}
-          onUpdateProtocol={updateProtocol}
-          onPauseProtocol={pauseProtocol}
-          onArchiveProtocol={archiveProtocol}
-          onActivateProtocol={activateProtocol}
-          onDeleteProtocol={deleteProtocol}
-          onAddSupp={() => openAddToProtocol(selectedProtocol)}
-          onEditSupp={openEdit}
-          onTogglePauseSupp={togglePause}
-          onResumeSupp={resumeSupp}
-          onDeleteSupp={deleteSuppById}
-          isClinician={isClinician}
-          patients={patients}
-          onSendToPatient={sendProtocol}
-        />
+        <aside style={{
+          width: 420,
+          flexShrink: 0,
+          background: theme.surface.card,
+          border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+          borderRadius: theme.radius.surface,
+          // In patient view the aside owns the scroll so the analytics panel
+          // can stack below the library; in clinician's own view the inner
+          // screen (library / settings / protocol detail) owns its own scroll.
+          overflowY: selectedPatient && rightColumnView === 'library' ? 'auto' : 'hidden',
+          overflowX: 'hidden',
+          display: "flex",
+          flexDirection: "column",
+        }}>
+          {rightColumnView === 'settings' && (
+            <SettingsScreen
+              desktop
+              isOpen
+              onBack={popScreen}
+              onSignOut={handleSignOut}
+              user={user}
+              token={token}
+              profile={profile}
+              onProfileUpdate={(updated) => setProfile(updated)}
+              onNotificationsEnabled={recomputeWithToast}
+              scheduleMode={scheduleMode}
+              scheduleConfig={scheduleConfig}
+              anchorBehavior={anchorBehavior}
+              consistentTime={consistentTime}
+              onSaveSchedule={saveSchedule}
+              supplements={visibleSupps}
+            />
+          )}
+          {rightColumnView === 'library' && (
+            <ProtocolLibrary
+              desktop
+              embedded
+              isOpen
+              readOnly={!!selectedPatient}
+              onBack={popScreen}
+              protocols={selectedPatient ? patientProtos : protocols}
+              supplements={selectedPatient ? patientSupps : visibleSupps}
+              onAddProtocol={addProtocol}
+              onOpenDetail={(protocol) => { setSelectedProtocol(protocol); pushScreen('protocol_detail'); }}
+              onProtocolCreated={(p) => {
+                // In patient mode, a freshly-created protocol is automatically
+                // sent to the selected patient. In clinician's own mode, we
+                // navigate to the new protocol's detail screen as before.
+                if (selectedPatient) {
+                  sendProtocol(p, selectedPatient.id);
+                  setCreateForPatientOpen(false);
+                } else {
+                  setSelectedProtocol(p);
+                  pushScreen('protocol_detail');
+                  openAddToProtocol(p);
+                }
+              }}
+              userId={selectedPatient ? selectedPatient.id : user.id}
+              token={token}
+              onActivateReceived={selectedPatient ? null : activateReceived}
+              adherenceMap={selectedPatient ? patientProtocolAdherence : null}
+              onPlusClick={selectedPatient ? () => setSendToPatientPickerOpen(true) : null}
+              controlledShowNew={selectedPatient ? createForPatientOpen : undefined}
+              onShowNewChange={selectedPatient ? setCreateForPatientOpen : undefined}
+            />
+          )}
+          {/* PatientAnalyticsPanel moved into the main column under
+              PatientDetailPanel (clinician audit Phase 2). Right aside stays
+              focused on the patient's protocols. */}
+          {rightColumnView === 'protocol_detail' && (
+            <ProtocolDetailScreen
+              desktop
+              isOpen
+              readOnly={!!selectedPatient}
+              onBack={popScreen}
+              protocol={selectedProtocol}
+              supplements={selectedPatient ? patientSupps : visibleSupps}
+              onUpdateProtocol={updateProtocol}
+              onPauseProtocol={pauseProtocol}
+              onArchiveProtocol={archiveProtocol}
+              onActivateProtocol={activateProtocol}
+              onDeleteProtocol={deleteProtocol}
+              onAddSupp={() => openAddToProtocol(selectedProtocol)}
+              onEditSupp={openEdit}
+              onTogglePauseSupp={togglePause}
+              onResumeSupp={resumeSupp}
+              onDeleteSupp={deleteSuppById}
+              isClinician={isClinician && !selectedPatient}
+              patients={patients}
+              onSendToPatient={sendProtocol}
+            />
+          )}
+        </aside>
+        </div>
         <Modal
           open={formOpen}
           onClose={closeForm}
@@ -1207,6 +1645,125 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         >
           <EditForm key={editingId ?? 'new'} form={form} setForm={setForm} editingId={editingId} onStop={stopSupp} onResume={resumeSuppFromForm} onDelete={deleteSupp} scheduleMode={scheduleMode} mealCount={mealCount} eveningMode={scheduleConfig.evening_mode ?? null} supplementHistory={supplementHistory} activeProtocols={protocols.filter(p => p.status === 'active')} />
         </Modal>
+
+        {/* Patient actions overflow menu — Archive only. (Send protocol moved
+            to the + button in the patient's protocols column.) */}
+        <Modal
+          open={patientActionsOpen}
+          onClose={() => setPatientActionsOpen(false)}
+          title={selectedPatient?.display_name || 'Patient actions'}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <button
+              type="button"
+              onClick={() => { setPatientActionsOpen(false); setConfirmArchivePatient(true); }}
+              style={{
+                display: 'flex', alignItems: 'center', width: '100%',
+                padding: `${spacing.md}px 0`,
+                background: 'transparent', border: 'none',
+                color: theme.text.primary,
+                fontFamily: 'inherit', fontSize: typography.body, fontWeight: typography.medium,
+                textAlign: 'left', cursor: 'pointer', minHeight: touch.min,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              Archive patient
+            </button>
+          </div>
+        </Modal>
+
+        {/* Send-or-create picker — opened from the + in the patient's protocols
+            column. Two options surface here: build a brand-new protocol
+            (then auto-send to this patient on save), or send one of the
+            clinician's existing library protocols. */}
+        <Modal
+          open={sendToPatientPickerOpen}
+          onClose={() => setSendToPatientPickerOpen(false)}
+          title={`Send to ${selectedPatient?.display_name || 'patient'}`}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setSendToPatientPickerOpen(false);
+                setCreateForPatientOpen(true);
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: spacing.sm,
+                width: '100%',
+                padding: `${spacing.sm}px 0`,
+                background: 'transparent', border: 'none',
+                color: theme.text.primary,
+                fontFamily: 'inherit', fontSize: typography.body, fontWeight: typography.medium,
+                textAlign: 'left', cursor: 'pointer', minHeight: touch.min,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Plus size={18} />
+              <span>Create new protocol</span>
+            </button>
+            {protocols.filter(p => p.status === 'active').length > 0 && (
+              <div style={{
+                fontSize: typography.label, color: theme.text.secondary,
+                letterSpacing: typography.labelSpacingWide,
+                textTransform: 'uppercase', fontWeight: typography.semibold,
+                fontFamily: typography.fontHeading,
+                paddingTop: spacing.md, paddingBottom: spacing.xs,
+                borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+                marginTop: spacing.xs,
+              }}>
+                From your library
+              </div>
+            )}
+            {protocols.filter(p => p.status === 'active').map((proto) => (
+              <button
+                key={proto.id}
+                type="button"
+                onClick={async () => {
+                  await sendProtocol(proto, selectedPatient.id);
+                  setSendToPatientPickerOpen(false);
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%',
+                  padding: `${spacing.sm}px 0`,
+                  background: 'transparent', border: 'none',
+                  color: theme.text.primary,
+                  fontFamily: 'inherit', fontSize: typography.body, fontWeight: typography.medium,
+                  textAlign: 'left', cursor: 'pointer', minHeight: touch.min,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <span>{proto.name}</span>
+                <span style={{ fontSize: typography.caption, color: theme.text.secondary }}>
+                  {visibleSupps.filter(s => s.protocol_id === proto.id).length} supplements
+                </span>
+              </button>
+            ))}
+          </div>
+        </Modal>
+
+        {/* Archive patient confirmation — only hides from clinician's roster
+            (RLS access preserved per Phase 4 design). Patient is not notified. */}
+        <Modal
+          open={confirmArchivePatient}
+          onClose={() => setConfirmArchivePatient(false)}
+          title={`Archive ${selectedPatient?.display_name || 'patient'}?`}
+          footer={
+            <div style={{ display: 'flex', gap: spacing.xs }}>
+              <Button variant="tertiary" fullWidth onClick={() => setConfirmArchivePatient(false)}>Cancel</Button>
+              <Button variant="primary" fullWidth onClick={async () => {
+                await saveClinicianNote({ archived_at: new Date().toISOString() });
+                setConfirmArchivePatient(false);
+                setSelectedPatient(null);
+              }}>Archive</Button>
+            </div>
+          }
+        >
+          <p style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6, margin: 0 }}>
+            Hides them from your patient list. You'll keep access to their data and can restore from the Archived section in the sidebar. The patient isn't notified.
+          </p>
+        </Modal>
       </div>
     );
   }
@@ -1214,7 +1771,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   return (
     <div style={{ fontFamily: typography.fontBody, color: theme.text.primary, maxWidth: layout.maxContentWidth, margin: "0 auto", padding: `max(20px, env(safe-area-inset-top)) ${spacing.md}px max(80px, env(safe-area-inset-bottom))`, WebkitFontSmoothing: "antialiased", background: BG_GRADIENT, minHeight: "100vh" }}>
 
-      {/* Header: [avatar] greeting · [+] [Library] */}
+      {/* Header: [avatar] greeting · [Library] [+] — Add closest to edge for thumb reach */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.md }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
           <AccountAvatar size="touch" displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
@@ -1223,11 +1780,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          <Button variant="icon" aria-label="Add item" onClick={openAdd}>
-            <Plus size={18} />
-          </Button>
           <Button variant="icon" aria-label="Open Library" onClick={() => pushScreen('manage_protocol')}>
             <Library size={18} />
+          </Button>
+          <Button variant="icon" aria-label="Add item" onClick={openAdd}>
+            <Plus size={18} />
           </Button>
         </div>
       </div>
