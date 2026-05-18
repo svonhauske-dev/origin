@@ -50,8 +50,34 @@ Deno.serve(async (req: Request) => {
   // pg_cron passes X-Cron-Secret as a shared-secret bearer. If present and
   // valid, run the all-users refill loop. We check this BEFORE JWT parsing so
   // a caller doesn't need both credentials.
-  const cronSecret    = req.headers.get("X-Cron-Secret") ?? "";
-  const expectedCron  = Deno.env.get("CRON_SECRET") ?? "";
+  //
+  // .trim() on both sides defends against trailing newlines / whitespace that
+  // sneak in when the env var is set via copy-paste in the Supabase Dashboard.
+  const cronSecret    = (req.headers.get("X-Cron-Secret") ?? "").trim();
+  const expectedCron  = (Deno.env.get("CRON_SECRET") ?? "").trim();
+
+  // If the caller sent an X-Cron-Secret header but it didn't match, return a
+  // diagnostic 401 explaining why (lengths only — never echo the actual
+  // values back, even in error responses). Once we've confirmed the cron
+  // path works in production, this branch should collapse back to the
+  // simpler "Unauthorized" plain-text response.
+  if (cronSecret) {
+    if (!expectedCron) {
+      return jsonResponse({
+        error: "cron_secret_not_configured",
+        hint: "X-Cron-Secret was sent but CRON_SECRET env var is missing or empty on the function. Set it in Supabase Dashboard → Edge Functions → Secrets.",
+      }, 401);
+    }
+    if (cronSecret !== expectedCron) {
+      return jsonResponse({
+        error: "cron_secret_mismatch",
+        receivedLength: cronSecret.length,
+        expectedLength: expectedCron.length,
+        hint: "Lengths match → check for invisible characters (newlines, BOM). Lengths differ → re-paste the value with no leading/trailing whitespace.",
+      }, 401);
+    }
+    // Match — fall through to cron-mode block below.
+  }
 
   if (cronSecret && expectedCron && cronSecret === expectedCron) {
     const { data: enabledRows, error: enabledErr } = await admin
