@@ -1870,7 +1870,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         </div>
       </div>
 
-      {/* Week strip — date nav + glanceable adherence (Session 1 of mobile audit). */}
+      {/* Week strip — date nav + glanceable adherence (Session 1 of mobile audit).
+          activeSlotIds is required so the per-day ring math doesn't inflate the
+          denominator for IF v2 users whose supplements carry both legacy and
+          IF v2 slot ids in their `slots` array (e.g. ["meal_1","breakfast"]).
+          Without this filter, the WeekStrip counts both ids as expected checks
+          while the user only checks the active one, producing 50% rings even
+          when the user is at 100% per the Hero. Same coreSlotIds set is passed
+          to the desktop callsite at 1589. */}
       <div style={{ marginBottom: spacing.md }}>
         <WeekStrip
           weekDates={weekDates}
@@ -1881,6 +1888,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           onPrev={handlePrevWeek}
           onNext={handleNextWeek}
           canNavigateNext={canNavigateNext}
+          activeSlotIds={new Set(coreSlotIds)}
           compact
         />
       </div>
