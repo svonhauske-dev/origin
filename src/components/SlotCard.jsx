@@ -28,8 +28,17 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
   };
   const sc = SC[status];
 
+  // Grey only when the slot's fire time is genuinely unknown — i.e. when the
+  // timeLabel is the placeholder "--:--" (anchor-relative slot waiting on the
+  // user's anchor) or "variable" (no offset registered). For modes where the
+  // slot has an absolute time independent of any anchor (IF v2, Fixed, the
+  // medication/wakeup after_dinner-with-evening_mode bucket), timeLabel is a
+  // concrete HH:MM and the slot should render at full opacity even if pillTime
+  // is null — Bego's IF v2 evening slot was getting greyed because the old
+  // check was `!pillTime`, which is always true for IF v2 users.
+  const timeUnknown = timeLabel === "--:--" || timeLabel === "variable";
   return (
-    <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && !pillTime ? 0.38 : 1 }}>
+    <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden", opacity: !noSchedule && status === "future" && timeUnknown ? 0.38 : 1 }}>
       {/* Header — split into TWO buttons so each has a distinct tap target:
           (1) slot icon = take-all (bulk-complete all supps in this slot) per D3,
           (2) rest of the row = expand/collapse toggle. Nested buttons would be
