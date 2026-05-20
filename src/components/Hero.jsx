@@ -156,12 +156,14 @@ function getHeroState({
   // Anchor (medication / wakeup)
   if (!effectivePill) {
     // D1: No anchor set. Logging still works — slot times read "--:--".
+    // "Not started yet" sits in the same status row position as "Completed"
+    // does on past all-done days, so the eyebrow + status line read with
+    // the same rhythm across past and today. The "+ Start my day" CTA below
+    // grows to fill remaining vertical space.
     return {
       eyebrow: { text: todayEyebrowText },
       status: "Not started yet",
-      submeta: scheduleMode === "wakeup"
-        ? "Set your wake time to schedule the day"
-        : "Set your meds time to schedule the day",
+      submeta: null,
       statusKind: "text",
       showSetAnchor: true,
     };
@@ -210,8 +212,8 @@ function getHeroState({
 }
 
 const START_LABELS = {
-  medication: "Set anchor",
-  wakeup:     "Set anchor",
+  medication: "Start my day",
+  wakeup:     "Start my day",
 };
 
 // Status row reserves enough height for the time input + Save button so the
@@ -288,8 +290,8 @@ export default function Hero({
       justifyContent: "center",
     }}>
 
-      <div style={{ display: "flex", alignItems: "center", gap: spacing.md }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: spacing.md, flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
 
           {/* Eyebrow — one consistent slot for both past and today. Always
               just the date (plus suffix for read-only/editing on past). */}
@@ -300,7 +302,7 @@ export default function Hero({
             letterSpacing: typography.labelSpacingWide,
             textTransform: "uppercase",
             fontFamily: typography.fontHeading,
-            marginBottom: spacing.xxs,
+            marginBottom: spacing.xs,
             minHeight: 16,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -320,8 +322,9 @@ export default function Hero({
           {/* Status row — reserved height keeps the card from reflowing
               when the time editor swaps in for just the time portion of the
               status text. The "Started at" prefix stays visible during edit
-              with identical typography so it doesn't shift between states. */}
-          {(() => {
+              with identical typography so it doesn't shift between states.
+              Skipped entirely when state.status is null (no-anchor empty state). */}
+          {state.status && (() => {
             // Pre-compute the title-text style so the prefix during edit and
             // the full status text in display render with identical metrics
             // (font, size, weight, line-height) — no vertical jump on swap.
@@ -370,7 +373,7 @@ export default function Hero({
             <div style={{
               fontSize: typography.caption,
               color: theme.text.secondary,
-              marginTop: spacing.xxxs,
+              marginTop: spacing.xs,
               display: "flex",
               alignItems: "center",
               gap: spacing.xs,
@@ -394,31 +397,37 @@ export default function Hero({
             </div>
           )}
 
-          {/* Inline anchor-setting pill — replaces the old Start-my-day CTA.
-              Tappable, not required. D1: logging works without it. */}
+          {/* Full-width "Start my day" CTA. Sits below the status row in the
+              no-anchor empty state; flex: 1 lets it absorb whatever vertical
+              space is left after eyebrow + status + margins, capped by the 132
+              card budget. Filled-accent treatment matches the original
+              startDay variant. Sized below touch.min — wide full-width hit
+              area compensates for the shorter height.
+              D1: logging works without it. */}
           {state.showSetAnchor && !isReadOnly && !isEditingPill && (
             <button
               onClick={startDay}
               style={{
-                marginTop: spacing.sm,
-                display: "inline-flex",
+                flex: 1,
+                display: "flex",
                 alignItems: "center",
-                gap: spacing.xxs,
-                padding: `${spacing.xxs}px ${spacing.xs}px`,
-                border: `${theme.borderWidth.default}px solid ${theme.border.strong}`,
-                background: "transparent",
-                color: theme.text.primary,
+                justifyContent: "center",
+                width: "100%",
+                marginTop: spacing.xs,
+                padding: `${spacing.xxs}px ${spacing.sm}px`,
+                border: "none",
+                background: theme.accent.default,
+                color: theme.text.onAccent,
                 fontSize: typography.caption,
+                fontWeight: typography.semibold,
                 fontFamily: "inherit",
                 cursor: "pointer",
-                minHeight: touch.min,
                 boxSizing: "border-box",
                 WebkitTapHighlightColor: "transparent",
               }}
-              aria-label={`Set ${scheduleMode === "wakeup" ? "wake" : "meds"} anchor to now`}
+              aria-label={`Start my day — set ${scheduleMode === "wakeup" ? "wake" : "meds"} anchor to now`}
             >
-              <span style={{ color: theme.text.secondary }}>+</span>
-              <span>{START_LABELS[scheduleMode] || "Set anchor"}</span>
+              {START_LABELS[scheduleMode] || "Start my day"}
             </button>
           )}
         </div>
