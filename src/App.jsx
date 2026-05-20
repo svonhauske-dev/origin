@@ -313,9 +313,13 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const lastDkRef = useRef(null);
   const pendingSaveRef = useRef(false);
   const lastTzRef = useRef(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' && window.innerWidth >= breakpoints.desktop
-  );
+  // Origin ships as a mobile-only personal app on all viewports. The desktop
+  // branch below is preserved as dead code; the clinician dashboard work will
+  // spin off into a separate product that connects to Origin. See
+  // ORIGIN-HANDOFF.md "Parked: Clinician Dashboard". On desktop viewports a
+  // CSS phone-frame in index.html constrains the mobile UI to a centered
+  // ~440px column instead of stretching across the whole screen.
+  const isDesktop = false;
   const [weekLogs, setWeekLogs] = useState([]);
   const [viewedWeekEnd, setViewedWeekEnd] = useState(() => startOfDay(TODAY));
   const [selectedProtocol, setSelectedProtocol]   = useState(null);
@@ -609,11 +613,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [token]);
 
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= breakpoints.desktop);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Desktop resize listener removed — isDesktop is now a hard-coded false
+  // (mobile-only product, see comment at declaration). Re-introduce if/when
+  // desktop is reactivated.
 
   // Initial load
   useEffect(() => {

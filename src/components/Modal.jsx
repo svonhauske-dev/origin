@@ -10,16 +10,12 @@ const ModalDepthCtx = createContext(0);
 
 const ANIM_MS = 300; // matches CSS transition duration
 
+// Origin is mobile-only on all viewports (see ORIGIN-HANDOFF.md "Parked:
+// Clinician Dashboard"). Modal therefore always renders the bottom-sheet
+// variant — the centered-card desktop variant is preserved as dead code for
+// when the desktop/clinician product reactivates.
 function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= breakpoints.desktop
-  );
-  useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= breakpoints.desktop);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  return isDesktop;
+  return false;
 }
 
 // Desktop card width keyed by content shape:

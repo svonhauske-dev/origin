@@ -22,6 +22,23 @@
       * { scrollbar-width: none; -ms-overflow-style: none; }
       *::-webkit-scrollbar { width: 0; height: 0; display: none; }
       body { color: #1A1A1A; }
+      /* Origin is mobile-only on all viewports — see ORIGIN-HANDOFF.md
+         "Parked: Clinician Dashboard". On desktop (≥1024px) body is
+         constrained to a centered ~440px phone-frame column. translateZ(0)
+         on body makes it a containing block so fixed-position portals
+         (Modal bottom sheet, Toast, Popover) anchor to the phone-frame
+         edges instead of the full viewport. */
+      @media (min-width: 1024px) {
+        html { background: #0D0D0D; }
+        body {
+          max-width: 440px;
+          margin: 0 auto;
+          border-left: 1px solid #2A2A2A;
+          border-right: 1px solid #2A2A2A;
+          overflow: hidden;
+          transform: translateZ(0);
+        }
+      }
       /* Width-lock: invisible bold ghost prevents layout shift when selector weight changes */
       .selector-label { position: relative; display: inline-block; }
       .selector-label::before { content: attr(data-text); font-weight: 600; visibility: hidden; height: 0; display: block; overflow: hidden; pointer-events: none; }

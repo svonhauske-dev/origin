@@ -9,16 +9,12 @@ import Button from "./Button";
 const ANIM_MS = 250;
 const PANEL_WIDTH = 480;
 
+// Origin is mobile-only on all viewports (see ORIGIN-HANDOFF.md "Parked:
+// Clinician Dashboard"). SidePanel therefore always delegates to Modal
+// (bottom sheet) — the right-side desktop variant is preserved as dead code
+// for when the desktop/clinician product reactivates.
 function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= breakpoints.desktop
-  );
-  useEffect(() => {
-    const onResize = () => setIsDesktop(window.innerWidth >= breakpoints.desktop);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-  return isDesktop;
+  return false;
 }
 
 // Right-side editing panel for focused work that should preserve surrounding
