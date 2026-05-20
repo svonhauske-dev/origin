@@ -297,34 +297,37 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
           : `${spacing.lg}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
       }}>
         {/* Received protocols — hidden in readOnly (patient-context) view.
-            Sent by another Origin user via peer-to-peer share. Tapping the
-            row opens a sheet with three intents (stack / replace / save). */}
+            Sent by another Origin user via peer-to-peer share. Each row is
+            its own card so multiple received protocols read as distinct
+            items, not a single bundled list. Tapping a card opens the
+            review modal (stack / replace / save / decline). */}
         {!readOnly && received.length > 0 && (
           <div style={{ marginBottom: spacing.xl }}>
             <Label style={{ marginBottom: spacing.xs }}>Received</Label>
-            <div style={{
-              border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-              borderRadius: theme.radius.surface, overflow: 'hidden',
-              background: theme.surface.card,
-            }}>
-              {received.map((send, i) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+              {received.map((send) => (
                 <button
                   key={send.id}
                   onClick={() => setActivateModalSend(send)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md,
                     width: '100%',
-                    padding: `${spacing.sm}px ${spacing.md}px`,
-                    borderTop: i > 0 ? `${theme.borderWidth.default}px solid ${theme.border.subtle}` : 'none',
-                    background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+                    padding: `${spacing.md}px`,
+                    background: theme.surface.card,
+                    border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+                    borderRadius: theme.radius.surface,
+                    cursor: 'pointer', textAlign: 'left',
                     WebkitTapHighlightColor: 'transparent',
+                    transition: 'background 120ms ease, border-color 120ms ease',
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = theme.surface.hover; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = theme.surface.card; }}
                 >
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary }}>
                       {send.name}
                     </div>
-                    <div style={{ fontSize: typography.caption, color: theme.text.secondary }}>
+                    <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginTop: 2 }}>
                       {(send.supplements_snapshot || []).length} supplement{(send.supplements_snapshot || []).length !== 1 ? 's' : ''} · tap to review
                     </div>
                   </div>

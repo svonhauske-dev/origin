@@ -1282,7 +1282,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         setSupps(s => s.map(x => archivedIds.has(x.protocol_id) ? { ...x, status: 'active', paused: false } : x));
       }
       const newStatus = intent === 'save_later' ? 'archived' : 'active';
-      const protoRows = await dbAddProtocol({ name: send.name, status: newStatus, user_id: user.id, treatment_mode: 'indefinite', source: 'shared' }, token);
+      // source must be 'user' or 'clinician' per the protocols.source CHECK
+      // constraint. The fact that this protocol came from a peer is preserved
+      // in the protocol_sends row (with clinician_id = sender's user id) —
+      // can be surfaced as attribution later.
+      const protoRows = await dbAddProtocol({ name: send.name, status: newStatus, user_id: user.id, treatment_mode: 'indefinite', source: 'user' }, token);
       newProto = protoRows?.[0];
       if (!newProto) throw new Error('Protocol creation failed');
       const snapshot = send.supplements_snapshot || [];
@@ -1945,16 +1949,19 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 aria-hidden="true"
                 style={{
                   position: 'absolute', top: -4, right: -4,
-                  minWidth: 16, height: 16, padding: '0 4px',
+                  minWidth: 16, height: 16, padding: '0 3px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  borderRadius: '999px',
+                  // Square badge — matches Origin's zero-radius design language
+                  // (radius.xs..xl all = 0; radius.full reserved for genuinely
+                  // circular shapes like adherence rings and avatars).
+                  borderRadius: 0,
                   background: theme.status.success,
                   color: theme.surface.canvas,
                   fontFamily: typography.fontData,
                   fontSize: 10, fontWeight: typography.semibold,
                   lineHeight: 1,
-                  // Border in canvas color creates a small gap that lifts the
-                  // badge off the icon edge — common notification-badge treatment.
+                  // Canvas-colored border creates a small gap lifting the
+                  // badge off the icon edge.
                   border: `2px solid ${theme.surface.canvas}`,
                   pointerEvents: 'none',
                 }}
