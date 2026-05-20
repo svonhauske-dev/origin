@@ -1299,7 +1299,17 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       setSupps(s => s.filter(x => x.protocol_id !== protocol.id));
       setProtocols(p => p.filter(x => x.id !== protocol.id));
       showToast(`${protocol.name} deleted`);
-    } catch (err) { showToast("Couldn't delete. Try again."); console.error(err); }
+    } catch (err) {
+      console.error(err);
+      // DIAGNOSTIC: surface the real error so Sofia can debug without
+      // devtools. supa() attaches the parsed REST error body to err.detail
+      // (e.g. {code, message, hint, details} from PostgREST) — that's the
+      // signal we need to identify RLS/FK/constraint failures. Revert to a
+      // generic toast once root cause is found.
+      const restMsg = err?.detail?.message || err?.detail?.hint || err?.detail?.code;
+      const detail = (restMsg || err?.message || err?.toString() || 'unknown').toString().slice(0, 160);
+      showToast(`Delete failed: ${detail}`);
+    }
   };
 
   // Decline a received protocol — marks the row as 'declined' (not
