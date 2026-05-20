@@ -17,7 +17,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  // apikey is required by Supabase's gateway and is sent by the client
+  // alongside the user JWT in Authorization. Without it in the allow-list,
+  // the browser blocks the actual POST after the OPTIONS preflight.
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, apikey, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
