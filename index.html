@@ -33,6 +33,13 @@
         body {
           max-width: 440px;
           margin: 0 auto;
+          /* Belt-and-suspenders height enforcement. The base rule sets
+             `height: 100dvh` but in practice on desktop body sometimes
+             collapsed shorter, causing position:fixed children anchored
+             to body's bottom (Modal bottom-sheet etc.) to land mid-screen.
+             min-height + height both pinned. */
+          height: 100dvh;
+          min-height: 100dvh;
           /* Phone-frame side edges painted INSIDE the content area via
              inset box-shadow (2px to survive subpixel slicing). */
           box-shadow: inset 2px 0 0 #2A2A2A, inset -2px 0 0 #2A2A2A;
