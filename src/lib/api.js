@@ -329,16 +329,27 @@ export const dbLookupUserByEmail = async (email, t) => {
 // the send itself already succeeded before this is called; push failure
 // shouldn't undo the send. The function reads the protocol_send row,
 // fetches the recipient's push_subscriptions, and sends a one-shot web push.
-export const dbNotifyProtocolSent = (protocolSendId, senderName, t) => {
-  return fetch(`${SUPA_URL}/functions/v1/notify_protocol_sent`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPA_KEY,
-      'Authorization': `Bearer ${t}`,
-    },
-    body: JSON.stringify({ protocol_send_id: protocolSendId, sender_name: senderName }),
-  });
+// Logs the response shape to console so push failures are visible during
+// development without needing to dig through the Network tab.
+export const dbNotifyProtocolSent = async (protocolSendId, senderName, t) => {
+  try {
+    const res = await fetch(`${SUPA_URL}/functions/v1/notify_protocol_sent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${t}`,
+      },
+      body: JSON.stringify({ protocol_send_id: protocolSendId, sender_name: senderName }),
+    });
+    const text = await res.text();
+    console.log('[push] notify_protocol_sent response', res.status, text);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
+    return text;
+  } catch (err) {
+    console.warn('[push] notify_protocol_sent failed', err);
+    throw err;
+  }
 };
 
 // ── Clinician-private notes + archive (Phase 4) ─────────────────────────
