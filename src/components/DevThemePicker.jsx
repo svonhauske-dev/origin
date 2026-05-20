@@ -11,6 +11,14 @@ const LABELS = {
 export default function DevThemePicker() {
   const { themeName, setTheme } = useTheme();
 
+  // Defense in depth: never render outside local dev, regardless of build mode.
+  // Vercel currently builds this app in development mode, so import.meta.env.DEV
+  // gates at the call site leak to production. Hostname check is build-mode-proof.
+  if (typeof window !== "undefined") {
+    const h = window.location.hostname;
+    if (h !== "localhost" && h !== "127.0.0.1" && h !== "0.0.0.0") return null;
+  }
+
   return (
     <div style={{
       position: "fixed",
