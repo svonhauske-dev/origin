@@ -143,11 +143,13 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
   const [activateModalSend, setActivateModalSend] = useState(null);
   const [activating, setActivating]         = useState(false);
 
+  // Refetch when Library opens, userId becomes available, or token rotates —
+  // covers (1) fresh-mount race where userId may not be ready, (2) reopening
+  // after new sends arrived in the background.
   useEffect(() => {
-    if (!isOpen || !token) return;
-    if (!userId) return;
+    if (!isOpen || !token || !userId) return;
     dbGetReceivedProtocols(userId, token).then(rows => setReceived(rows || [])).catch(() => {});
-  }, [isOpen]);
+  }, [isOpen, userId, token]);
 
   const activeProtocols   = protocols.filter(p => p.status === 'active');
   const archivedProtocols = protocols.filter(p => p.status !== 'active').sort((a, b) => a.name.localeCompare(b.name));

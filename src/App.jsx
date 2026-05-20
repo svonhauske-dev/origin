@@ -1936,7 +1936,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
             <Button variant="icon" aria-label={pendingReceivedCount > 0 ? `Open Library — ${pendingReceivedCount} received` : "Open Library"} onClick={() => pushScreen('manage_protocol')}>
               <Library size={18} />
             </Button>
@@ -1944,15 +1944,18 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               <span
                 aria-hidden="true"
                 style={{
-                  position: 'absolute', top: 2, right: 2,
-                  minWidth: 14, height: 14, padding: '0 4px',
+                  position: 'absolute', top: -4, right: -4,
+                  minWidth: 16, height: 16, padding: '0 4px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   borderRadius: '999px',
-                  background: theme.accent.default,
-                  color: theme.accent.onDefault,
+                  background: theme.status.success,
+                  color: theme.surface.canvas,
                   fontFamily: typography.fontData,
-                  fontSize: 9, fontWeight: typography.semibold,
+                  fontSize: 10, fontWeight: typography.semibold,
                   lineHeight: 1,
+                  // Border in canvas color creates a small gap that lifts the
+                  // badge off the icon edge — common notification-badge treatment.
+                  border: `2px solid ${theme.surface.canvas}`,
                   pointerEvents: 'none',
                 }}
               >
@@ -2060,6 +2063,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         onAddProtocol={addProtocol}
         onOpenDetail={(protocol) => { setSelectedProtocol(protocol); pushScreen('protocol_detail'); }}
         onProtocolCreated={(p) => { setSelectedProtocol(p); pushScreen('protocol_detail'); openAddToProtocol(p); }}
+        userId={user.id}
         token={token}
         onActivateReceived={activateReceived}
         onDeclineReceived={declineReceived}
