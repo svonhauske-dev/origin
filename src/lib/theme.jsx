@@ -38,7 +38,6 @@ const ThemeContext = createContext({
   theme: themes.achromatic,
   themeName: "achromatic",
   themePreference: "achromatic",
-  setTheme: () => {},
   setThemePreference: () => {},
   syncFromDB: async () => {},
 });
@@ -81,11 +80,6 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
-  // Dev-only: set active theme without touching stored preference (used by DevThemePicker)
-  const setTheme = (newName) => {
-    setState(s => ({ ...s, name: newName }));
-  };
-
   const theme = themes[name] ?? themes.achromatic;
 
   useEffect(() => {
@@ -98,7 +92,7 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, themeName: name, themePreference: pref, setTheme, setThemePreference, syncFromDB }}>
+    <ThemeContext.Provider value={{ theme, themeName: name, themePreference: pref, setThemePreference, syncFromDB }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -4,7 +4,6 @@ import {
   shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
-import DevThemePicker from "./components/DevThemePicker";
 import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS } from "./config";
 import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library, Pencil, MoreHorizontal } from "lucide-react";
 import Button from "./components/Button";
@@ -215,7 +214,6 @@ export default function App() {
     return (
       <ThemeProvider>
         <DesignSystemPage />
-        {import.meta.env.DEV && <DevThemePicker />}
       </ThemeProvider>
     );
   }
@@ -259,7 +257,6 @@ export default function App() {
           {!authLoading && !user && <Auth onSignIn={u => { setUser(u); setProtocolLoading(true); }} />}
           {user && <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
           <Toast />
-          {import.meta.env.DEV && <DevThemePicker />}
         </NavigationProvider>
       </ToastProvider>
     </ThemeProvider>

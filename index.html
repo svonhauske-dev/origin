@@ -36,6 +36,11 @@
           border-left: 1px solid #2A2A2A;
           border-right: 1px solid #2A2A2A;
           overflow: hidden;
+          /* clip-path enforces strict clipping of all descendants
+             (including fixed-position slide-in screens that translate
+             off-body to translateX(100%) when closed). overflow: hidden
+             alone doesn't reliably clip transformed fixed descendants. */
+          clip-path: inset(0);
           transform: translateZ(0);
         }
       }
