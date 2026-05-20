@@ -129,8 +129,10 @@ export default function ProtocolDetailScreen({
     if (isClinician && isActive) {
       items.push({ key: 'send', label: 'Send to patient', onSelect: () => { setMenuOpen(false); setSendModalOpen(true); } });
     }
-    // Peer-to-peer send — available to any user for active protocols.
-    if (!isClinician && isActive && onSendToUser) {
+    // Peer-to-peer send — available to any user for any owned protocol
+    // (active or archived). You might want to share something you ran
+    // last year that's now archived, not just what you're running today.
+    if (!isClinician && onSendToUser) {
       items.push({ key: 'send-user', label: 'Send to someone', onSelect: () => { setMenuOpen(false); setSendUserOpen(true); setSendUserEmail(''); setSendUserError(null); } });
     }
     return items;
