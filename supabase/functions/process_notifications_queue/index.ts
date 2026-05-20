@@ -2,6 +2,7 @@
 // Called every minute by pg_cron. Reads pending notifications_queue rows,
 // sends Web Push to each user's subscriptions, marks rows fired.
 // Deploy with --no-verify-jwt (pg_cron calls with service role key, not user JWT).
+// Auto-deploy: this file is deployed by Supabase GitHub integration on push to main.
 
 // deno-lint-ignore-file no-explicit-any
 import webpush from "npm:web-push@3";
