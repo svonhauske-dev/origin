@@ -2161,8 +2161,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       {/* Contextual insight — quiet single-line note that appears when there's
           something worth surfacing (upcoming ending, milestone day). Only on
           today, only when the home is past the empty state. Computed from
-          current state every render, so it disappears as conditions change. */}
-      {isToday && !isPast && homeSupps.length > 0 && (() => {
+          current state every render, so it disappears as conditions change.
+          DEV-ONLY: gated behind `import.meta.env.DEV` while the surface is
+          still in prototype. vercel.json pins `vite build` so this is
+          reliably false in production builds. */}
+      {import.meta.env.DEV && isToday && !isPast && homeSupps.length > 0 && (() => {
         const insights = buildHomeInsights({ supplements: visibleSupps, protocols, logs: weekLogs });
         if (insights.length === 0) return null;
         const top = insights[0];

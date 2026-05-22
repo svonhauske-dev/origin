@@ -275,22 +275,27 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
             </div>
 
-            {divider}
-
-            <Label style={{ marginBottom: spacing.xs }}>Insights</Label>
-            <div
-              onClick={() => setView('insights')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
-                Adherence + upcoming changes
-              </span>
-              <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-            </div>
+            {/* DEV-ONLY: insights nav row (prototype). vercel.json pins `vite
+                build` so import.meta.env.DEV is reliably false in production. */}
+            {import.meta.env.DEV && (
+              <>
+                {divider}
+                <Label style={{ marginBottom: spacing.xs }}>Insights</Label>
+                <div
+                  onClick={() => setView('insights')}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
+                    Adherence + upcoming changes
+                  </span>
+                  <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
+                </div>
+              </>
+            )}
 
             {divider}
 
@@ -415,8 +420,8 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
           </div>
         )}
 
-        {/* ── Insights view (quick prototype) ── */}
-        {view === 'insights' && (() => {
+        {/* ── Insights view (DEV-ONLY prototype) ── */}
+        {import.meta.env.DEV && view === 'insights' && (() => {
           // For the prototype we treat "your" adherence as the first active
           // protocol's adherence — for the common 1-protocol case that's exact;
           // multi-protocol users get a partial picture for now.
