@@ -2101,19 +2101,20 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, marginBottom: spacing.md }}>
         {homeSupps.length === 0 ? (
           <div style={{ textAlign: "center", padding: `${spacing.xl}px ${spacing.md}px` }}>
-            <div style={{ fontSize: typography.display, color: theme.text.secondary, marginBottom: spacing.md, fontFamily: typography.fontHeading, lineHeight: 1 }}>◯</div>
-            <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, marginBottom: spacing.xs }}>No items yet</div>
-            <div style={{ fontSize: typography.caption, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
-            {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add to protocol</Button>}
-            {/* Day-1 inline tip — only on the home empty state for first-day users.
-                Schedule-mode-specific copy. Dismissible, never returns once dismissed. */}
+            {/* Day-1 inline tip sits at the top of the empty card so new users
+                read the schedule-mode mental model before the empty state +
+                CTA. Dismissible, never returns once dismissed. */}
             {!isPast && isDay1 && DAY1_TIP[scheduleMode] && (
-              <div style={{ marginTop: spacing.md }}>
+              <div style={{ marginBottom: spacing.lg, textAlign: "left" }}>
                 <InlineTip id={`day1-${scheduleMode}`} label={DAY1_TIP[scheduleMode].label}>
                   {DAY1_TIP[scheduleMode].body}
                 </InlineTip>
               </div>
             )}
+            <div style={{ fontSize: typography.display, color: theme.text.secondary, marginBottom: spacing.md, fontFamily: typography.fontHeading, lineHeight: 1 }}>◯</div>
+            <div style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, marginBottom: spacing.xs }}>No items yet</div>
+            <div style={{ fontSize: typography.caption, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.5, marginBottom: spacing.lg }}>Add your first to begin tracking.</div>
+            {!isPast && <Button variant="primary" fullWidth onClick={openAdd}>Add an item to protocol</Button>}
           </div>
         ) : slotCardsContent}
       </div>
