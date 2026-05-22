@@ -1887,6 +1887,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               isClinician={isClinician && !selectedPatient}
               patients={patients}
               onSendToPatient={sendProtocol}
+              profile={profile}
+              schedule={{ schedule_type: scheduleMode }}
+              onToast={showToast}
             />
           )}
         </aside>
@@ -2162,6 +2165,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         patients={patients}
         onSendToPatient={sendProtocol}
         onSendToUser={sendProtocolToUser}
+        profile={profile}
+        schedule={{ schedule_type: scheduleMode }}
+        onToast={showToast}
       />
       <SidePanel
         open={formOpen}

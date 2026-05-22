@@ -43,6 +43,7 @@ export default function ProtocolDetailScreen({
   onAddSupp, onEditSupp, onTogglePauseSupp, onResumeSupp, onDeleteSupp,
   isClinician, patients = [], onSendToPatient,
   onSendToUser,
+  profile = null, schedule = null, onToast,
   desktop = false,
   readOnly = false,
 }) {
@@ -117,6 +118,44 @@ export default function ProtocolDetailScreen({
     if (action === 'delete')  { await onDeleteProtocol(protocol); onBack(); }
   };
 
+  const handleSharePdf = async () => {
+    setMenuOpen(false);
+    if (!protocol) return;
+    try {
+      // Dynamic import — pdf-lib + fontkit are ~230KB gzipped; load only on
+      // demand so they don't bloat the main bundle.
+      const { exportProtocolPdf } = await import("../lib/pdf");
+      const blob = await exportProtocolPdf({
+        protocol,
+        supps: protocolSupps,
+        profile,
+        schedule,
+      });
+      const filename = `${(protocol.name || 'protocol').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: protocol.name });
+        onToast?.('Protocol shared');
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      onToast?.('Protocol downloaded');
+    } catch (err) {
+      // AbortError fires when the user dismisses the native share sheet —
+      // not a real failure, no toast needed.
+      if (err?.name === 'AbortError') return;
+      console.error('PDF export failed', err);
+      onToast?.('Could not generate PDF');
+    }
+  };
+
   // Overflow menu items — order: lifecycle change → share → destructive
   // (matches iOS action-sheet convention). Destructive last so it's never
   // adjacent to a benign tap target.
@@ -140,7 +179,10 @@ export default function ProtocolDetailScreen({
     if (!isClinician && onSendToUser) {
       items.push({ key: 'send-user', label: 'Send to someone', onSelect: () => { setMenuOpen(false); setSendUserOpen(true); setSendUserEmail(''); setSendUserError(null); } });
     }
-    // 3. Destructive (always last)
+    // 3. Share-as-PDF — always available (covers active + archived). Sits
+    //    above destructive actions so it's never adjacent to Delete.
+    items.push({ key: 'share-pdf', label: 'Share as PDF', onSelect: handleSharePdf });
+    // 4. Destructive (always last)
     if (isArchived) {
       items.push({ key: 'delete',   label: 'Delete protocol',   onSelect: () => { setMenuOpen(false); setConfirmAction('delete'); }, destructive: true });
     }
