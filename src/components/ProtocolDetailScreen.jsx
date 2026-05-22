@@ -69,6 +69,15 @@ export default function ProtocolDetailScreen({
   // Anchor element for the overflow + send-to-patient popovers. Both anchor
   // to the same ⋯ trigger so the picker visually replaces the menu in place.
   const [menuAnchor, setMenuAnchor]         = useState(null);
+  // PDF preview state. The Share as PDF flow is preview-first: tapping the
+  // menu item generates the PDF, opens a Modal with an iframe preview, and
+  // exposes Share + Download in the footer so the user reviews the artifact
+  // before it goes anywhere.
+  const [previewState, setPreviewState]     = useState('closed'); // 'closed' | 'loading' | 'ready' | 'error'
+  const [previewUrl, setPreviewUrl]         = useState(null);
+  const [previewBlob, setPreviewBlob]       = useState(null);
+  const [previewFilename, setPreviewFilename] = useState('');
+  const [previewSending, setPreviewSending] = useState(false);
   const nameInputRef = useRef(null);
   const scrollRef    = useRef(null);
 
@@ -118,11 +127,16 @@ export default function ProtocolDetailScreen({
     if (action === 'delete')  { await onDeleteProtocol(protocol); onBack(); }
   };
 
-  const handleSharePdf = async () => {
+  const openPdfPreview = async () => {
     setMenuOpen(false);
     if (!protocol) return;
+    setPreviewState('loading');
+    setPreviewUrl(null);
+    setPreviewBlob(null);
+    const filename = `${(protocol.name || 'protocol').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+    setPreviewFilename(filename);
     try {
-      // Dynamic import — pdf-lib + fontkit are ~230KB gzipped; load only on
+      // Dynamic import — pdf-lib + fontkit are ~510KB gzipped; load only on
       // demand so they don't bloat the main bundle.
       const { exportProtocolPdf } = await import("../lib/pdf");
       const blob = await exportProtocolPdf({
@@ -131,29 +145,61 @@ export default function ProtocolDetailScreen({
         profile,
         schedule,
       });
-      const filename = `${(protocol.name || 'protocol').replace(/\s+/g, '-').toLowerCase()}.pdf`;
-      const file = new File([blob], filename, { type: 'application/pdf' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: protocol.name });
-        onToast?.('Protocol shared');
-        return;
-      }
-
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      onToast?.('Protocol downloaded');
+      setPreviewBlob(blob);
+      setPreviewUrl(url);
+      setPreviewState('ready');
+    } catch (err) {
+      console.error('PDF export failed', err);
+      setPreviewState('error');
+      onToast?.('Could not generate PDF');
+      // Close the preview after surfacing the error — there's nothing to show.
+      setTimeout(() => closePdfPreview(), 200);
+    }
+  };
+
+  const closePdfPreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewBlob(null);
+    setPreviewFilename('');
+    setPreviewState('closed');
+    setPreviewSending(false);
+  };
+
+  const sharePdfFromPreview = async () => {
+    if (!previewBlob) return;
+    const file = new File([previewBlob], previewFilename, { type: 'application/pdf' });
+    if (!(navigator.canShare && navigator.canShare({ files: [file] }))) {
+      // Share API unavailable — fall back to download from the preview.
+      downloadPdfFromPreview();
+      return;
+    }
+    setPreviewSending(true);
+    try {
+      await navigator.share({ files: [file], title: protocol?.name });
+      onToast?.('Protocol shared');
+      closePdfPreview();
     } catch (err) {
       // AbortError fires when the user dismisses the native share sheet —
-      // not a real failure, no toast needed.
-      if (err?.name === 'AbortError') return;
-      console.error('PDF export failed', err);
-      onToast?.('Could not generate PDF');
+      // not a real failure, no toast and keep the preview open.
+      if (err?.name !== 'AbortError') {
+        console.error('PDF share failed', err);
+        onToast?.('Could not share PDF');
+      }
+    } finally {
+      setPreviewSending(false);
     }
+  };
+
+  const downloadPdfFromPreview = () => {
+    if (!previewBlob || !previewUrl) return;
+    const a = document.createElement('a');
+    a.href = previewUrl;
+    a.download = previewFilename;
+    a.click();
+    onToast?.('Protocol downloaded');
+    closePdfPreview();
   };
 
   // Overflow menu items — order: lifecycle change → share → destructive
@@ -179,9 +225,10 @@ export default function ProtocolDetailScreen({
     if (!isClinician && onSendToUser) {
       items.push({ key: 'send-user', label: 'Send to someone', onSelect: () => { setMenuOpen(false); setSendUserOpen(true); setSendUserEmail(''); setSendUserError(null); } });
     }
-    // 3. Share-as-PDF — always available (covers active + archived). Sits
-    //    above destructive actions so it's never adjacent to Delete.
-    items.push({ key: 'share-pdf', label: 'Share as PDF', onSelect: handleSharePdf });
+    // 3. Share-as-PDF — preview-first; opens a Modal with the rendered PDF
+    //    so the user reviews the artifact before any share fires. Sits above
+    //    destructive actions so it's never adjacent to Delete.
+    items.push({ key: 'share-pdf', label: 'Share as PDF', onSelect: openPdfPreview });
     // 4. Destructive (always last)
     if (isArchived) {
       items.push({ key: 'delete',   label: 'Delete protocol',   onSelect: () => { setMenuOpen(false); setConfirmAction('delete'); }, destructive: true });
@@ -752,6 +799,66 @@ export default function ProtocolDetailScreen({
             <div style={{ fontSize: typography.caption, color: theme.text.secondary, fontFamily: typography.fontHeading, lineHeight: 1.5 }}>
               They'll get a notification and can choose to stack, replace, or save the protocol.
             </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* PDF preview Modal — preview-first share flow. Generates the PDF on
+          open, renders it in an iframe so the user reviews the artifact, then
+          exposes Share + Download in the footer. Cancel revokes the blob URL. */}
+      <Modal
+        open={previewState !== 'closed' && previewState !== 'error'}
+        onClose={() => { if (!previewSending) closePdfPreview(); }}
+        title="Preview PDF"
+        footer={
+          <div style={{ display: 'flex', gap: spacing.xs }}>
+            <Button variant="tertiary" fullWidth onClick={closePdfPreview} disabled={previewSending}>
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={downloadPdfFromPreview}
+              disabled={previewState !== 'ready' || previewSending}
+            >
+              Download
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={sharePdfFromPreview}
+              disabled={previewState !== 'ready' || previewSending}
+            >
+              {previewSending ? 'Sharing…' : 'Share'}
+            </Button>
+          </div>
+        }
+      >
+        <div style={{
+          height: '60vh',
+          minHeight: 320,
+          background: theme.surface.cardSubtle,
+          border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}>
+          {previewState === 'loading' && (
+            <div style={{
+              fontSize: typography.caption,
+              color: theme.text.secondary,
+              fontFamily: typography.fontHeading,
+            }}>
+              Generating preview…
+            </div>
+          )}
+          {previewState === 'ready' && previewUrl && (
+            <iframe
+              src={previewUrl}
+              title="Protocol PDF preview"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
           )}
         </div>
       </Modal>
