@@ -60,7 +60,7 @@ import {
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp } from './lib/time';
 import { calculateProtocolAdherence, calculateAdherenceForDate } from './lib/adherence';
-import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush } from './lib/notifications';
+import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush, retryPendingPushCleanup } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
 import IFMigrationScreen from "./components/IFMigrationScreen";
 import DesignSystemPage from "./components/design-system-page/DesignSystemPage";
@@ -260,6 +260,10 @@ export default function App() {
     getSession().then(u => {
       if (u) {
         setUser(u);
+        // Drain any push-cleanup that was queued from a prior sign-out
+        // where the DB DELETE failed. Fire-and-forget — silent on failure,
+        // retries again next boot.
+        retryPendingPushCleanup().catch(() => {});
         setProtocolLoading(true);
         setAuthLoading(false);
       } else {
@@ -280,7 +284,12 @@ export default function App() {
           {!authLoading && !user && (
             <Auth
               recoveryMode={recoveryMode}
-              onSignIn={u => { setUser(u); setRecoveryMode(false); setProtocolLoading(true); }}
+              onSignIn={u => {
+                setUser(u);
+                retryPendingPushCleanup().catch(() => {});
+                setRecoveryMode(false);
+                setProtocolLoading(true);
+              }}
             />
           )}
           {user && <ProtocolApp user={user} token={token()} onSignOut={async () => {

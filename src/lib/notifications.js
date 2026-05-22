@@ -53,12 +53,32 @@ export function isPushSupported() {
   );
 }
 
+// iPadOS Safari since iPadOS 13 reports a macOS user agent by default
+// ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)…"), so a plain UA regex
+// catches iPhone + classic iPad but misses iPadOS in its default desktop
+// rendering mode. Combine the UA test with platform + maxTouchPoints to
+// catch iPadOS — real macOS reports `maxTouchPoints === 0` even with a
+// Magic Trackpad, while iPads expose touch points.
+function isIPadOSDesktop() {
+  return (
+    navigator.platform === "MacIntel" &&
+    typeof navigator.maxTouchPoints === "number" &&
+    navigator.maxTouchPoints > 1
+  );
+}
+
 export function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || isIPadOSDesktop();
 }
 
 export function isIOSPWA() {
-  return isIOS() && window.navigator.standalone === true;
+  if (!isIOS()) return false;
+  // `window.navigator.standalone` is the original iOS-only API and is still
+  // the most reliable signal on iPhone Safari. matchMedia('(display-mode:
+  // standalone)') is the modern cross-browser check and is required to
+  // catch iPadOS-desktop-mode PWAs, where `standalone` may be undefined.
+  if (window.navigator.standalone === true) return true;
+  return Boolean(window.matchMedia?.("(display-mode: standalone)")?.matches);
 }
 
 export function needsHomeScreenInstall() {
@@ -146,23 +166,87 @@ export async function subscribeToPush() {
   return subscription;
 }
 
+// localStorage key used to queue a failed DB cleanup so we can retry it on
+// the next app load (when we'll have a fresh token / network). Plain endpoint
+// string; we only ever queue one at a time per device.
+const PENDING_PUSH_CLEANUP_KEY = "origin.pending_push_cleanup";
+
 export async function unsubscribeFromPush() {
   if (!isPushSupported()) return;
 
-  const reg = await registerServiceWorker();
+  let reg;
+  try {
+    reg = await registerServiceWorker();
+  } catch {
+    // SW unavailable — nothing to unsubscribe.
+    return;
+  }
   const subscription = await reg.pushManager.getSubscription();
+  if (!subscription) return;
 
-  if (subscription) {
-    const endpoint = subscription.endpoint;
+  const endpoint = subscription.endpoint;
+
+  // (1) Tear down at the push service first. This is a local browser call
+  //     with no network dependency, so it's the most reliable step. Once
+  //     it succeeds the endpoint is dead and the device stops receiving
+  //     pushes — which is the privacy-relevant guarantee.
+  try {
     await subscription.unsubscribe();
+  } catch (e) {
+    if (typeof console !== "undefined") console.warn("[push] SW unsubscribe failed", e);
+  }
 
-    const tok = localStorage.getItem("sb_token") || "";
+  // (2) Remove the DB row for the endpoint. This can fail on a flaky network
+  //     during sign-out; if it does we queue the endpoint and retry on the
+  //     next app load. RLS will scope the DELETE to the current user's row,
+  //     so a queued cleanup that later runs under a different user's token
+  //     will silently filter — that's fine because the now-dead endpoint
+  //     will be cleaned passively by 404/410 handling on the next push
+  //     attempt anyway.
+  const tok = localStorage.getItem("sb_token") || "";
+  if (!tok) {
+    // No token (signed out concurrently?) — queue and bail.
+    localStorage.setItem(PENDING_PUSH_CLEANUP_KEY, endpoint);
+    return;
+  }
+  try {
     await supa(
       "DELETE",
       `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
       null,
       tok
     );
+    // Successful — clear any prior pending state for the same endpoint.
+    if (localStorage.getItem(PENDING_PUSH_CLEANUP_KEY) === endpoint) {
+      localStorage.removeItem(PENDING_PUSH_CLEANUP_KEY);
+    }
+  } catch (e) {
+    localStorage.setItem(PENDING_PUSH_CLEANUP_KEY, endpoint);
+    if (typeof console !== "undefined") console.warn("[push] DB cleanup failed; queued for retry", e);
+  }
+}
+
+// Called on app boot once an auth session is established. Drains the
+// pending-cleanup queue using the current user's token. RLS limits the
+// DELETE to rows the current user owns; if the queued endpoint belonged
+// to a prior user it silently filters and we clear the queue anyway —
+// the dead endpoint will auto-clean via 404/410 on next push attempt.
+export async function retryPendingPushCleanup() {
+  const endpoint = localStorage.getItem(PENDING_PUSH_CLEANUP_KEY);
+  if (!endpoint) return;
+  const tok = localStorage.getItem("sb_token") || "";
+  if (!tok) return;
+  try {
+    await supa(
+      "DELETE",
+      `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`,
+      null,
+      tok
+    );
+    localStorage.removeItem(PENDING_PUSH_CLEANUP_KEY);
+  } catch (e) {
+    // Network still flaky — leave queued for the next boot.
+    if (typeof console !== "undefined") console.warn("[push] cleanup retry still failing", e);
   }
 }
 

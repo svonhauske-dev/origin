@@ -2,6 +2,7 @@ import { spacing, typography, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import { needsHomeScreenInstall } from "../lib/notifications";
 import Button from "./Button";
+import OriginGlyph from "./OriginGlyph";
 
 export default function NotificationPrompt({ onEnable, onSkip }) {
   const { theme } = useTheme();
@@ -41,6 +42,9 @@ export default function NotificationPrompt({ onEnable, onSkip }) {
     return (
       <div style={screenStyle}>
         <div style={{ width: "100%", maxWidth: layout.maxContentWidth }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: spacing.md }}>
+            <OriginGlyph size={56} />
+          </div>
           <div style={headingStyle}>Add Origin to your home screen</div>
           <div style={bodyStyle}>
             Reminders on iOS need Origin installed to your home screen. Once it's installed, open Origin from there and turn on reminders in Settings.
@@ -69,7 +73,9 @@ export default function NotificationPrompt({ onEnable, onSkip }) {
   return (
     <div style={screenStyle}>
       <div style={{ width: "100%", maxWidth: layout.maxContentWidth }}>
-        <div style={{ fontSize: 40, marginBottom: spacing.lg, textAlign: "center" }}>🔔</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: spacing.md }}>
+          <OriginGlyph size={56} />
+        </div>
         <div style={headingStyle}>Want reminders?</div>
         <div style={bodyStyle}>
           Origin can ping you when it's time to take your medication and supplements. You can change this any time in Settings.
