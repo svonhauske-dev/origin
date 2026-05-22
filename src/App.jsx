@@ -60,7 +60,7 @@ import {
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp } from './lib/time';
 import { calculateProtocolAdherence, calculateAdherenceForDate } from './lib/adherence';
-import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, getCurrentSubscription, registerServiceWorker, subscribeToPush } from './lib/notifications';
+import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
 import IFMigrationScreen from "./components/IFMigrationScreen";
 import DesignSystemPage from "./components/design-system-page/DesignSystemPage";
@@ -283,7 +283,16 @@ export default function App() {
               onSignIn={u => { setUser(u); setRecoveryMode(false); setProtocolLoading(true); }}
             />
           )}
-          {user && <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
+          {user && <ProtocolApp user={user} token={token()} onSignOut={async () => {
+            // Tear down the device's push binding for this account before
+            // clearing the session token — the DELETE inside unsubscribeFromPush
+            // needs the token to authorize against RLS. Without this step the
+            // next user signing in on the same device would inherit our push
+            // endpoint until they explicitly toggled notifications off.
+            try { await unsubscribeFromPush(); } catch {/* sign out always proceeds */}
+            signOut();
+            setUser(null);
+          }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
           <Toast />
         </NavigationProvider>
       </ToastProvider>

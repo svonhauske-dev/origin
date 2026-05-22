@@ -92,6 +92,10 @@ export async function subscribeToPush() {
     throw new Error("VAPID public key missing — check VITE_VAPID_PUBLIC_KEY env var");
   }
 
+  const user = await getSession();
+  if (!user) throw new Error("Not signed in");
+  const tok = localStorage.getItem("sb_token") || "";
+
   const reg = await registerServiceWorker();
   await navigator.serviceWorker.ready;
 
@@ -100,14 +104,35 @@ export async function subscribeToPush() {
     throw new Error("Notification permission denied");
   }
 
+  // Wipe any pre-existing SW subscription before creating a fresh one. The
+  // service worker's push state is per-device, not per-user — if a different
+  // account was previously signed into this device and enabled notifications,
+  // its endpoint would still be bound to the SW and would otherwise end up
+  // shared across two users in the DB. Subscribing fresh produces a new
+  // endpoint that maps unambiguously to the current user. The previous
+  // endpoint, now invalid at the push service, gets auto-cleaned the next
+  // time the edge function tries to push to it (404/410 cleanup is already
+  // in place in process_notifications_queue + notify_protocol_sent). We also
+  // clear the current user's row at the old endpoint here so a same-user
+  // re-enable doesn't leave a transient dead row.
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) {
+    const oldEndpoint = existing.endpoint;
+    await existing.unsubscribe();
+    try {
+      await supa(
+        "DELETE",
+        `/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(oldEndpoint)}`,
+        null,
+        tok,
+      );
+    } catch {/* RLS may filter when the old row belongs to another user; harmless */}
+  }
+
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
   });
-
-  const user = await getSession();
-  if (!user) throw new Error("Not signed in");
-  const tok = localStorage.getItem("sb_token") || "";
 
   const subJSON = subscription.toJSON();
   await supa("POST", "/rest/v1/push_subscriptions", {
