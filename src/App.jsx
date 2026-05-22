@@ -227,19 +227,30 @@ export default function App() {
   // (before the session effect runs) so we route to Auth's reset_confirm mode
   // instead of dropping the user straight into ProtocolApp on the recovery
   // token's session.
+  //
+  // We mirror the "in recovery" flag into sessionStorage so a mid-flow page
+  // refresh stays in recovery mode rather than silently auto-signing-in via
+  // the recovery token left in localStorage. sessionStorage is per-tab so it
+  // clears naturally when the user closes the tab.
   const [recoveryMode, setRecoveryMode] = useState(() => {
     if (typeof window === "undefined") return false;
     const hash = window.location.hash.slice(1);
-    if (!hash) return false;
-    const params = new URLSearchParams(hash);
-    if (params.get("type") !== "recovery") return false;
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-    if (!accessToken) return false;
-    localStorage.setItem("sb_token", accessToken);
-    if (refreshToken) localStorage.setItem("sb_refresh_token", refreshToken);
-    window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    return true;
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      if (params.get("type") === "recovery") {
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        if (accessToken) {
+          localStorage.setItem("sb_token", accessToken);
+          if (refreshToken) localStorage.setItem("sb_refresh_token", refreshToken);
+          sessionStorage.setItem("origin.recovery_mode", "1");
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          return true;
+        }
+      }
+    }
+    // No fresh hash — was the user mid-recovery before a refresh?
+    return sessionStorage.getItem("origin.recovery_mode") === "1";
   });
   const token = () => localStorage.getItem("sb_token") || "";
 
@@ -288,6 +299,7 @@ export default function App() {
                 setUser(u);
                 retryPendingPushCleanup().catch(() => {});
                 setRecoveryMode(false);
+                sessionStorage.removeItem("origin.recovery_mode");
                 setProtocolLoading(true);
               }}
             />
