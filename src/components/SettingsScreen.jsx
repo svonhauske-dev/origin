@@ -13,6 +13,7 @@ import {
   getCurrentSubscription, subscribeToPush, unsubscribeFromPush,
 } from '../lib/notifications';
 import { dbUpdateScheduleField, dbUpdateProfile, updateEmail, updatePassword } from '../lib/api';
+import { calculateProtocolAdherence, getUpcomingEndings, getCurrentProtocolAge } from '../lib/adherence';
 import ScheduleTab from './ScheduleTab';
 import Modal from './Modal';
 
@@ -45,9 +46,9 @@ function PasswordRule({ met, label }) {
   );
 }
 
-const TITLES = { main: 'Settings', schedule: 'Schedule', account: 'Account', install: 'Add to home screen' };
+const TITLES = { main: 'Settings', schedule: 'Schedule', account: 'Account', install: 'Add to home screen', insights: 'Insights' };
 
-export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled, scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSaveSchedule, supplements = [], desktop = false }) {
+export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled, scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSaveSchedule, supplements = [], protocols = [], weekLogs = [], desktop = false }) {
   const { theme } = useTheme();
   const { show: showToast } = useToast();
 
@@ -276,6 +277,23 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
             {divider}
 
+            <Label style={{ marginBottom: spacing.xs }}>Insights</Label>
+            <div
+              onClick={() => setView('insights')}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
+                Adherence + upcoming changes
+              </span>
+              <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
+            </div>
+
+            {divider}
+
             {/* Notifications */}
             <Label style={{ marginBottom: spacing.xs }}>Notifications</Label>
             {!pushSupported ? (
@@ -396,6 +414,113 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </ol>
           </div>
         )}
+
+        {/* ── Insights view (quick prototype) ── */}
+        {view === 'insights' && (() => {
+          // For the prototype we treat "your" adherence as the first active
+          // protocol's adherence — for the common 1-protocol case that's exact;
+          // multi-protocol users get a partial picture for now.
+          const active = protocols.filter(p => p.status === 'active')[0];
+          const adh7  = active ? calculateProtocolAdherence(active, supplements, weekLogs, null, 7)  : null;
+          const adh30 = active ? calculateProtocolAdherence(active, supplements, weekLogs, null, 30) : null;
+          const protoAge = getCurrentProtocolAge(protocols);
+          const endings = getUpcomingEndings(supplements, 14);
+          const hasAny = adh7 || adh30 || protoAge || endings.length > 0;
+
+          if (!hasAny) {
+            return (
+              <HelperText>Not enough data yet. Insights appear as you build a history.</HelperText>
+            );
+          }
+
+          const labelStyle = {
+            fontSize: typography.label,
+            color: theme.text.muted,
+            fontFamily: typography.fontHeading,
+            fontWeight: typography.semibold,
+            letterSpacing: typography.labelSpacingWide,
+            textTransform: 'uppercase',
+            marginBottom: spacing.xxxs,
+          };
+          const numStyle = {
+            fontSize: typography.display,
+            fontWeight: typography.bold,
+            color: theme.text.primary,
+            fontFamily: typography.fontData,
+            letterSpacing: typography.headingLetterSpacing,
+            lineHeight: 1,
+          };
+
+          return (
+            <>
+              {(adh7 || adh30) && (
+                <>
+                  <Label style={{ marginBottom: spacing.sm }}>Adherence</Label>
+                  <div style={{ display: 'flex', gap: spacing.md, marginBottom: spacing.md }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={labelStyle}>Last 7 days</div>
+                      <div style={numStyle}>{adh7 ? `${adh7.pct}%` : '—'}</div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={labelStyle}>Last 30 days</div>
+                      <div style={numStyle}>{adh30 ? `${adh30.pct}%` : '—'}</div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {protoAge && (
+                <>
+                  {divider}
+                  <Label style={{ marginBottom: spacing.xs }}>Protocol</Label>
+                  <div style={{ fontSize: typography.body, color: theme.text.primary, marginBottom: spacing.md }}>
+                    Day{' '}
+                    <span style={{ fontFamily: typography.fontData, fontWeight: typography.semibold }}>
+                      {protoAge.ageDays}
+                    </span>
+                    {' '}of {protoAge.protocol.name}
+                  </div>
+                </>
+              )}
+
+              {endings.length > 0 && (
+                <>
+                  {divider}
+                  <Label style={{ marginBottom: spacing.xs }}>Coming up</Label>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {endings.map((s, i) => {
+                      const [y, m, dd] = s.ends_at.split('-').map(Number);
+                      const endDate = new Date(y, m - 1, dd);
+                      const formatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      return (
+                        <div key={s.id} style={{
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          justifyContent: 'space-between',
+                          padding: `${spacing.xs}px 0`,
+                          borderBottom: i < endings.length - 1
+                            ? `${theme.borderWidth.default}px solid ${theme.border.subtle}`
+                            : 'none',
+                        }}>
+                          <span style={{ fontSize: typography.body, color: theme.text.primary }}>
+                            {s.name}
+                          </span>
+                          <span style={{
+                            fontFamily: typography.fontData,
+                            fontSize: typography.caption,
+                            color: theme.text.secondary,
+                          }}>
+                            {formatted}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </>
+          );
+        })()}
 
       </div>
 

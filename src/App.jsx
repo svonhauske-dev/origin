@@ -59,7 +59,7 @@ import {
   dbGetClinicianNotes,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp } from './lib/time';
-import { calculateProtocolAdherence, calculateAdherenceForDate } from './lib/adherence';
+import { calculateProtocolAdherence, calculateAdherenceForDate, buildHomeInsights } from './lib/adherence';
 import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush, retryPendingPushCleanup } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
 import IFMigrationScreen from "./components/IFMigrationScreen";
@@ -2158,6 +2158,47 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         nextFixedSlot={nextFixedSlot}
       />
 
+      {/* Contextual insight — quiet single-line note that appears when there's
+          something worth surfacing (upcoming ending, milestone day). Only on
+          today, only when the home is past the empty state. Computed from
+          current state every render, so it disappears as conditions change. */}
+      {isToday && !isPast && homeSupps.length > 0 && (() => {
+        const insights = buildHomeInsights({ supplements: visibleSupps, protocols, logs: weekLogs });
+        if (insights.length === 0) return null;
+        const top = insights[0];
+        return (
+          <div style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: spacing.sm,
+            padding: `${spacing.xs}px ${spacing.sm}px`,
+            marginBottom: spacing.md,
+            borderLeft: `2px solid ${theme.accent.default}`,
+            background: theme.surface.card,
+          }}>
+            <span style={{
+              fontSize: typography.label,
+              color: theme.text.muted,
+              fontFamily: typography.fontHeading,
+              fontWeight: typography.semibold,
+              letterSpacing: typography.labelSpacingWide,
+              textTransform: "uppercase",
+              flexShrink: 0,
+            }}>
+              {top.label}
+            </span>
+            <span style={{
+              fontSize: typography.caption,
+              color: theme.text.primary,
+              fontFamily: typography.fontBody,
+              lineHeight: 1.5,
+            }}>
+              {top.body}
+            </span>
+          </div>
+        );
+      })()}
+
       {/* Main slot list — read-only state is signaled by the in-Hero eyebrow
           ("Viewing X · read-only"), no opacity dim on the content tree. */}
       <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, background: theme.surface.card, padding: spacing.md, marginBottom: spacing.md }}>
@@ -2197,6 +2238,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         consistentTime={consistentTime}
         onSaveSchedule={saveSchedule}
         supplements={visibleSupps}
+        protocols={protocols}
+        weekLogs={weekLogs}
       />
       <ProtocolLibrary
         isOpen={screenStack.some(s => s.name === 'manage_protocol')}

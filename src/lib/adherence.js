@@ -227,6 +227,76 @@ export function buildActivityLog(supplements = [], protocols = [], daysBack = 30
   return events.slice(0, limit);
 }
 
+// Quick prototype — a short list of contextual insights for the home screen.
+// Returns `{ id, kind, label, body }[]`, highest-priority first. Caller
+// typically renders only the first item to keep the home quiet. Insights
+// are computed each render from current state, so they appear and disappear
+// as the underlying conditions change — no dismissal state to track.
+export function buildHomeInsights({ supplements = [], protocols = [], logs = [] }) {
+  const out = [];
+  const today = startOfDay(new Date());
+
+  // (1) Upcoming endings — highest priority because action is required.
+  const endings = getUpcomingEndings(supplements, 7);
+  if (endings.length > 0) {
+    const next = endings[0];
+    const [y, m, dd] = next.ends_at.split('-').map(Number);
+    const endDate = startOfDay(new Date(y, m - 1, dd));
+    const days = Math.round((endDate - today) / 86400000);
+    const whenStr =
+      days === 0 ? 'today'         :
+      days === 1 ? 'tomorrow'      :
+      days < 7   ? endDate.toLocaleDateString('en-US', { weekday: 'long' }) :
+                   endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    out.push({
+      id: `ending-${next.id}`,
+      kind: 'upcoming-ending',
+      label: 'Coming up',
+      body: `${next.name} ends ${whenStr}`,
+    });
+  }
+
+  // (2) Protocol milestones — quiet acknowledgement when an active protocol
+  //     crosses a multiple of 30 days today. Single milestone per render.
+  const activeProtocols = protocols.filter(p => p.status === 'active');
+  for (const p of activeProtocols) {
+    const startStr = p.starts_at || p.created_at;
+    if (!startStr) continue;
+    const start = startOfDay(new Date(startStr));
+    const ageDays = Math.round((today - start) / 86400000);
+    if (ageDays > 0 && ageDays % 30 === 0) {
+      out.push({
+        id: `milestone-${p.id}-${ageDays}`,
+        kind: 'milestone',
+        label: 'Milestone',
+        body: `${ageDays} days on ${p.name}`,
+      });
+      break;
+    }
+  }
+
+  return out;
+}
+
+// Days the oldest active protocol has been running. Used by the InsightsScreen
+// summary line ("Day 47 of Origin Protocol"). Returns null if no active
+// protocol has a usable start date.
+export function getCurrentProtocolAge(protocols) {
+  const active = (protocols || []).filter(p => p.status === 'active');
+  if (active.length === 0) return null;
+  const today = startOfDay(new Date());
+  let oldest = null;
+  for (const p of active) {
+    const startStr = p.starts_at || p.created_at;
+    if (!startStr) continue;
+    const start = startOfDay(new Date(startStr));
+    if (!oldest || start < oldest.start) oldest = { protocol: p, start };
+  }
+  if (!oldest) return null;
+  const ageDays = Math.round((today - oldest.start) / 86400000);
+  return { protocol: oldest.protocol, ageDays };
+}
+
 export function getUpcomingEndings(supplements, daysAhead = 14) {
   const today = startOfDay(new Date());
   const horizon = new Date(today);
