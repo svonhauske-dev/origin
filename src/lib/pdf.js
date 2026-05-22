@@ -171,16 +171,27 @@ function groupBySlot(supps, scheduleMode) {
   });
 
   const slotDefs = scheduleMode === "fasting" ? IF_SLOTS : SLOTS;
+  const knownSlotIds = new Set(slotDefs.map(s => s.id));
 
-  // Determine each supp's primary slot (first slot in supp.slots, or null for anytime).
-  // Group by primary slot only — don't duplicate a supp across multiple slots
-  // even if `supp.slots` has more than one entry. The PDF describes structure;
-  // the app handles multi-slot display.
-  const buckets = new Map();
+  // Mirror how the app renders supps: a supp appears under EVERY slot it's
+  // assigned to (App.jsx getSuppsForSlot filters by supp.slots.includes(sid)).
+  // Supps with no slots go to Anytime. Supps with only unknown slot IDs
+  // (legacy `injectable`/`topical` IDs etc.) go to "Other" so we never drop.
+  const buckets = new Map();        // slotId → supps in display order
+  const anytime = [];
+  const orphans = [];
+
   for (const supp of active) {
-    const primary = Array.isArray(supp.slots) && supp.slots.length > 0 ? supp.slots[0] : null;
-    if (!buckets.has(primary)) buckets.set(primary, []);
-    buckets.get(primary).push(supp);
+    const slots = Array.isArray(supp.slots) ? supp.slots : [];
+    if (slots.length === 0) { anytime.push(supp); continue; }
+    let placed = false;
+    for (const sid of slots) {
+      if (!knownSlotIds.has(sid)) continue;
+      if (!buckets.has(sid)) buckets.set(sid, []);
+      buckets.get(sid).push(supp);
+      placed = true;
+    }
+    if (!placed) orphans.push(supp);
   }
 
   const groups = [];
@@ -194,13 +205,18 @@ function groupBySlot(supps, scheduleMode) {
       });
     }
   }
-  // Anytime bucket (supps with no slot) — render last.
-  const anytime = buckets.get(null);
-  if (anytime && anytime.length) {
+  if (anytime.length) {
     groups.push({
       slotId: null,
       label: "Anytime",
       supps: anytime.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    });
+  }
+  if (orphans.length) {
+    groups.push({
+      slotId: "_other",
+      label: "Other",
+      supps: orphans.slice().sort((a, b) => a.name.localeCompare(b.name)),
     });
   }
   return groups;
@@ -434,12 +450,12 @@ function drawSuppRow(page, supp, y, fonts) {
     color: NEAR_BLACK,
   });
 
-  // Dose — col2, right-aligned at COL2_RIGHT, truncated to col2 width.
+  // Dose — col2, left-aligned at COL2_X so doses across rows line up
+  // tabularly under a consistent left edge. Truncate to fit col2 width.
   const doseText = truncateToWidth(supp.dose || "", fonts.jbMono, size, COL2_W - 8);
   if (doseText) {
-    const doseW = fonts.jbMono.widthOfTextAtSize(doseText, size);
     page.drawText(doseText, {
-      x: COL2_RIGHT - doseW,
+      x: COL2_X,
       y: baselineY,
       font: fonts.jbMono,
       size,
