@@ -222,6 +222,25 @@ export default function App() {
   const [user, setUser]                         = useState(null);
   const [authLoading, setAuthLoading]           = useState(true);
   const [protocolLoading, setProtocolLoading]   = useState(false);
+  // Supabase password-recovery emails land back on this app with a URL hash
+  // like `#access_token=…&refresh_token=…&type=recovery`. Parse synchronously
+  // (before the session effect runs) so we route to Auth's reset_confirm mode
+  // instead of dropping the user straight into ProtocolApp on the recovery
+  // token's session.
+  const [recoveryMode, setRecoveryMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return false;
+    const params = new URLSearchParams(hash);
+    if (params.get("type") !== "recovery") return false;
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    if (!accessToken) return false;
+    localStorage.setItem("sb_token", accessToken);
+    if (refreshToken) localStorage.setItem("sb_refresh_token", refreshToken);
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    return true;
+  });
   const token = () => localStorage.getItem("sb_token") || "";
 
   const isLoading = authLoading || protocolLoading;
@@ -234,6 +253,10 @@ export default function App() {
     loaderRenderTime.current ? Math.max(0, 3000 - (Date.now() - loaderRenderTime.current)) : 3000;
 
   useEffect(() => {
+    if (recoveryMode) {
+      setAuthLoading(false);
+      return;
+    }
     getSession().then(u => {
       if (u) {
         setUser(u);
@@ -254,7 +277,12 @@ export default function App() {
       <ToastProvider>
         <NavigationProvider>
           {isLoading && <Loader onMount={onLoaderMount} />}
-          {!authLoading && !user && <Auth onSignIn={u => { setUser(u); setProtocolLoading(true); }} />}
+          {!authLoading && !user && (
+            <Auth
+              recoveryMode={recoveryMode}
+              onSignIn={u => { setUser(u); setRecoveryMode(false); setProtocolLoading(true); }}
+            />
+          )}
           {user && <ProtocolApp user={user} token={token()} onSignOut={() => { signOut(); setUser(null); }} onProtocolLoadEnd={handleProtocolLoadEnd} />}
           <Toast />
         </NavigationProvider>
@@ -1495,8 +1523,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           // iOS in Safari — can't subscribe until installed; show install instructions.
           setNeedsNotificationPrompt(true);
         } else if (isPushSupported()) {
-          const sub = await getCurrentSubscription();
-          if (!sub) setNeedsNotificationPrompt(true);
+          // First-time onboarding completion — always prompt. We intentionally
+          // skip the browser-level `getCurrentSubscription()` check because the
+          // service worker's push subscription can outlive a sign-out, so a
+          // brand-new user signing up on a previously-used device would
+          // otherwise be silently skipped past the prompt.
+          setNeedsNotificationPrompt(true);
         }
       }
       return ok;

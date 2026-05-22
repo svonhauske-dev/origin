@@ -170,6 +170,25 @@ export function signOut() {
   localStorage.removeItem("sb_refresh_token");
 }
 
+// Triggers Supabase's password-recovery email. Supabase intentionally returns
+// 200 whether or not the address is registered — to avoid leaking which emails
+// have accounts — so we don't surface registered/unregistered to the UI.
+// `redirectTo` should be the production URL Supabase will append the recovery
+// hash to (#access_token=…&type=recovery). It must also be whitelisted in the
+// Supabase dashboard under Auth → URL Configuration → Redirect URLs.
+export async function requestPasswordReset(email, redirectTo) {
+  const res = await fetch(`${SUPA_URL}/auth/v1/recover`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPA_KEY },
+    body: JSON.stringify({ email, ...(redirectTo ? { redirect_to: redirectTo } : {}) }),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d?.msg || "RESET_REQUEST_FAILED");
+  }
+  return true;
+}
+
 // Protocols
 export const dbGetProtocols    = (userId, t) => supa("GET",  `/rest/v1/protocols?user_id=eq.${userId}&select=*&order=created_at.asc`, null, t);
 export const dbAddProtocol     = (p, t)    => supa("POST",   "/rest/v1/protocols", p, t);
