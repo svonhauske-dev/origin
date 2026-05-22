@@ -1491,7 +1491,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const ok = await saveSchedule(mode, finalConfig, behavior, cTime);
       if (ok) {
         setNeedsOnboarding(false);
-        if (isPushSupported() && !needsHomeScreenInstall()) {
+        if (needsHomeScreenInstall()) {
+          // iOS in Safari — can't subscribe until installed; show install instructions.
+          setNeedsNotificationPrompt(true);
+        } else if (isPushSupported()) {
           const sub = await getCurrentSubscription();
           if (!sub) setNeedsNotificationPrompt(true);
         }
