@@ -8,6 +8,10 @@ import Card from '../Card';
 import Row from '../Row';
 import Badge from '../Badge';
 import Label from '../Label';
+import Heading from '../Heading';
+import HelperText from '../HelperText';
+import Checkbox from '../Checkbox';
+import InlineLoader from '../InlineLoader';
 import TabBar from '../TabBar';
 import AdherenceRing from '../AdherenceRing';
 import Sparkline from '../Sparkline';
@@ -204,6 +208,50 @@ export const componentRegistry = {
       variants: [
         { name: 'default',  props: { children: 'When to take it' } },
         { name: 'compact',  props: { style: { marginBottom: 0 }, children: 'Category' } },
+      ],
+    },
+
+    Heading: {
+      component: Heading,
+      description: 'Required `level` (1–6) drives the DOM tag; independent `visual` drives the size token — decouples document outline from visual styling. `visual="label"` produces the uppercase/letter-spaced treatment used for section labels across Settings and Onboarding.',
+      variants: [
+        { name: 'level 1 (display)',                props: { level: 1, children: 'Origin' } },
+        { name: 'level 2 (heading)',                props: { level: 2, children: 'Today\'s schedule' } },
+        { name: 'level 3 (title)',                  props: { level: 3, children: 'Active protocols' } },
+        { name: 'level 2 · visual="label"',         props: { level: 2, visual: 'label', children: 'Notifications' } },
+        { name: 'level 2 · visual="display"',       props: { level: 2, visual: 'display', children: '87%' } },
+      ],
+    },
+
+    HelperText: {
+      component: HelperText,
+      description: 'T1 explanatory text — section explanation directly below a Label or above content. Caption typography on text.secondary.',
+      variants: [
+        { name: 'default',
+          props: { children: 'Notifications come in at your scheduled times — Origin will batch them if you have multiple supplements in the same window.' } },
+        { name: 'short',
+          props: { children: 'Optional.' } },
+      ],
+    },
+
+    Checkbox: {
+      component: Checkbox,
+      description: 'Reusable checked indicator — fills background, draws a checkmark inside, inverts border on checked state. Consolidates the row-checkbox, password-rule indicator, and SlotCard primary check. Use `shape="pill"` for circular indicators (password rules), `shape="square"` for row-style checks. `weight="accent"` gives the 2px border treatment used on SlotCard\'s primary check.',
+      variants: [
+        { name: 'unchecked · square',                  props: { checked: false } },
+        { name: 'checked · square',                    props: { checked: true } },
+        { name: 'unchecked · pill',                    props: { checked: false, shape: 'pill' } },
+        { name: 'checked · pill',                      props: { checked: true,  shape: 'pill' } },
+        { name: 'checked · square · accent weight',    props: { checked: true,  weight: 'accent' } },
+      ],
+    },
+
+    InlineLoader: {
+      component: InlineLoader,
+      description: 'Compact loading indicator — pulsing dot with expanding rings. For inline contexts (form submit buttons, autocomplete async lookups) where a full Loader would dominate. Two sizes.',
+      variants: [
+        { name: 'sm (20px)', props: { size: 'sm' } },
+        { name: 'md (32px)', props: { size: 'md' } },
       ],
     },
 
