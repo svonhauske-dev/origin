@@ -149,9 +149,9 @@ export default function Auth({ onSignIn, recoveryMode = false }) {
           color: theme.text.primary,
           marginBottom: spacing.lg,
         }}>Origin</div>
-        <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>
+        <h1 style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, margin: 0, marginBottom: spacing.xs }}>
           {copy.title}
-        </div>
+        </h1>
         <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xl, lineHeight: 1.5 }}>
           {copy.sub}
         </div>

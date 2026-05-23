@@ -2070,9 +2070,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.md }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
           <AccountAvatar size="touch" displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
-          <span style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <h1 style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
             {profile?.display_name ? `Hello, ${profile.display_name.trim().split(" ")[0]}` : "Hello"}
-          </span>
+          </h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
           <div style={{ position: 'relative', display: 'inline-flex' }}>

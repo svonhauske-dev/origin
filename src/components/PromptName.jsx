@@ -20,9 +20,9 @@ export default function PromptName({ onSave }) {
     <div style={{ fontFamily: typography.fontBody, background: theme.gradients.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }}>
       <div style={{ width: "100%", maxWidth: layout.signInWidth, textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: spacing.md }}>👋</div>
-        <div style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, marginBottom: spacing.xs }}>
+        <h1 style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, margin: 0, marginBottom: spacing.xs }}>
           What's your full name?
-        </div>
+        </h1>
         <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xl, lineHeight: 1.5 }}>
           We'll use it in your daily greeting.
         </div>

@@ -290,9 +290,9 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
             <ChevronLeft size={18} />
           </Button>
         )}
-        <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary }}>
+        <h1 style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, margin: 0 }}>
           Protocols
-        </span>
+        </h1>
         {readOnly && !onPlusClick ? (
           <span style={{ width: touch.min }} aria-hidden />
         ) : (
