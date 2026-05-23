@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { spacing, typography, touch, layout, icon, motion } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { useToast } from './ToastContext';
@@ -9,6 +9,7 @@ import Heading from './Heading';
 import Input from './Input';
 import Label from './Label';
 import HelperText from './HelperText';
+import Row from './Row';
 import InlineLoader from './InlineLoader';
 import {
   isPushSupported, needsHomeScreenInstall, getNotificationPermission,
@@ -238,36 +239,28 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         {view === 'main' && (
           <>
             <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Schedule</Heading>
-            <div
+            <Row
               onClick={() => setView('schedule')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
-                Edit schedule
-              </span>
-              <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-            </div>
+              ariaLabel="Edit schedule"
+              leftContent={
+                <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
+                  Edit schedule
+                </span>
+              }
+            />
 
             {divider}
 
             <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Account</Heading>
-            <div
+            <Row
               onClick={() => setView('account')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
-                Edit account
-              </span>
-              <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-            </div>
+              ariaLabel="Edit account"
+              leftContent={
+                <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
+                  Edit account
+                </span>
+              }
+            />
 
             {/* DEV-ONLY: insights nav row (prototype). vercel.json pins `vite
                 build` so import.meta.env.DEV is reliably false in production. */}
@@ -275,19 +268,15 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               <>
                 {divider}
                 <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Insights</Heading>
-                <div
+                <Row
                   onClick={() => setView('insights')}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    minHeight: touch.min, cursor: 'pointer', userSelect: 'none',
-                    WebkitTapHighlightColor: 'transparent',
-                  }}
-                >
-                  <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
-                    Adherence + upcoming changes
-                  </span>
-                  <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-                </div>
+                  ariaLabel="Adherence and upcoming changes"
+                  leftContent={
+                    <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
+                      Adherence + upcoming changes
+                    </span>
+                  }
+                />
               </>
             )}
 
@@ -298,19 +287,15 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             {!pushSupported ? (
               <HelperText>Notifications aren't supported in this browser.</HelperText>
             ) : needsInstall ? (
-              <div
+              <Row
                 onClick={() => setView('install')}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  cursor: 'pointer', userSelect: 'none', WebkitTapHighlightColor: 'transparent',
-                  minHeight: touch.min,
-                }}
-              >
-                <span style={{ fontSize: typography.caption, color: theme.text.secondary, flex: 1, paddingRight: spacing.sm }}>
-                  Install Origin to your home screen to enable reminders.
-                </span>
-                <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-              </div>
+                ariaLabel="Install Origin to enable reminders"
+                leftContent={
+                  <span style={{ fontSize: typography.caption, color: theme.text.secondary, flex: 1, paddingRight: spacing.sm }}>
+                    Install Origin to your home screen to enable reminders.
+                  </span>
+                }
+              />
             ) : (
               <>
                 <div style={{ display: 'flex', gap: spacing.xs }}>

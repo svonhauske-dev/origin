@@ -10,6 +10,7 @@ import Modal from "./Modal";
 import TabBar from "./TabBar";
 import InlineTip from "./InlineTip";
 import HelperText from "./HelperText";
+import Row from "./Row";
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -27,86 +28,83 @@ function addDuration(startStr, value, unit) {
 function ProtocolRow({ protocol, count, onTap, adherence }) {
   const { theme } = useTheme();
   const isArchived = protocol.status !== 'active';
-  return (
-    <button
-      onClick={onTap}
-      disabled={!onTap}
-      style={{
-        display: "flex", alignItems: "center", width: "100%",
-        background: "none", border: "none",
-        borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-        padding: `${spacing.sm}px 0`, cursor: onTap ? "pointer" : "default",
-        minHeight: touch.min, textAlign: "left",
-        WebkitTapHighlightColor: "transparent",
-        opacity: isArchived ? 0.55 : 1,
-        gap: spacing.sm,
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: "2px" }}>
-          {protocol.name}
-        </div>
-        <div style={{ fontSize: typography.caption, color: theme.text.secondary }}>
-          {count} {count === 1 ? "supplement" : "supplements"}
-          {protocol.source === 'clinician' && " · From clinician"}
-          {protocol.status === 'archived' && " · Saved"}
-          {protocol.ends_at && protocol.status === 'active' && ` · Ends ${formatDate(protocol.ends_at)}`}
-        </div>
+
+  // Compose the right slot: when only onTap is set, defer to Row's default
+  // chevron (undefined). When adherence is present we own the right slot,
+  // and include the chevron explicitly if also tappable.
+  const adherenceBlock = adherence && (
+    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+      <div style={{
+        fontSize: typography.title,
+        fontWeight: typography.bold,
+        fontFamily: typography.fontData,
+        color: theme.text.primary,
+        lineHeight: 1,
+      }}>
+        {adherence.pct}%
       </div>
-      {adherence && (
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{
-            fontSize: typography.title,
-            fontWeight: typography.bold,
-            fontFamily: typography.fontData,
-            color: theme.text.primary,
-            lineHeight: 1,
-          }}>
-            {adherence.pct}%
+      <div style={{
+        fontSize: typography.caption,
+        color: theme.text.secondary,
+        marginTop: spacing.xxxs,
+      }}>
+        {adherence.days} {adherence.days === 1 ? 'day' : 'days'}
+      </div>
+    </div>
+  );
+  let rightContent;
+  if (adherence && onTap) rightContent = <>{adherenceBlock}<ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} /></>;
+  else if (adherence)     rightContent = adherenceBlock;
+  else if (onTap)         rightContent = undefined; // default chevron
+  else                    rightContent = null;
+
+  return (
+    <Row
+      onClick={onTap}
+      ariaLabel={protocol.name}
+      rightContent={rightContent}
+      leftContent={
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: "2px" }}>
+            {protocol.name}
           </div>
-          <div style={{
-            fontSize: typography.caption,
-            color: theme.text.secondary,
-            marginTop: spacing.xxxs,
-          }}>
-            {adherence.days} {adherence.days === 1 ? 'day' : 'days'}
+          <div style={{ fontSize: typography.caption, color: theme.text.secondary }}>
+            {count} {count === 1 ? "supplement" : "supplements"}
+            {protocol.source === 'clinician' && " · From clinician"}
+            {protocol.status === 'archived' && " · Saved"}
+            {protocol.ends_at && protocol.status === 'active' && ` · Ends ${formatDate(protocol.ends_at)}`}
           </div>
         </div>
-      )}
-      {onTap && <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />}
-    </button>
+      }
+      style={{
+        borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+        padding: `${spacing.sm}px 0`,
+        opacity: isArchived ? 0.55 : 1,
+      }}
+    />
   );
 }
 
 function IntentOption({ label, description, onClick, theme }) {
   return (
-    <button
-      type="button"
+    <Row
       onClick={onClick}
+      ariaLabel={label}
+      leftContent={
+        <div style={{ flex: 1, paddingRight: spacing.sm }}>
+          <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs }}>
+            {label}
+          </div>
+          <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.4 }}>
+            {description}
+          </div>
+        </div>
+      }
       style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        width: "100%",
-        background: "transparent",
-        border: "none",
         borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
         padding: `${spacing.sm}px 0`,
-        minHeight: touch.min, cursor: "pointer", userSelect: "none",
-        textAlign: "left",
-        fontFamily: "inherit",
-        color: "inherit",
-        WebkitTapHighlightColor: "transparent",
       }}
-    >
-      <div style={{ flex: 1, paddingRight: spacing.sm }}>
-        <div style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.primary, marginBottom: spacing.xxxs }}>
-          {label}
-        </div>
-        <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.4 }}>
-          {description}
-        </div>
-      </div>
-      <ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} />
-    </button>
+    />
   );
 }
 

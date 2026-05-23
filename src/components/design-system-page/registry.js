@@ -5,6 +5,7 @@
 import Button from '../Button';
 import Input from '../Input';
 import Card from '../Card';
+import Row from '../Row';
 import Badge from '../Badge';
 import Label from '../Label';
 import TabBar from '../TabBar';
@@ -166,6 +167,23 @@ export const componentRegistry = {
         { name: 'selected', props: { variant: 'selected', style: { minHeight: 60 }, children: 'Selected card' } },
         { name: 'accent',   props: { variant: 'accent',   style: { minHeight: 60 }, children: 'Accent card' } },
         { name: 'subtle',   props: { variant: 'subtle',   style: { minHeight: 60 }, children: 'Subtle card' } },
+      ],
+    },
+
+    Row: {
+      component: Row,
+      description: 'Disclosure-row primitive. Left content + optional right content, button-semantic when onClick is set (div + role="button" so callsites can nest interactive children — see SupplementRow). Default right slot is ChevronRight when interactive. Underlies Settings nav rows, SlotRow, SupplementRow, and ProtocolLibrary rows.',
+      variants: [
+        { name: 'nav (default chevron)',
+          props: { leftContent: 'Edit schedule', onClick: () => {}, ariaLabel: 'Edit schedule' } },
+        { name: 'static (no onClick)',
+          props: { leftContent: 'Read-only label' } },
+        { name: 'custom right content',
+          props: { leftContent: 'Adherence — last 30 days', onClick: () => {}, rightContent: '85%' } },
+        { name: 'no right content (rightContent={null})',
+          props: { leftContent: 'Sign out', onClick: () => {}, rightContent: null, ariaLabel: 'Sign out' } },
+        { name: 'disabled',
+          props: { leftContent: 'Edit account', onClick: () => {}, disabled: true, ariaLabel: 'Edit account' } },
       ],
     },
 
