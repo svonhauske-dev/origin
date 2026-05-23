@@ -48,6 +48,16 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
   const { show: showToast } = useToast();
 
   const [view, setView] = useState('main');
+  // renderedSubView lags behind `view`: it captures the most recent non-main
+  // view so its content stays mounted during the slide-out animation back
+  // to main. Without it, going back would unmount the sub-view content
+  // instantly and the slide would animate an empty container.
+  const [renderedSubView, setRenderedSubView] = useState(null);
+
+  const goToSubView = (v) => {
+    setRenderedSubView(v);
+    setView(v);
+  };
 
   // Notification state
   const [permission, setPermission]           = useState('default');
@@ -77,6 +87,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
   useEffect(() => {
     if (!isOpen) return;
     setView('main');
+    setRenderedSubView(null);
     setPermission(getNotificationPermission());
     setNeedsInstall(needsHomeScreenInstall());
     setPushSupported(isPushSupported());
@@ -168,7 +179,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         showToast('Permission denied — enable in device settings');
         setPermission('denied');
       } else if (err.message?.includes('PWA install')) {
-        setView('install');
+        goToSubView('install');
       } else if (err.message?.includes('VAPID')) {
         showToast('Reminders not configured yet');
       } else {
@@ -183,15 +194,64 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
     <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
   );
 
+  // Shared layer header — back chevron + title. Each sliding layer mounts
+  // its own copy so the title swap is visually tied to the layer that's
+  // entering/leaving.
+  const LayerHeader = ({ title }) => (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: desktop
+        ? `${spacing.md}px ${spacing.md}px ${spacing.sm}px`
+        : `max(20px, env(safe-area-inset-top)) ${spacing.md}px ${spacing.sm}px`,
+      background: desktop ? theme.surface.card : theme.surface.canvas,
+      borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
+      position: 'sticky', top: 0, zIndex: 1,
+    }}>
+      <Button variant="icon" aria-label="Back" onClick={handleBack}>
+        <ChevronLeft size={18} />
+      </Button>
+      <h1 style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, margin: 0 }}>
+        {title}
+      </h1>
+      <div style={{ width: touch.min }} />
+    </div>
+  );
+
+  const contentInnerStyle = {
+    maxWidth: desktop ? 'none' : layout.maxContentWidth,
+    width: '100%',
+    margin: '0 auto',
+    padding: desktop
+      ? `${spacing.lg}px ${spacing.md}px ${spacing.md}px`
+      : `${spacing.lg}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
+  };
+
+  // Both layers are absolutely positioned inside the panel and scroll
+  // independently. Sub-layer translates from +100% → 0 entering and back
+  // to +100% on the way out, mirroring the iOS push-nav pattern. The outer
+  // panel sets overflow: hidden so the off-screen sub-layer is clipped
+  // rather than escaping.
+  const layerBaseStyle = {
+    position: 'absolute',
+    inset: 0,
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    background: desktop ? theme.surface.card : theme.surface.canvas,
+  };
+  const subLayerStyle = {
+    ...layerBaseStyle,
+    transform: view === 'main' ? 'translateX(100%)' : 'translateX(0)',
+    transition: `transform ${motion.screenSlide}ms ease-out`,
+    zIndex: 2,
+  };
+
   return (
     <div style={desktop ? {
       position: 'relative',
       width: '100%',
       height: '100%',
       background: theme.surface.card,
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
+      overflow: 'hidden',
     } : {
       position: 'fixed',
       // Centered phone-frame on desktop (≥1024px). 100vw closed-state shift
@@ -203,44 +263,16 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       transition: `transform ${motion.screenSlide}ms ease-out`,
       zIndex: 100,
       background: theme.surface.canvas,
-      overflowY: 'auto',
-      WebkitOverflowScrolling: 'touch',
+      overflow: 'hidden',
     }}>
-      {/* Sticky header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: desktop
-          ? `${spacing.md}px ${spacing.md}px ${spacing.sm}px`
-          : `max(20px, env(safe-area-inset-top)) ${spacing.md}px ${spacing.sm}px`,
-        background: desktop ? theme.surface.card : theme.surface.canvas,
-        borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
-        position: 'sticky', top: 0, zIndex: 1,
-      }}>
-        <Button variant="icon" aria-label="Back" onClick={handleBack}>
-          <ChevronLeft size={18} />
-        </Button>
-        <h1 style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, margin: 0 }}>
-          {TITLES[view]}
-        </h1>
-        <div style={{ width: touch.min }} />
-      </div>
-
-      {/* Scrollable content */}
-      <div style={{
-        maxWidth: desktop ? 'none' : layout.maxContentWidth,
-        width: '100%',
-        margin: '0 auto',
-        padding: desktop
-          ? `${spacing.lg}px ${spacing.md}px ${spacing.md}px`
-          : `${spacing.lg}px ${spacing.md}px max(80px, env(safe-area-inset-bottom))`,
-      }}>
-
-        {/* ── Main view ── */}
-        {view === 'main' && (
+      {/* ───── Main layer ───── */}
+      <div style={layerBaseStyle} aria-hidden={view !== 'main'}>
+        <LayerHeader title={TITLES.main} />
+        <div style={contentInnerStyle}>
           <>
             <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Schedule</Heading>
             <Row
-              onClick={() => setView('schedule')}
+              onClick={() => goToSubView('schedule')}
               ariaLabel="Edit schedule"
               leftContent={
                 <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
@@ -253,7 +285,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
             <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Account</Heading>
             <Row
-              onClick={() => setView('account')}
+              onClick={() => goToSubView('account')}
               ariaLabel="Edit account"
               leftContent={
                 <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
@@ -269,7 +301,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                 {divider}
                 <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Insights</Heading>
                 <Row
-                  onClick={() => setView('insights')}
+                  onClick={() => goToSubView('insights')}
                   ariaLabel="Adherence and upcoming changes"
                   leftContent={
                     <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
@@ -288,7 +320,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               <HelperText>Notifications aren't supported in this browser.</HelperText>
             ) : needsInstall ? (
               <Row
-                onClick={() => setView('install')}
+                onClick={() => goToSubView('install')}
                 ariaLabel="Install Origin to enable reminders"
                 leftContent={
                   <span style={{ fontSize: typography.caption, color: theme.text.secondary, flex: 1, paddingRight: spacing.sm }}>
@@ -313,10 +345,16 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
             <Button variant="secondary" fullWidth onClick={() => setShowSignOutConfirm(true)}>Sign out</Button>
           </>
-        )}
+        </div>
+      </div>
+
+      {/* ───── Sub-view layer ───── */}
+      <div style={subLayerStyle} aria-hidden={view === 'main'}>
+        <LayerHeader title={TITLES[renderedSubView] || ''} />
+        <div style={contentInnerStyle}>
 
         {/* ── Schedule view ── */}
-        {view === 'schedule' && (
+        {renderedSubView === 'schedule' && (
           <ScheduleTab
             scheduleMode={scheduleMode}
             scheduleConfig={scheduleConfig}
@@ -328,7 +366,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         )}
 
         {/* ── Account view ── */}
-        {view === 'account' && (
+        {renderedSubView === 'account' && (
           <>
             <div style={{ marginBottom: spacing.md }}>
               <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>Full name</Label>
@@ -385,7 +423,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         )}
 
         {/* ── Install view ── */}
-        {view === 'install' && (
+        {renderedSubView === 'install' && (
           <div style={{ paddingTop: spacing.xs }}>
             <p style={{ fontSize: typography.body, color: theme.text.secondary, marginBottom: spacing.md, lineHeight: 1.6 }}>
               To enable reminders on iOS, Origin must be installed to your home screen.
@@ -400,7 +438,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         )}
 
         {/* ── Insights view (DEV-ONLY prototype) ── */}
-        {import.meta.env.DEV && view === 'insights' && (() => {
+        {import.meta.env.DEV && renderedSubView === 'insights' && (() => {
           // For the prototype we treat "your" adherence as the first active
           // protocol's adherence — for the common 1-protocol case that's exact;
           // multi-protocol users get a partial picture for now.
@@ -506,6 +544,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
           );
         })()}
 
+        </div>
       </div>
 
       <Modal
