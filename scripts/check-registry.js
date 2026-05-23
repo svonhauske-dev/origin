@@ -49,6 +49,9 @@ const EXCEPTIONS = {
   // Brand asset
   "OriginGlyph":             "brand-mark SVG, not a design-system primitive",
 
+  // Context / non-visual
+  "ToastContext":            "context module (exports ToastContext + useToast + ToastProvider); not a UI primitive",
+
   // Clinician spin-off — parked from the design-system page
   "Sidebar":                 "clinician spin-off — parked",
   "PatientRoster":           "clinician spin-off — parked",
@@ -87,16 +90,22 @@ const primitiveKeys = extractKeys("primitives");
 const composedKeys  = extractKeys("composed");
 const registered    = new Set([...primitiveKeys, ...composedKeys]);
 
-// Scan src/components/ — top level only. Capitalized .jsx files with a
-// default export.
+// Scan src/components/ — top level only. Capitalized .jsx files that export
+// either a default OR a Capitalized named const/function/class. The named
+// branch catches files like ToastContext.jsx that ship `export const
+// ToastContext` instead of a default export — without it, future primitives
+// shipped as named exports would silently pass through the check.
 const detected = [];
+const NAMED_COMPONENT_EXPORT = /^export\s+(?:const|function|class)\s+[A-Z]/m;
 for (const entry of fs.readdirSync(COMPONENTS_DIR, { withFileTypes: true })) {
   if (!entry.isFile()) continue;
   if (!entry.name.endsWith(".jsx")) continue;
   if (!/^[A-Z]/.test(entry.name)) continue;
   const name = entry.name.replace(/\.jsx$/, "");
   const src = fs.readFileSync(path.join(COMPONENTS_DIR, entry.name), "utf8");
-  if (!/^export\s+default\s+/m.test(src)) continue;
+  const hasDefault = /^export\s+default\s+/m.test(src);
+  const hasNamed   = NAMED_COMPONENT_EXPORT.test(src);
+  if (!hasDefault && !hasNamed) continue;
   detected.push(name);
 }
 
