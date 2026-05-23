@@ -321,7 +321,7 @@ export default function ProtocolDetailScreen({
                 width: '100%', background: 'none', border: 'none',
                 borderBottom: `${theme.borderWidth.default}px solid ${theme.accent.default}`,
                 fontSize: typography.body, fontWeight: typography.semibold,
-                color: theme.text.primary, padding: `${spacing.xxs}px 0`, outline: 'none',
+                color: theme.text.primary, padding: `${spacing.xxs}px 0`,
                 textAlign: 'center', fontFamily: 'inherit',
               }}
             />
@@ -793,7 +793,6 @@ export default function ProtocolDetailScreen({
               color: theme.text.primary,
               fontFamily: typography.fontBody,
               fontSize: typography.body,
-              outline: 'none',
             }}
           />
           {sendUserError ? (

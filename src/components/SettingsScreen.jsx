@@ -5,6 +5,7 @@ import { useTheme } from '../lib/theme';
 import { useToast } from './ToastContext';
 import Button from './Button';
 import Checkbox from './Checkbox';
+import Heading from './Heading';
 import Input from './Input';
 import Label from './Label';
 import HelperText from './HelperText';
@@ -236,7 +237,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         {/* ── Main view ── */}
         {view === 'main' && (
           <>
-            <Label style={{ marginBottom: spacing.xs }}>Schedule</Label>
+            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Schedule</Heading>
             <div
               onClick={() => setView('schedule')}
               style={{
@@ -253,7 +254,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
             {divider}
 
-            <Label style={{ marginBottom: spacing.xs }}>Account</Label>
+            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Account</Heading>
             <div
               onClick={() => setView('account')}
               style={{
@@ -273,7 +274,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             {import.meta.env.DEV && (
               <>
                 {divider}
-                <Label style={{ marginBottom: spacing.xs }}>Insights</Label>
+                <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Insights</Heading>
                 <div
                   onClick={() => setView('insights')}
                   style={{
@@ -293,7 +294,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             {divider}
 
             {/* Notifications */}
-            <Label style={{ marginBottom: spacing.xs }}>Notifications</Label>
+            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Notifications</Heading>
             {!pushSupported ? (
               <HelperText>Notifications aren't supported in this browser.</HelperText>
             ) : needsInstall ? (
@@ -453,7 +454,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             <>
               {(adh7 || adh30) && (
                 <>
-                  <Label style={{ marginBottom: spacing.sm }}>Adherence</Label>
+                  <Heading level={2} visual="label" style={{ marginBottom: spacing.sm }}>Adherence</Heading>
                   <div style={{ display: 'flex', gap: spacing.md, marginBottom: spacing.md }}>
                     <div style={{ flex: 1 }}>
                       <div style={labelStyle}>Last 7 days</div>
@@ -470,7 +471,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               {protoAge && (
                 <>
                   {divider}
-                  <Label style={{ marginBottom: spacing.xs }}>Protocol</Label>
+                  <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Protocol</Heading>
                   <div style={{ fontSize: typography.body, color: theme.text.primary, marginBottom: spacing.md }}>
                     Day{' '}
                     <span style={{ fontFamily: typography.fontData, fontWeight: typography.semibold }}>
@@ -484,7 +485,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               {endings.length > 0 && (
                 <>
                   {divider}
-                  <Label style={{ marginBottom: spacing.xs }}>Coming up</Label>
+                  <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Coming up</Heading>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {endings.map((s, i) => {
                       const [y, m, dd] = s.ends_at.split('-').map(Number);

@@ -14,7 +14,10 @@ export default function Input({ variant = "text", width, style, type, onFocus, o
     borderRadius: theme.radius.surface,
     fontSize: typography.body,
     fontFamily: typography.fontBody,
-    outline: "none",
+    // Don't strip outline — let the global :focus-visible rule fire for
+    // keyboard focus. Modern browsers suppress the default outline on
+    // mouse focus when :focus-visible is defined, so this stays clean
+    // for mouse users while exposing the keyboard-focus indicator.
     WebkitAppearance: "none",
     boxSizing: "border-box",
     transition: "border-color 150ms ease",

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
-import { spacing, typography, touch } from '../design-system';
+import { spacing, typography, touch, icon } from '../design-system';
 import { useTheme } from '../lib/theme';
+import Checkbox from './Checkbox';
 
 export default function SupplementRow({ supplement, checked, isReadOnly, onToggle, onEdit }) {
   const { theme } = useTheme();
@@ -26,24 +27,11 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {/* Inline checkbox */}
-      <div className="supp-checkbox" style={{
-        width: 18,
-        height: 18,
-        borderRadius: theme.radius.surfaceInner,
-        border: `${theme.borderWidth.default}px solid ${checked ? theme.accent.default : theme.border.subtle}`,
-        background: checked ? theme.accent.default : 'transparent',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background 150ms ease, border-color 150ms ease',
-      }}>
-        {checked && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke={theme.text.onAccent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+      {/* Inline checkbox — Checkbox primitive. supp-checkbox className stays
+          on a wrapper so the existing prefers-reduced-motion override in
+          index.html still matches. */}
+      <div className="supp-checkbox" style={{ display: "flex", flexShrink: 0 }}>
+        <Checkbox checked={checked} size={icon.sm} shape="square" />
       </div>
 
       {/* Name + dose */}

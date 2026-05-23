@@ -4,6 +4,7 @@ import { useTheme } from "../lib/theme";
 import { DEFAULT_CONFIG, FIXED_SLOTS, DISPLAY_MODES, ANCHOR_SUB_MODES, computeIFSlotTimes } from "../config";
 import Button from "./Button";
 import Card from "./Card";
+import Heading from "./Heading";
 import HelperText from "./HelperText";
 import Input from "./Input";
 import Label from "./Label";
@@ -219,7 +220,7 @@ export default function Onboarding({ onComplete }) {
             {/* Anchor sub-selector — appears below grid when Anchor card is selected */}
             {selectedCard === "anchor" && (
               <div style={{ marginTop: spacing.sm }}>
-                <Label>Anchor type</Label>
+                <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Anchor type</Heading>
                 <div style={{ display: "flex", gap: spacing.xs }}>
                   {ANCHOR_SUB_MODES.map(sub => (
                     <Button
@@ -266,7 +267,7 @@ export default function Onboarding({ onComplete }) {
         {/* Flexible / Consistent toggle — not for fixed or fasting (both fixed-schedule) */}
         {selectedMode !== "fixed" && selectedMode !== "fasting" && (
           <div style={{ marginBottom: spacing.md }}>
-            <Label>Daily timing</Label>
+            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Daily timing</Heading>
             {behavior === "flexible" && (
               <HelperText>Tap each morning to set your schedule for the day.</HelperText>
             )}
@@ -291,7 +292,7 @@ export default function Onboarding({ onComplete }) {
         {isOffsetMode && (
           <>
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Meal schedule</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Meal schedule</Heading>
               <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
                 {[
                   { key_h: "first_meal_offset_hours", key_m: "first_meal_offset_minutes", label: "First meal",    caption: "hours after your anchor" },
@@ -328,7 +329,7 @@ export default function Onboarding({ onComplete }) {
             </div>
 
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Pre-meal window</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Pre-meal window</Heading>
               <HelperText>How early before each meal to schedule pre-meal items</HelperText>
               <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
                 <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Pre-meal items</span>
@@ -343,7 +344,7 @@ export default function Onboarding({ onComplete }) {
             </div>
 
             <div style={{ marginBottom: spacing.lg }}>
-              <Label>Evening</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Evening</Heading>
               <HelperText>A fixed slot independent of your anchor</HelperText>
               <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.sm }}>
                 {([
@@ -409,7 +410,7 @@ export default function Onboarding({ onComplete }) {
         {selectedMode === "fasting" && (
           <div style={{ marginBottom: spacing.lg }}>
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Eating window start</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Eating window start</Heading>
               <HelperText>When your eating window opens each day</HelperText>
               <Input
                 variant="time"
@@ -419,7 +420,7 @@ export default function Onboarding({ onComplete }) {
               />
             </div>
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Window duration</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Window duration</Heading>
               <div style={{ display: "flex", gap: spacing.xs }}>
                 {[[4, "4 hr"], [6, "6 hr"], [8, "8 hr"], [10, "10 hr"], [12, "12 hr"]].map(([val, lbl]) => {
                   const on = (config.eating_window_duration_hours ?? 8) === val;
@@ -428,7 +429,7 @@ export default function Onboarding({ onComplete }) {
               </div>
             </div>
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Meals</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Meals</Heading>
               <div style={{ display: "flex", gap: spacing.xs }}>
                 {[[2, "2 meals"], [3, "3 meals"]].map(([val, lbl]) => {
                   const on = (config.meal_count ?? 3) === val;
@@ -437,7 +438,7 @@ export default function Onboarding({ onComplete }) {
               </div>
             </div>
             <div style={{ marginBottom: spacing.md }}>
-              <Label>Pre-meal window</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Pre-meal window</Heading>
               <HelperText>How early before each meal to take pre-meal items</HelperText>
               <Card style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>
                 <span style={{ flex: 1, fontSize: typography.caption, color: theme.text.secondary }}>Pre-meal items</span>
@@ -452,7 +453,7 @@ export default function Onboarding({ onComplete }) {
             </div>
 
             <div style={{ marginBottom: spacing.lg }}>
-              <Label>Evening</Label>
+              <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Evening</Heading>
               <HelperText>A fixed slot at the end of your day</HelperText>
               <div style={{ display: "flex", gap: spacing.xs, marginBottom: spacing.sm }}>
                 {([
@@ -515,7 +516,7 @@ export default function Onboarding({ onComplete }) {
         {/* Fixed: time pickers */}
         {selectedMode === "fixed" && (
           <div style={{ marginBottom: spacing.lg }}>
-            <Label>Fixed times</Label>
+            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Fixed times</Heading>
             <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs }}>
               {FIXED_SLOTS.map(({ key, label }) => (
                 <Card key={key} style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.xs}px ${spacing.sm}px`, marginBottom: 0 }}>

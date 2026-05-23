@@ -47,20 +47,27 @@ export default function Heading({
   const Tag = `h${level || 2}`;
   const v = visual || LEVEL_DEFAULT_VISUAL[level] || "body";
   const fontSize = VISUAL_TO_SIZE[v] ?? typography.body;
+  // visual="label" produces the uppercase/letter-spaced treatment that
+  // existing section labels use across Settings + Onboarding — letting
+  // `<Heading level={2} visual="label">` drop in for what used to be
+  // `<Label>` while gaining real heading semantics.
+  const isLabelVisual = v === "label";
   const letterSpacing =
     v === "display" ? typography.displayLetterSpacing :
     v === "heading" || v === "title" ? typography.headingLetterSpacing :
+    isLabelVisual ? typography.labelSpacing :
     "normal";
 
   return (
     <Tag
       style={{
-        fontFamily: typography.fontHeading,
+        fontFamily: isLabelVisual ? typography.fontBody : typography.fontHeading,
         fontSize,
         fontWeight: typography[weight] ?? typography.semibold,
-        color: theme.text.primary,
+        color: isLabelVisual ? theme.text.secondary : theme.text.primary,
         letterSpacing,
-        lineHeight: 1.25,
+        lineHeight: isLabelVisual ? 1 : 1.25,
+        textTransform: isLabelVisual ? "uppercase" : "none",
         margin: 0,
         ...style,
       }}

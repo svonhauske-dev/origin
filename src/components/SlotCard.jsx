@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pencil, Pill, Syringe, Droplet, Clock } from 'lucide-react';
-import { spacing, typography, touch, motion } from '../design-system';
+import { spacing, typography, touch, motion, icon } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
+import Checkbox from './Checkbox';
 
 function CategoryIcon({ category, color }) {
   if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
@@ -124,9 +125,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, minHeight: touch.row }}>
                 <button type="button" onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} aria-label={done ? `Uncheck ${supp.name}` : `Check ${supp.name}`} aria-pressed={done} style={{ background: "none", border: "none", padding: expand, margin: -expand, cursor: (isFuture || isReadOnly) ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, WebkitTapHighlightColor: "transparent" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: theme.radius.surfaceInner, border: `${theme.borderWidth.accent}px solid ${done ? theme.accent.default : theme.border.strong}`, background: done ? theme.accent.default : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {done && <span style={{ color: theme.text.onAccent, fontSize: typography.label, fontWeight: typography.bold }}>✓</span>}
-                  </div>
+                  <Checkbox checked={done} size={24} shape="square" weight="accent" />
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xs2 }}>

@@ -12,12 +12,14 @@ export default function Checkbox({
   checked,
   size = icon.sm,           // default 18px — matches SupplementRow
   shape = "square",         // "square" | "pill"
+  weight = "default",       // "default" (1px) | "accent" (2px) — SlotCard's primary check uses accent
   ariaLabel,
   style,
   ...rest
 }) {
   const { theme } = useTheme();
   const checkSize = Math.floor(size * 0.6);
+  const borderWidth = weight === "accent" ? theme.borderWidth.accent : theme.borderWidth.default;
 
   return (
     <div
@@ -29,7 +31,7 @@ export default function Checkbox({
         height: size,
         borderRadius: shape === "pill" ? theme.radius.pill : theme.radius.surfaceInner,
         background: checked ? theme.accent.default : "transparent",
-        border: `${theme.borderWidth.default}px solid ${checked ? theme.accent.default : theme.border.strong}`,
+        border: `${borderWidth}px solid ${checked ? theme.accent.default : theme.border.strong}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
