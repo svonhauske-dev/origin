@@ -136,7 +136,7 @@ export const themes = {
       primary:   '#FFFFFF',
       secondary: '#A0A0A0',
       muted:     '#666666',
-      disabled:  '#444444',
+      disabled:  '#6B6B6B', // WCAG: 3.70:1 on #0D0D0D canvas (was #444444 = 1.71:1, hard fail).
       onAccent:  '#0D0D0D',
       onDanger:  '#0D0D0D',
       faint:     'rgba(255,255,255,0.3)',
@@ -150,8 +150,13 @@ export const themes = {
       track:    'rgba(255,255,255,0.10)',
     },
     border: {
-      subtle: '#2A2A2A',
-      strong: '#404040',
+      // WCAG 1.4.11 requires ≥3:1 for interactive UI component boundaries
+      // (card edges, input outlines, focus-ring offset region). Since the
+      // canvas (#0D0D0D) and elevated surfaces (#1A1A1A) only differ by
+      // 1.14:1, cards rely entirely on borders to read as discrete surfaces
+      // — so subtle borders had to clear the floor.
+      subtle: '#606060', // 3.12:1 on #0D0D0D (was #2A2A2A = 1.26:1, hard fail).
+      strong: '#808080', // 5.31:1 on #0D0D0D (was #404040 = 1.96:1, fail).
       focus:  '#FFFFFF',
     },
     slot: { default: '#FFFFFF' },
