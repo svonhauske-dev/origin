@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
-import { spacing, typography } from '../design-system';
+import { spacing, typography, touch } from '../design-system';
 import { useTheme } from '../lib/theme';
 
 export default function SupplementRow({ supplement, checked, isReadOnly, onToggle, onEdit }) {
@@ -85,8 +85,8 @@ export default function SupplementRow({ supplement, checked, isReadOnly, onToggl
           cursor: 'pointer',
           color: theme.text.secondary,
           padding: `${spacing.xxs}px`,
-          minWidth: 32,
-          minHeight: 32,
+          minWidth: touch.min,
+          minHeight: touch.min,
           display: 'flex',
           alignItems: 'center',
           borderRadius: theme.radius.surfaceInner,
