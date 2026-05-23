@@ -174,7 +174,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
     bottom: 0,
     width: "min(440px, 100vw)",
     maxHeight: "90dvh",
-    borderRadius: `${radius.xl}px ${radius.xl}px 0 0`,
+    borderRadius: `${radius.modal}px ${radius.modal}px 0 0`,
     paddingBottom: "env(safe-area-inset-bottom)",
   };
 

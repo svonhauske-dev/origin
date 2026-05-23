@@ -18,12 +18,39 @@ export const spacing = {
 };
 
 export const radius = {
-  xs:   2,    // badges, tags
-  sm:   4,    // checkboxes, tight UI elements
-  md:   12,   // cards, modals, inputs — canonical surface radius
-  lg:   16,   // unused — reserved for larger surfaces
-  xl:   20,   // unused — reserved for extra-large surfaces
-  full: 9999, // pill buttons, avatars
+  xs:    2,    // badges, tags
+  sm:    4,    // checkboxes, tight UI elements
+  md:    12,   // cards, modals, inputs — canonical surface radius
+  modal: 20,   // bottom-sheet top corners (Modal.jsx) — only consumer
+  full:  9999, // pill buttons, avatars
+};
+
+// Icon and avatar sizes — pulled out of inline magic numbers across SlotCard,
+// SupplementRow, Sidebar, Auth, SettingsScreen, etc. Previously 9 distinct
+// raw px values (16, 18, 20, 22, 24, 28, 32, 36, 40) for visually-similar
+// roles. This is the canonical scale; reach for it instead of literals.
+export const icon = {
+  xs: 16,  // checkbox icons, inline glyphs
+  sm: 18,  // row icons, edit affordances, small avatars
+  md: 24,  // primary action icons, slot indicators
+  lg: 32,  // avatar (PatientRoster default)
+  xl: 40,  // hero / display contexts (rarely)
+};
+
+// Motion tokens — durations in ms + canonical easings. Pre-Phase-2 the
+// codebase had 8 distinct durations and 4 distinct easings scattered as
+// magic numbers inside `transition:` strings. Reach for these.
+export const motion = {
+  state:         150,   // hover/focus/state changes (default)
+  modalOpen:     200,   // bottom-sheet appear, popover, toast
+  modalClose:    150,   // bottom-sheet dismiss
+  screenSlide:   300,   // slide-in screen (Settings, ProtocolLibrary, ProtocolDetailScreen)
+  chevronRotate: 300,   // collapse/expand chevron rotation
+  toast:         200,   // toast appear
+  pressed:       60,    // button:active opacity change (global rule)
+  easeOut:       'cubic-bezier(0.16, 1, 0.3, 1)',
+  ease:          'ease',
+  easeIn:        'ease-in',
 };
 
 export const typography = {
@@ -73,9 +100,13 @@ export const layout = {
 // (The old top-level `gradients` export referenced the deleted `colors`
 // block. Components use `theme.gradients.bg` from the active theme.)
 
+// Shadow tints derived from theme.surface.card (#1A1A1A = rgb(26,26,26)).
+// Kept here rather than computed from the theme to avoid forcing every
+// consumer through a function call. If the achromatic palette ever
+// extends to a second theme variant, refactor to `makeShadows(theme)`.
 export const shadows = {
   card:     "0 1px 2px rgba(26,26,26,0.04)",
-  elevated: "0 2px 8px rgba(26,26,26,0.08)",  // small lift — selected day cells, hovered tiles
+  elevated: "0 2px 8px rgba(26,26,26,0.08)",
   modal:    "0 8px 32px rgba(26,26,26,0.08), 0 2px 8px rgba(26,26,26,0.04)",
   popover:  "0 4px 16px rgba(26,26,26,0.06)",
   toast:    "0 4px 16px rgba(26,26,26,0.10)",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Pill, Syringe, Droplet, Clock } from 'lucide-react';
-import { spacing, typography, touch } from '../design-system';
+import { spacing, typography, touch, motion } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
@@ -104,7 +104,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
             {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? theme.slot.default : theme.text.secondary, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
-            <span style={{ fontSize: typography.caption, color: theme.text.secondary, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>⌃</span>
+            <span style={{ fontSize: typography.caption, color: theme.text.secondary, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: `transform ${motion.chevronRotate}ms ease-out` }}>⌃</span>
           </div>
         </button>
       </div>

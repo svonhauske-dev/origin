@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Plus, Pause, Play, Trash2, MoreHorizontal } from "lucide-react";
 import { Pill, Syringe, Droplet } from "lucide-react";
-import { spacing, typography, touch, layout } from "../design-system";
+import { spacing, typography, touch, layout, motion } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
 import Button from "./Button";
+import Heading from "./Heading";
 import Modal from "./Modal";
 import Popover, { PopoverItem } from "./Popover";
 import TabBar from "./TabBar";
@@ -280,7 +281,7 @@ export default function ProtocolDetailScreen({
         position: 'fixed', top: 0, left: '50%', bottom: 0,
         width: 'min(440px, 100vw)',
         transform: isOpen ? 'translateX(-50%)' : 'translateX(100vw)',
-        transition: 'transform 0.3s ease-out',
+        transition: `transform ${motion.screenSlide}ms ease-out`,
         zIndex: 102,
         background: theme.surface.canvas,
         overflowY: 'auto',
@@ -326,28 +327,32 @@ export default function ProtocolDetailScreen({
             />
           </form>
         ) : readOnly ? (
-          <span style={{
-            flex: 1, textAlign: 'center',
-            fontSize: typography.body, fontWeight: typography.semibold,
-            color: theme.text.primary,
-            padding: `${spacing.xs}px ${spacing.sm}px`,
-          }}>
+          <Heading
+            level={1}
+            visual="body"
+            weight="semibold"
+            style={{
+              flex: 1, textAlign: 'center',
+              padding: `${spacing.xs}px ${spacing.sm}px`,
+              fontFamily: typography.fontBody,
+            }}
+          >
             {protocol?.name || ''}
-          </span>
+          </Heading>
         ) : (
           <button
             onClick={() => { setEditingName(true); setNameVal(protocol?.name || ''); }}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: typography.body, fontWeight: typography.semibold,
-              color: theme.text.primary, textAlign: 'center',
               padding: `${spacing.xs}px ${spacing.sm}px`,
               minWidth: 0,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            {protocol?.name || ''}
+            <Heading level={1} visual="body" weight="semibold" style={{ margin: 0, fontFamily: typography.fontBody }}>
+              {protocol?.name || ''}
+            </Heading>
           </button>
         )}
 

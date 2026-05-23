@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { dbGetReceivedProtocols } from "../lib/api";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { spacing, typography, touch, layout } from "../design-system";
+import { spacing, typography, touch, layout, motion } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 import Label from "./Label";
@@ -267,7 +267,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
       position: "fixed", top: 0, left: "50%", bottom: 0,
       width: "min(440px, 100vw)",
       transform: isOpen ? "translateX(-50%)" : "translateX(100vw)",
-      transition: "transform 0.3s ease-out",
+      transition: `transform ${motion.screenSlide}ms ease-out`,
       zIndex: 101,
       background: theme.surface.canvas,
       overflowY: "auto",

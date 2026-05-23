@@ -3,6 +3,7 @@ import { spacing, typography, layout, makeSegBtnStyle } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Card from './Card';
+import Heading from './Heading';
 import Input from './Input';
 import Label from './Label';
 import HelperText from './HelperText';
@@ -62,9 +63,9 @@ export default function IFMigrationScreen({ oldConfig = {}, consistentTime, hasL
     }}>
       <div style={{ maxWidth: layout.maxContentWidth, margin: '0 auto', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: spacing.xl }}>
-          <div style={{ fontSize: typography.title, fontWeight: typography.bold, color: theme.text.primary, fontFamily: typography.fontHeading, marginBottom: spacing.xs }}>
+          <Heading level={1} visual="title" weight="bold" style={{ marginBottom: spacing.xs }}>
             Intermittent fasting updated
-          </div>
+          </Heading>
           <div style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6 }}>
             Your eating window is now fixed — Origin will notify you at the same time every day. Confirm the details below.
           </div>

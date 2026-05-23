@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { spacing, typography, touch, layout } from '../design-system';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { spacing, typography, touch, layout, icon, motion } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { useToast } from './ToastContext';
 import Button from './Button';
+import Checkbox from './Checkbox';
 import Input from './Input';
 import Label from './Label';
 import HelperText from './HelperText';
@@ -30,15 +31,7 @@ function PasswordRule({ met, label }) {
   const { theme } = useTheme();
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xxs }}>
-      <div style={{
-        width: 16, height: 16, borderRadius: theme.radius.pill,
-        background: met ? theme.accent.default : 'transparent',
-        border: `${theme.borderWidth.default}px solid ${met ? theme.accent.default : theme.border.subtle}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, transition: 'background 150ms, border-color 150ms',
-      }}>
-        {met && <Check size={10} color={theme.text.onAccent} strokeWidth={3} />}
-      </div>
+      <Checkbox checked={met} size={icon.xs} shape="pill" />
       <span style={{ fontSize: typography.label, color: met ? theme.text.primary : theme.text.secondary, transition: 'color 150ms' }}>
         {label}
       </span>
@@ -205,7 +198,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       top: 0, left: '50%', bottom: 0,
       width: 'min(440px, 100vw)',
       transform: isOpen ? 'translateX(-50%)' : 'translateX(100vw)',
-      transition: 'transform 0.3s ease-out',
+      transition: `transform ${motion.screenSlide}ms ease-out`,
       zIndex: 100,
       background: theme.surface.canvas,
       overflowY: 'auto',
