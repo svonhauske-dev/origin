@@ -23,7 +23,7 @@ import SupplementRow from '../SupplementRow';
 import { DayCell } from '../WeekStrip';
 import InsightsPanel from '../InsightsPanel';
 import InlineTip from '../InlineTip';
-import { ModalPreview, PopoverPreview, SidePanelPreview, LogAtSheetPreview } from './previews';
+import { ModalPreview, PopoverPreview, SidePanelPreview, LogAtSheetPreview, LoaderPreview, ToastPreview } from './previews';
 
 // ── Stub helpers ───────────────────────────────────────────────────────────────
 
@@ -252,6 +252,24 @@ export const componentRegistry = {
       variants: [
         { name: 'sm (20px)', props: { size: 'sm' } },
         { name: 'md (32px)', props: { size: 'md' } },
+      ],
+    },
+
+    Loader: {
+      component: LoaderPreview,
+      description: 'Fullscreen screen-takeover loader for auth load + protocol load. Pulsing dot with four expanding wave rings (3s cycle, staggered 0.6s). HIG-exception preserved under prefers-reduced-motion — without it, users see a blank screen with no indication anything is happening. Each variant renders a trigger; click to see the real Loader at viewport scale, click anywhere to dismiss.',
+      variants: [
+        { name: 'fullscreen', props: {} },
+      ],
+    },
+
+    Toast: {
+      component: ToastPreview,
+      description: 'Bottom-center transient feedback. 3s default duration (5s with action), animated entrance/exit via translate + opacity. Three shapes: bare message, with leading icon, with trailing action button (Undo, Retry). Each variant renders a trigger button; click to fire a real toast at the bottom of the viewport.',
+      variants: [
+        { name: 'basic',        props: { variant: 'basic' } },
+        { name: 'with icon',    props: { variant: 'with-icon' } },
+        { name: 'with action',  props: { variant: 'with-action' } },
       ],
     },
 

@@ -60,12 +60,6 @@ const EXCEPTIONS = {
 
   // Inline composite — wrapped inside a screen, no standalone surface
   "SupplementNameAutocomplete": "input-attached autocomplete; not a standalone primitive",
-
-  // Render-environment constraints — primitives that need a preview wrapper
-  // (like ModalPreview) before they can sit in the registry. Tracked for
-  // follow-up.
-  "Loader":                  "TODO: needs preview wrapper — fullscreen screen-takeover, doesn't fit a registry tile",
-  "Toast":                   "TODO: needs preview wrapper — context-driven, requires a mock ToastProvider",
 };
 
 // Load registry source. We string-match keys rather than importing JS modules

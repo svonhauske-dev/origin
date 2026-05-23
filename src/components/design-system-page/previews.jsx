@@ -1,9 +1,13 @@
 import { useRef, useState } from "react";
+import { Check } from "lucide-react";
 import Modal from "../Modal";
 import Popover, { PopoverItem, PopoverSection } from "../Popover";
 import SidePanel from "../SidePanel";
 import LogAtSheet from "../LogAtSheet";
 import Button from "../Button";
+import Loader from "../Loader";
+import Toast from "../Toast";
+import { ToastProvider, useToast } from "../ToastContext";
 
 // Portal-based components can't render meaningfully in a static showcase grid
 // (their position is `fixed`, they hijack the viewport, they need refs).
@@ -86,6 +90,56 @@ export function LogAtSheetPreview({ target }) {
         onConfirm={() => setOpen(false)}
       />
     </>
+  );
+}
+
+// Loader is a fullscreen screen-takeover (auth load, protocol load). Demo it
+// honestly: click the trigger to render the real Loader at viewport scale,
+// click anywhere to dismiss. No mock — the same component renders here as
+// in production.
+export function LoaderPreview() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="secondary" size="compact" onClick={() => setOpen(true)}>
+        Open Loader
+      </Button>
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 9999, cursor: "pointer" }}
+        >
+          <Loader />
+        </div>
+      )}
+    </>
+  );
+}
+
+// Toast needs a ToastProvider context — the /design-system route returns
+// early in App.jsx before the app's ToastProvider mounts, so we scope a
+// local one here. The Toast UI is position: fixed at the bottom of the
+// viewport (same as production), so clicking trigger pops a real toast.
+function ToastPreviewInner({ variant }) {
+  const { show } = useToast();
+  const trigger = () => {
+    if (variant === "with-icon") show("Saved", { icon: <Check size={16} /> });
+    else if (variant === "with-action") show("Supplement archived", { action: { label: "Undo", onClick: () => {} } });
+    else show("Reminders on");
+  };
+  return (
+    <Button variant="secondary" size="compact" onClick={trigger}>
+      Trigger toast
+    </Button>
+  );
+}
+
+export function ToastPreview({ variant = "basic" }) {
+  return (
+    <ToastProvider>
+      <ToastPreviewInner variant={variant} />
+      <Toast />
+    </ToastProvider>
   );
 }
 
