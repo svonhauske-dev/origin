@@ -5,6 +5,7 @@ import { useTheme } from '../lib/theme';
 import Badge from './Badge';
 import Button from './Button';
 import Checkbox from './Checkbox';
+import Heading from './Heading';
 
 function CategoryIcon({ category, color }) {
   if (category === "Rx")         return <Pill     size={14} color={color} style={{ flexShrink: 0 }} />;
@@ -97,8 +98,10 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
           }}
         >
           <div style={{ minWidth: 0, textAlign: "left", flex: 1 }}>
-            <div style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: allDone ? theme.text.secondary : theme.text.primary, display: "flex", alignItems: "center", gap: spacing.xs }}>
-              {slot.label}
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+              <Heading level={2} visual="title" weight="medium" style={{ color: allDone ? theme.text.secondary : theme.text.muted }}>
+                {slot.label}
+              </Heading>
               {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : (isReadOnly ? "neutral" : "missed")}>{sc.badge.label}</Badge>}
             </div>
             <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
