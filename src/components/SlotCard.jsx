@@ -99,7 +99,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
         >
           <div style={{ minWidth: 0, textAlign: "left", flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
-              <Heading level={2} visual="title" weight="medium" style={{ color: allDone ? theme.text.secondary : theme.text.muted }}>
+              <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.secondary }}>
                 {slot.label}
               </Heading>
               {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : (isReadOnly ? "neutral" : "missed")}>{sc.badge.label}</Badge>}
@@ -107,7 +107,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
             <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 16 }}>{allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? "s" : ""} done` : slot.sublabel}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
-            {!noSchedule && <span style={{ fontSize: typography.caption, color: pillTime && hasOffset ? theme.slot.default : theme.text.secondary, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
+            {!noSchedule && <span style={{ fontSize: typography.caption, color: theme.text.secondary, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold }}>{timeLabel}</span>}
             <span style={{ fontSize: typography.caption, color: theme.text.secondary, display: "inline-block", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: `transform ${motion.chevronRotate}ms ease-out` }}>⌃</span>
           </div>
         </button>

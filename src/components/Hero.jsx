@@ -418,7 +418,7 @@ export default function Hero({
                 border: "none",
                 background: theme.accent.default,
                 color: theme.text.onAccent,
-                fontSize: typography.caption,
+                fontSize: typography.body,
                 fontWeight: typography.semibold,
                 fontFamily: "inherit",
                 cursor: "pointer",
