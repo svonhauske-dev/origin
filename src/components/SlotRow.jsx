@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
+import Heading from './Heading';
 import Row from './Row';
 import SupplementRow from './SupplementRow';
 
@@ -34,13 +35,9 @@ export default function SlotRow({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         leftContent={
-          <span style={{
-            fontSize: typography.body,
-            fontWeight: typography.medium,
-            color: theme.text.primary,
-          }}>
+          <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.muted }}>
             {slotName}
-          </span>
+          </Heading>
         }
         rightContent={
           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { getSlotLabelForMode } from '../config';
+import Heading from './Heading';
 import SlotRow from './SlotRow';
 import SupplementRow from './SupplementRow';
 import TodayPanelHeader from './TodayPanelHeader';
@@ -144,14 +145,12 @@ export default function TodayPanel({
             }}>
               <div style={{
                 padding: `${spacing.md}px ${spacing.lg}px`,
-                fontSize: typography.body,
-                fontWeight: typography.medium,
-                color: theme.text.primary,
-                fontFamily: typography.fontBody,
                 borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
                 background: theme.surface.card,
               }}>
-                Anytime
+                <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.muted }}>
+                  Anytime
+                </Heading>
               </div>
               <div style={{ padding: `${spacing.xs}px ${spacing.sm}px`, background: theme.surface.card }}>
                 {anytimeSupps.map(s => (
