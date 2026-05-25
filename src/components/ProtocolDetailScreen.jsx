@@ -557,7 +557,7 @@ export default function ProtocolDetailScreen({
                               <CategoryIcon category={supp.category} color={theme.text.secondary} />
                               <Badge variant="neutral">paused</Badge>
                             </div>
-                            {supp.dose && <div style={{ fontSize: typography.caption, color: theme.text.faint }}>{supp.dose}</div>}
+                            {supp.dose && <div style={{ fontSize: typography.label, color: theme.text.secondary }}>{supp.dose}</div>}
                           </div>
                           {!readOnly && (
                             <>
