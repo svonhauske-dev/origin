@@ -170,7 +170,6 @@ export const themes = {
       disabled:  '#6B6B6B', // WCAG: 3.70:1 on #0D0D0D canvas (was #444444 = 1.71:1, hard fail).
       onAccent:  '#0D0D0D',
       onDanger:  '#0D0D0D',
-      faint:     'rgba(255,255,255,0.3)',
     },
     accent: {
       default:  '#FFFFFF',
