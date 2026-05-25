@@ -369,7 +369,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         {renderedSubView === 'account' && (
           <>
             <div style={{ marginBottom: spacing.md }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>Full name</Label>
+              <Label>Full name</Label>
               <div style={{ position: 'relative' }}>
                 <Input
                   type="text"
@@ -387,7 +387,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </div>
 
             <form onSubmit={e => { e.preventDefault(); handleSaveEmail(); }} style={{ marginBottom: spacing.md }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>Email</Label>
+              <Label>Email</Label>
               <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xs }}>{user.email}</div>
               <Input
                 type="email"
@@ -408,7 +408,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </form>
 
             <form onSubmit={e => { e.preventDefault(); handleSavePassword(); }}>
-              <Label style={{ marginBottom: spacing.xxs, fontSize: typography.caption, color: theme.text.secondary }}>Password</Label>
+              <Label>Password</Label>
               <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" autoComplete="new-password" style={{ marginBottom: spacing.xs }} />
               <Input type="password" value={confirmPw}   onChange={e => setConfirmPw(e.target.value)}   placeholder="Confirm new password" autoComplete="new-password" style={{ marginBottom: spacing.xs }} />
               {confirmPw && !pwMatch && <div style={{ fontSize: typography.label, color: theme.status.danger, marginBottom: spacing.xs }}>Passwords don't match</div>}
