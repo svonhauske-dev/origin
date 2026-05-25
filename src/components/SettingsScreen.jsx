@@ -191,7 +191,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
   };
 
   const divider = (
-    <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.lg}px 0` }} />
+    <div style={{ borderTop: `${theme.borderWidth.default}px solid ${theme.border.subtle}`, margin: `${spacing.md}px 0` }} />
   );
 
   // Shared layer header — back chevron + title. Each sliding layer mounts

@@ -4,6 +4,7 @@ import { useTheme } from "../lib/theme";
 import Button from "./Button";
 import Input from "./Input";
 import Label from "./Label";
+import OriginGlyph from "./OriginGlyph";
 
 export default function PromptName({ onSave }) {
   const { theme } = useTheme();
@@ -19,7 +20,9 @@ export default function PromptName({ onSave }) {
   return (
     <div style={{ fontFamily: typography.fontBody, background: theme.gradients.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: spacing.md }}>
       <div style={{ width: "100%", maxWidth: layout.signInWidth, textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: spacing.md }}>👋</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: spacing.md }}>
+          <OriginGlyph size={56} />
+        </div>
         <h1 style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, margin: 0, marginBottom: spacing.xs }}>
           What's your full name?
         </h1>

@@ -63,7 +63,7 @@ export default function IFMigrationScreen({ oldConfig = {}, consistentTime, hasL
     }}>
       <div style={{ maxWidth: layout.maxContentWidth, margin: '0 auto', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: spacing.xl }}>
-          <Heading level={1} visual="title" weight="bold" style={{ marginBottom: spacing.xs }}>
+          <Heading level={1} visual="heading" weight="bold" style={{ marginBottom: spacing.xs }}>
             Intermittent fasting updated
           </Heading>
           <div style={{ fontSize: typography.body, color: theme.text.secondary, lineHeight: 1.6 }}>

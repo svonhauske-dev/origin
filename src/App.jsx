@@ -1636,7 +1636,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     activeSlotList.some(s => getSuppsForSlot(s.id).length >= 2);
 
   const slotCardsContent = (
-    <div style={{ display: "flex", flexDirection: "column", gap: spacing.xs2 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
       {hasMultiSuppSlot && !isReadOnly && !isPast && !isFuture && (
         <InlineTip id="take-all-hint" label="Tip">
           Tap the icon at the left of a slot to log every item in it at once.

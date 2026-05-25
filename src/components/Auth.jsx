@@ -257,7 +257,7 @@ export default function Auth({ onSignIn, recoveryMode = false }) {
                 <button
                   type="button"
                   onClick={() => goTo("reset_request")}
-                  style={{ marginTop: spacing.sm, background: "none", border: "none", color: theme.text.secondary, fontSize: typography.label, cursor: "pointer", padding: 0, WebkitTapHighlightColor: "transparent", textDecoration: "underline" }}
+                  style={{ marginTop: spacing.sm, background: "none", border: "none", color: theme.text.secondary, fontSize: typography.caption, cursor: "pointer", padding: 0, WebkitTapHighlightColor: "transparent", textDecoration: "underline" }}
                 >
                   Forgot password?
                 </button>

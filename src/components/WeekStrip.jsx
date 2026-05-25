@@ -69,7 +69,7 @@ export function DayCell({ date, log, supplements, isSelected, isFuture, isToday,
           <div style={{
             background: theme.status.nowBadgeBg,
             color: theme.status.nowBadgeText,
-            fontSize: compact ? 8 : typography.label,
+            fontSize: compact ? typography.caption2 : typography.label,
             fontWeight: typography.semibold,
             fontFamily: typography.fontBody,
             letterSpacing: compact ? '0.06em' : typography.labelSpacing,
