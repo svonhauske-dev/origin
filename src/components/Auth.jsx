@@ -11,6 +11,7 @@ import { spacing, typography, layout, touch, icon } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
 import Checkbox from './Checkbox';
+import Heading from './Heading';
 import Input from './Input';
 import Label from './Label';
 import InlineLoader from './InlineLoader';
@@ -141,9 +142,9 @@ export default function Auth({ onSignIn, recoveryMode = false }) {
           color: theme.text.primary,
           marginBottom: spacing.lg,
         }}>Origin</div>
-        <h1 style={{ fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, letterSpacing: typography.headingLetterSpacing, margin: 0, marginBottom: spacing.xs }}>
+        <Heading level={1} visual="display" weight="bold" style={{ marginBottom: spacing.xs }}>
           {copy.title}
-        </h1>
+        </Heading>
         <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xl, lineHeight: 1.5 }}>
           {copy.sub}
         </div>

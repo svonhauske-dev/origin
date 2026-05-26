@@ -2,6 +2,7 @@ import { spacing, typography, layout } from "../design-system";
 import { useTheme } from "../lib/theme";
 import { needsHomeScreenInstall } from "../lib/notifications";
 import Button from "./Button";
+import Heading from "./Heading";
 import OriginGlyph from "./OriginGlyph";
 
 export default function NotificationPrompt({ onEnable, onSkip }) {
@@ -18,14 +19,6 @@ export default function NotificationPrompt({ onEnable, onSkip }) {
     justifyContent: "center",
     padding: `max(${spacing.xl}px, env(safe-area-inset-top)) ${spacing.md}px max(${spacing.xl}px, env(safe-area-inset-bottom))`,
     WebkitFontSmoothing: "antialiased",
-  };
-
-  const headingStyle = {
-    fontSize: typography.heading,
-    fontWeight: typography.semibold,
-    color: theme.text.primary,
-    fontFamily: typography.fontHeading,
-    marginBottom: spacing.xs,
   };
 
   const bodyStyle = {
@@ -45,7 +38,7 @@ export default function NotificationPrompt({ onEnable, onSkip }) {
           <div style={{ display: "flex", justifyContent: "center", marginBottom: spacing.md }}>
             <OriginGlyph size={56} />
           </div>
-          <h1 style={{ ...headingStyle, margin: 0, marginBottom: spacing.xs }}>Add Origin to your home screen</h1>
+          <Heading level={1} visual="heading" style={{ marginBottom: spacing.xs }}>Add Origin to your home screen</Heading>
           <div style={bodyStyle}>
             Reminders on iOS need Origin installed to your home screen. Once it's installed, open Origin from there and turn on reminders in Settings.
           </div>
@@ -76,7 +69,7 @@ export default function NotificationPrompt({ onEnable, onSkip }) {
         <div style={{ display: "flex", justifyContent: "center", marginBottom: spacing.md }}>
           <OriginGlyph size={56} />
         </div>
-        <h1 style={{ ...headingStyle, margin: 0, marginBottom: spacing.xs }}>Want reminders?</h1>
+        <Heading level={1} visual="heading" style={{ marginBottom: spacing.xs }}>Want reminders?</Heading>
         <div style={bodyStyle}>
           Origin can ping you when it's time to take your medication and supplements. You can change this any time in Settings.
         </div>
