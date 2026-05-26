@@ -1,6 +1,7 @@
 import { spacing, typography, touch, effects } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Button from './Button';
+import Heading from './Heading';
 import Input from './Input';
 import Card from './Card';
 import AdherenceRing from './AdherenceRing';
@@ -295,19 +296,7 @@ export default function Hero({
 
           {/* Eyebrow — one consistent slot for both past and today. Always
               just the date (plus suffix for read-only/editing on past). */}
-          <div style={{
-            fontSize: typography.label,
-            color: theme.text.secondary,
-            fontWeight: typography.semibold,
-            letterSpacing: typography.labelSpacingWide,
-            textTransform: "uppercase",
-            fontFamily: typography.fontHeading,
-            marginBottom: spacing.xs,
-            minHeight: 16,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}>
+          <Heading level={2} visual="label" font="heading" style={{ marginBottom: spacing.xs, minHeight: 16, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {state.eyebrow.text}
             {state.eyebrow.suffix && (
               <span style={{
@@ -317,7 +306,7 @@ export default function Hero({
                 · {state.eyebrow.suffix}
               </span>
             )}
-          </div>
+          </Heading>
 
           {/* Status row — reserved height keeps the card from reflowing
               when the time editor swaps in for just the time portion of the

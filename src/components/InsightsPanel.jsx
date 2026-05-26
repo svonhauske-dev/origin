@@ -3,6 +3,7 @@ import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { calculateAdherenceForDate, getUpcomingEndings } from '../lib/adherence';
 import { dateKey, startOfDay } from '../lib/time';
+import Heading from './Heading';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -36,21 +37,6 @@ function formatRelativeDate(dateString) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function SectionLabel({ children }) {
-  const { theme } = useTheme();
-  return (
-    <div style={{
-      fontSize: typography.label,
-      fontWeight: typography.semibold,
-      color: theme.text.secondary,
-      letterSpacing: typography.labelSpacingWide,
-      textTransform: 'uppercase',
-      fontFamily: typography.fontBody,
-    }}>
-      {children}
-    </div>
-  );
-}
 
 function Divider() {
   const { theme } = useTheme();
@@ -146,13 +132,13 @@ export default function InsightsPanel({
         padding: `${spacing.md}px ${spacing.lg}px`,
         borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
       }}>
-        <SectionLabel>Insights</SectionLabel>
+        <Heading level={2} visual="label">Insights</Heading>
       </div>
 
       <div style={{ padding: spacing.lg, display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-          <SectionLabel>7-day adherence</SectionLabel>
+          <Heading level={2} visual="label">7-day adherence</Heading>
           <WeeklyAdherenceDisplay percentage={weekAvg} dailyValues={dailyValues} />
           {trend30 && (
             <div style={{
@@ -182,7 +168,7 @@ export default function InsightsPanel({
           <>
             <Divider />
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-              <SectionLabel>Current streak</SectionLabel>
+              <Heading level={2} visual="label">Current streak</Heading>
               <div style={{
                 fontSize: typography.heading,
                 fontWeight: typography.bold,
@@ -198,7 +184,7 @@ export default function InsightsPanel({
         <Divider />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-          <SectionLabel>Your schedule</SectionLabel>
+          <Heading level={2} visual="label">Your schedule</Heading>
           <div style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontBody }}>
             {scheduleSummary}
           </div>
@@ -208,7 +194,7 @@ export default function InsightsPanel({
           <>
             <Divider />
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-              <SectionLabel>Upcoming endings</SectionLabel>
+              <Heading level={2} visual="label">Upcoming endings</Heading>
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
                 {upcoming.slice(0, 3).map(supp => (
                   <div key={supp.id} style={{ fontSize: typography.body, color: theme.text.secondary, fontFamily: typography.fontBody }}>
