@@ -4,6 +4,7 @@ import { useTheme } from "../lib/theme";
 import Modal from "./Modal";
 import Button from "./Button";
 import Input from "./Input";
+import Label from "./Label";
 
 // LogAtSheet — bottom sheet on mobile / centered modal on desktop (per Modal
 // primitive) that lets the user log a missed supplement at a specific time.
@@ -57,16 +58,15 @@ export default function LogAtSheet({ open, onClose, target, onConfirm }) {
           </div>
         )}
         <div>
-          <div style={{ fontSize: typography.label, color: theme.text.secondary, fontWeight: typography.semibold, letterSpacing: typography.labelSpacingWide, textTransform: "uppercase", marginBottom: spacing.xs, fontFamily: typography.fontBody }}>
-            Time taken
-          </div>
+          <Label htmlFor="logat-time">Time taken</Label>
           <Input
+            id="logat-time"
             variant="time"
             value={tmpTime}
             onChange={(e) => setTmpTime(e.target.value)}
           />
         </div>
-        <div style={{ fontSize: typography.caption, color: theme.text.muted, lineHeight: 1.5 }}>
+        <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5 }}>
           Origin records what actually happened, not just the slot's scheduled time. Your adherence data stays honest.
         </div>
       </div>

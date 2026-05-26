@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { spacing, typography, shadows } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { SUPPLEMENTS_DATABASE } from '../data/supplements-database';
+import Heading from './Heading';
 import Input from './Input';
 import Button from './Button';
 
@@ -86,16 +87,9 @@ export default function SupplementNameAutocomplete({ value, onChange, history = 
       />
       {showRecents && (
         <div style={{ marginTop: spacing.sm }}>
-          <div style={{
-            fontSize: typography.label,
-            color: theme.text.muted,
-            letterSpacing: typography.labelSpacingWide,
-            textTransform: 'uppercase',
-            fontWeight: typography.semibold,
-            marginBottom: spacing.xs,
-          }}>
+          <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>
             Recent
-          </div>
+          </Heading>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
             {recents.map((name) => (
               <Button
