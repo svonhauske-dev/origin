@@ -32,6 +32,7 @@ export default function Heading({
   level,
   visual,
   weight = "semibold",
+  font,
   children,
   style,
   ...rest
@@ -61,7 +62,7 @@ export default function Heading({
   return (
     <Tag
       style={{
-        fontFamily: isLabelVisual ? typography.fontBody : typography.fontHeading,
+        fontFamily: font === "heading" ? typography.fontHeading : font === "body" ? typography.fontBody : (isLabelVisual ? typography.fontBody : typography.fontHeading),
         fontSize,
         fontWeight: typography[weight] ?? typography.semibold,
         color: isLabelVisual ? theme.text.secondary : theme.text.primary,
