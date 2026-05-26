@@ -210,9 +210,9 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       <Button variant="icon" aria-label="Back" onClick={handleBack}>
         <ChevronLeft size={18} />
       </Button>
-      <h1 style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, margin: 0 }}>
+      <Heading level={1} visual="body" font="body">
         {title}
-      </h1>
+      </Heading>
       <div style={{ width: touch.min }} />
     </div>
   );

@@ -191,9 +191,9 @@ export default function Onboarding({ onComplete }) {
           <ProgressDots step={1} />
 
           <div style={{ marginBottom: spacing.xl }}>
-            <h1 style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading, margin: 0, marginBottom: spacing.xs }}>
+            <Heading level={1} visual="heading" style={{ marginBottom: spacing.xs }}>
               Set up your protocol
-            </h1>
+            </Heading>
             <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5 }}>
               Choose how Origin tracks your day.
             </div>
@@ -256,9 +256,9 @@ export default function Onboarding({ onComplete }) {
         <ProgressDots step={2} />
 
         <div style={{ marginBottom: spacing.xl }}>
-          <h1 style={{ fontSize: typography.heading, fontWeight: typography.semibold, color: theme.text.primary, fontFamily: typography.fontHeading, margin: 0, marginBottom: spacing.xs }}>
+          <Heading level={1} visual="heading" style={{ marginBottom: spacing.xs }}>
             Configure your schedule
-          </h1>
+          </Heading>
           <div style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.5 }}>
             {STEP2_SUBTITLES[selectedMode]}
           </div>

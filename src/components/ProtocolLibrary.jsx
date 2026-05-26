@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { spacing, typography, touch, layout, motion } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
+import Heading from "./Heading";
 import Label from "./Label";
 import Input from "./Input";
 import Modal from "./Modal";
@@ -288,9 +289,9 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
             <ChevronLeft size={18} />
           </Button>
         )}
-        <h1 style={{ fontSize: typography.body, fontWeight: typography.semibold, color: theme.text.primary, margin: 0 }}>
+        <Heading level={1} visual="body" font="body">
           Protocols
-        </h1>
+        </Heading>
         {readOnly && !onPlusClick ? (
           <span style={{ width: touch.min }} aria-hidden />
         ) : (

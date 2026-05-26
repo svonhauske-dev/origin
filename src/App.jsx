@@ -10,6 +10,7 @@ import Button from "./components/Button";
 import Input from "./components/Input";
 import Card from "./components/Card";
 import Badge from "./components/Badge";
+import Heading from "./components/Heading";
 import Label from "./components/Label";
 import Modal from "./components/Modal";
 import Popover, { PopoverItem, PopoverSection } from "./components/Popover";
@@ -1788,17 +1789,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           ) : (<>
           {/* Personal home greeting — restrained, lives here so it only
               appears in the clinician's own cockpit, not over patient views. */}
-          <h1 style={{
-            fontFamily: typography.fontHeading,
-            fontSize: typography.heading,
-            fontWeight: typography.semibold,
-            color: theme.text.primary,
-            letterSpacing: typography.headingLetterSpacing,
-            margin: 0,
-            marginBottom: spacing.lg,
-          }}>
+          <Heading level={1} visual="heading" style={{ marginBottom: spacing.lg }}>
             Hello, {firstName || 'there'}
-          </h1>
+          </Heading>
           <WeekStrip
             weekDates={weekDates}
             weekLogs={weekLogs}
@@ -2070,9 +2063,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.md }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
           <AccountAvatar size="touch" displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
-          <h1 style={{ fontSize: typography.body, fontWeight: typography.medium, color: theme.text.muted, fontFamily: typography.fontBody, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>
+          <Heading level={1} visual="body" weight="medium" font="body" style={{ color: theme.text.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {profile?.display_name?.trim().split(" ")[0] || "Origin"}
-          </h1>
+          </Heading>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
           <div style={{ position: 'relative', display: 'inline-flex' }}>
