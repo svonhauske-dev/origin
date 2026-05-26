@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { spacing, typography, shadows, breakpoints, zIndex as zIndexTokens } from "../design-system";
+import { spacing, typography, shadows, breakpoints, icon, zIndex as zIndexTokens } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Modal from "./Modal";
 import Button from "./Button";
@@ -157,7 +157,7 @@ export default function SidePanel({ open, onClose, title, children, footer }) {
             {title}
           </span>
           <Button variant="icon" aria-label="Close" onClick={onClose}>
-            <X size={18} />
+            <X size={icon.sm} />
           </Button>
         </div>
 

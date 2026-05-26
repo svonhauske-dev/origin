@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { spacing, typography, shadows } from '../design-system';
+import { spacing, typography, shadows, icon } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { dateKey } from '../lib/time';
 import { calculateAdherenceForDate } from '../lib/adherence';
@@ -171,7 +171,7 @@ export default function WeekStrip({
         marginBottom: spacing.sm,
       }}>
         <button onClick={onPrev} style={navBtnStyle(true)}>
-          <ChevronLeft size={18} />
+          <ChevronLeft size={icon.sm} />
         </button>
         <span style={{
           fontSize: typography.label,
@@ -184,7 +184,7 @@ export default function WeekStrip({
           {formatWeekRange(weekStart, weekEnd)}
         </span>
         <button onClick={onNext} disabled={!canNavigateNext} style={navBtnStyle(canNavigateNext)}>
-          <ChevronRight size={18} />
+          <ChevronRight size={icon.sm} />
         </button>
       </div>
 

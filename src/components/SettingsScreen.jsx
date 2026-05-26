@@ -208,7 +208,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       position: 'sticky', top: 0, zIndex: 1,
     }}>
       <Button variant="icon" aria-label="Back" onClick={handleBack}>
-        <ChevronLeft size={18} />
+        <ChevronLeft size={icon.sm} />
       </Button>
       <Heading level={1} visual="body" font="body">
         {title}

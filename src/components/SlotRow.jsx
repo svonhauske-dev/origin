@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { spacing, typography } from '../design-system';
+import { spacing, typography, icon } from '../design-system';
 import { useTheme } from '../lib/theme';
 import Heading from './Heading';
 import Row from './Row';
@@ -61,7 +61,7 @@ export default function SlotRow({
               {statusLabel}
             </span>
             <ChevronDown
-              size={16}
+              size={icon.xs}
               color={hovered ? theme.text.primary : theme.text.secondary}
               style={{
                 transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',

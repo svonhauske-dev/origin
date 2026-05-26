@@ -128,7 +128,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
             return (
               <div key={supp.id} style={{ display: "flex", alignItems: "center", gap: spacing.xs, minHeight: touch.row }}>
                 <button type="button" onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} aria-label={done ? `Uncheck ${supp.name}` : `Check ${supp.name}`} aria-pressed={done} style={{ background: "none", border: "none", padding: expand, margin: -expand, cursor: (isFuture || isReadOnly) ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, WebkitTapHighlightColor: "transparent" }}>
-                  <Checkbox checked={done} size={24} shape="square" weight="accent" />
+                  <Checkbox checked={done} size={icon.md} shape="square" weight="accent" />
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xs2 }}>
@@ -169,7 +169,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                     log at…
                   </button>
                 )}
-                {!isReadOnly && !isPast && <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ border: "none" }}><Pencil size={16} /></Button>}
+                {!isReadOnly && !isPast && <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={e => { e.stopPropagation(); openEdit(supp); }} style={{ border: "none" }}><Pencil size={icon.xs} /></Button>}
               </div>
             );
           })}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { spacing, typography, radius, shadows, effects, breakpoints, zIndex as zIndexTokens } from "../design-system";
+import { spacing, typography, radius, shadows, effects, breakpoints, icon, zIndex as zIndexTokens } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 
@@ -278,7 +278,7 @@ export default function Modal({ open, onClose, title, children, footer, leftActi
               fontFamily: typography.fontHeading,
             }}>{title}</span>
           )}
-          <Button variant="icon" aria-label="Close" onClick={onClose}><X size={18} /></Button>
+          <Button variant="icon" aria-label="Close" onClick={onClose}><X size={icon.sm} /></Button>
         </div>
 
         {/* Scrollable body */}

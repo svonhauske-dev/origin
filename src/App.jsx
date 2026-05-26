@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  spacing, typography, touch, layout,
+  spacing, typography, touch, layout, icon,
   shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
@@ -1515,7 +1515,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }, 5000);
     setPendingDeletes(p => ({ ...p, [supp.id]: { supp, timeoutId } }));
     showToast(`Deleted ${supp.name}`, {
-      icon: <Trash2 size={16} />,
+      icon: <Trash2 size={icon.xs} />,
       duration: 5000,
       action: { label: "Undo", onClick: () => undoDelete(supp.id) },
     });
@@ -1750,7 +1750,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 aria-label="Patient actions"
                 onClick={(e) => { setPatientActionsAnchor(e.currentTarget); setPatientActionsOpen(true); }}
               >
-                <MoreHorizontal size={18} />
+                <MoreHorizontal size={icon.sm} />
               </Button>
             </div>
           )}
@@ -2070,7 +2070,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexShrink: 0 }}>
           <div style={{ position: 'relative', display: 'inline-flex' }}>
             <Button variant="icon" aria-label={pendingReceivedCount > 0 ? `Open Library — ${pendingReceivedCount} received` : "Open Library"} onClick={() => pushScreen('manage_protocol')}>
-              <Library size={18} />
+              <Library size={icon.sm} />
             </Button>
             {pendingReceivedCount > 0 && (
               <span
@@ -2105,11 +2105,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               onClick={() => setPastDayEditing(!pastDayEditing)}
               style={pastDayEditing ? { background: theme.accent.subtle, color: theme.accent.onSubtle, borderColor: theme.accent.default } : undefined}
             >
-              {pastDayEditing ? <span style={{ fontSize: typography.label, fontWeight: typography.semibold, padding: `0 ${spacing.xxs}px` }}>Done</span> : <Pencil size={16} />}
+              {pastDayEditing ? <span style={{ fontSize: typography.label, fontWeight: typography.semibold, padding: `0 ${spacing.xxs}px` }}>Done</span> : <Pencil size={icon.xs} />}
             </Button>
           ) : (
             <Button variant="icon" aria-label="Add item" onClick={openAdd}>
-              <Plus size={18} />
+              <Plus size={icon.sm} />
             </Button>
           )}
         </div>

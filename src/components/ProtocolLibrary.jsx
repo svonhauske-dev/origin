@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { dbGetReceivedProtocols } from "../lib/api";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { spacing, typography, touch, layout, motion } from "../design-system";
+import { spacing, typography, touch, layout, motion, icon } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Button from "./Button";
 import Heading from "./Heading";
@@ -54,7 +54,7 @@ function ProtocolRow({ protocol, count, onTap, adherence }) {
     </div>
   );
   let rightContent;
-  if (adherence && onTap) rightContent = <>{adherenceBlock}<ChevronRight size={18} color={theme.text.secondary} style={{ flexShrink: 0 }} /></>;
+  if (adherence && onTap) rightContent = <>{adherenceBlock}<ChevronRight size={icon.sm} color={theme.text.secondary} style={{ flexShrink: 0 }} /></>;
   else if (adherence)     rightContent = adherenceBlock;
   else if (onTap)         rightContent = undefined; // default chevron
   else                    rightContent = null;
@@ -286,7 +286,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
           <span style={{ width: touch.min }} aria-hidden />
         ) : (
           <Button variant="icon" aria-label="Back" onClick={onBack}>
-            <ChevronLeft size={18} />
+            <ChevronLeft size={icon.sm} />
           </Button>
         )}
         <Heading level={1} visual="body" font="body">
@@ -300,7 +300,7 @@ export default function ProtocolLibrary({ isOpen, onBack, protocols, supplements
             aria-label={readOnly ? "Send or create protocol" : "New protocol"}
             onClick={onPlusClick ? onPlusClick : () => setShowNew(true)}
           >
-            <Plus size={18} />
+            <Plus size={icon.sm} />
           </Button>
         )}
       </div>

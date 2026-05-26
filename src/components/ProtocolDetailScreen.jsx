@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Plus, Pause, Play, Trash2, MoreHorizontal } from "lucide-react";
 import { Pill, Syringe, Droplet } from "lucide-react";
-import { spacing, typography, touch, layout, motion } from "../design-system";
+import { spacing, typography, touch, layout, motion, icon } from "../design-system";
 import { useTheme } from "../lib/theme";
 import Badge from "./Badge";
 import Button from "./Button";
@@ -303,7 +303,7 @@ export default function ProtocolDetailScreen({
       }}>
         <div style={{ justifySelf: 'start' }}>
           <Button variant="icon" aria-label="Back" onClick={onBack}>
-            <ChevronLeft size={18} />
+            <ChevronLeft size={icon.sm} />
           </Button>
         </div>
 
@@ -363,12 +363,12 @@ export default function ProtocolDetailScreen({
               aria-label="Protocol actions"
               onClick={(e) => { setMenuAnchor(e.currentTarget); setMenuOpen(true); }}
             >
-              <MoreHorizontal size={18} />
+              <MoreHorizontal size={icon.sm} />
             </Button>
           )}
           {!readOnly && (isActive || isArchived) && (
             <Button variant="icon" aria-label="Add supplement" onClick={onAddSupp}>
-              <Plus size={18} />
+              <Plus size={icon.sm} />
             </Button>
           )}
         </div>
@@ -436,7 +436,7 @@ export default function ProtocolDetailScreen({
                           onClick={() => setDeletingSupp(supp)}
                           style={{ border: 'none' }}
                         >
-                          <Trash2 size={18} color={theme.status.danger} />
+                          <Trash2 size={icon.sm} color={theme.status.danger} />
                         </Button>
                       )}
                     </div>
@@ -510,7 +510,7 @@ export default function ProtocolDetailScreen({
                               onClick={() => onTogglePauseSupp(supp)}
                               style={{ border: 'none' }}
                             >
-                              <Pause size={18} color={theme.text.secondary} />
+                              <Pause size={icon.sm} color={theme.text.secondary} />
                             </Button>
                           )}
                         </div>
@@ -567,7 +567,7 @@ export default function ProtocolDetailScreen({
                                 onClick={() => setDeletingSupp(supp)}
                                 style={{ border: 'none', marginRight: spacing.xxs }}
                               >
-                                <Trash2 size={18} color={theme.status.danger} />
+                                <Trash2 size={icon.sm} color={theme.status.danger} />
                               </Button>
                               <Button
                                 variant="icon"
@@ -575,7 +575,7 @@ export default function ProtocolDetailScreen({
                                 onClick={() => onResumeSupp(supp)}
                                 style={{ border: 'none' }}
                               >
-                                <Play size={18} color={theme.text.primary} />
+                                <Play size={icon.sm} color={theme.text.primary} />
                               </Button>
                             </>
                           )}
