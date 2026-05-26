@@ -303,6 +303,7 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
             return (
               <Card
                 key={m.id}
+                variant={on ? 'selected' : 'default'}
                 onClick={() => {
                   setSelectedCard(m.id);
                   if (m.id === 'anchor') {
@@ -318,10 +319,10 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
                     handleModeChange(m.id);
                   }
                 }}
-                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, background: on ? theme.accent.subtle : 'transparent', border: `${theme.borderWidth.default}px solid ${on ? theme.accent.default : theme.border.subtle}`, marginBottom: 0 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: spacing.xxs, minHeight: layout.modeButtonHeight, marginBottom: 0 }}
               >
-                <span style={{ fontSize: typography.caption, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
-                <span style={{ fontSize: typography.label, color: theme.text.secondary, lineHeight: 1.4 }}>{m.desc}</span>
+                <span style={{ fontSize: typography.body, fontWeight: typography.semibold, color: on ? theme.accent.onSubtle : theme.text.primary }}>{m.title}</span>
+                <span style={{ fontSize: typography.caption, color: theme.text.secondary, lineHeight: 1.4 }}>{m.desc}</span>
               </Card>
             );
           })}
