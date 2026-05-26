@@ -125,9 +125,15 @@ export const effects = {
 
 // ── Reusable style objects ──────────────────────────────────────────────────────
 
-// Segmented-button style. Curry over `theme` so consumers get a function that
-// matches their existing `segBtnStyle(on)` call sites. Replaces three identical
-// local definitions across ScheduleTab / Onboarding / IFMigrationScreen.
+// Segmented-button style factory — NOT a Button variant.
+//
+// Style factories encapsulate styling only; primitives encapsulate styling +
+// behavior + semantics. Segment controls in dense configuration contexts
+// (Onboarding, ScheduleTab, IFMigrationScreen) use 40px height
+// (layout.segHeight) vs Button's 44px (touch.min). They don't need
+// Button's disabled/loading/type behavior — native <button> + this
+// styling is the correct abstraction. 12 callsites use this factory.
+// New segment-control needs should use it; do not migrate to Button.
 export const makeSegBtnStyle = (theme) => (on) => ({
   flex: 1,
   padding: `${spacing.sm}px`,
