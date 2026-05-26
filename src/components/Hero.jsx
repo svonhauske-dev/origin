@@ -255,7 +255,7 @@ export default function Hero({
       onClick={() => { setTmpTime(pillTime || ""); setEditPillTime(true); }}
       style={{
         fontSize: typography.label,
-        color: theme.text.muted,
+        color: theme.text.tertiary,
         background: "none",
         border: "none",
         cursor: "pointer",
@@ -301,7 +301,7 @@ export default function Hero({
             {state.eyebrow.suffix && (
               <span style={{
                 marginLeft: spacing.xxs,
-                color: state.eyebrow.suffixTone === "accent" ? theme.accent.default : theme.text.muted,
+                color: state.eyebrow.suffixTone === "accent" ? theme.accent.default : theme.text.tertiary,
               }}>
                 · {state.eyebrow.suffix}
               </span>

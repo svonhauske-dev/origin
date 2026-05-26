@@ -334,7 +334,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // Reset nav stack to home on every sign-in (NavigationProvider survives sign-out,
   // so stale stack would otherwise persist and reopen the last screen)
   useEffect(() => { resetStack(); }, []);
-  const ANYTIME_SLOT = { id: "anytime", label: "Anytime", sublabel: "No specific time", icon: "◦", color: theme.text.muted };
+  const ANYTIME_SLOT = { id: "anytime", label: "Anytime", sublabel: "No specific time", icon: "◦", color: theme.text.tertiary };
   const BG_GRADIENT = theme.gradients.bg;
   const [protocols, setProtocols]           = useState([]);
   // Pending received protocols (peer-to-peer sends not yet stacked/replaced/saved).
@@ -2063,7 +2063,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing.sm, marginBottom: spacing.md }}>
         <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, minWidth: 0 }}>
           <AccountAvatar size="touch" displayName={profile?.display_name?.trim().split(" ")[0] || null} onClick={() => pushScreen('settings')} />
-          <Heading level={1} visual="body" weight="medium" font="body" style={{ color: theme.text.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <Heading level={1} visual="body" weight="medium" font="body" style={{ color: theme.text.tertiary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {profile?.display_name?.trim().split(" ")[0] || "Origin"}
           </Heading>
         </div>
@@ -2174,7 +2174,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           }}>
             <span style={{
               fontSize: typography.label,
-              color: theme.text.muted,
+              color: theme.text.tertiary,
               fontFamily: typography.fontHeading,
               fontWeight: typography.semibold,
               letterSpacing: typography.labelSpacingWide,

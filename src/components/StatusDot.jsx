@@ -10,7 +10,7 @@ export default function StatusDot({ status, size = 6 }) {
     status === 'success' ? theme.status.success :
     status === 'warning' ? theme.status.warning :
     status === 'danger'  ? theme.status.danger  :
-                           theme.text.muted;
+                           theme.text.tertiary;
   return (
     <span
       aria-hidden

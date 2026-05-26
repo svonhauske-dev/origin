@@ -69,7 +69,7 @@ export default function InlineTip({ id, label, children }) {
           cursor: 'pointer',
           padding: spacing.xxs,
           margin: -spacing.xxs,
-          color: theme.text.muted,
+          color: theme.text.tertiary,
           display: 'flex',
           alignItems: 'center',
           flexShrink: 0,

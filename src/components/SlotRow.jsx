@@ -35,7 +35,7 @@ export default function SlotRow({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         leftContent={
-          <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.muted }}>
+          <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.tertiary }}>
             {slotName}
           </Heading>
         }

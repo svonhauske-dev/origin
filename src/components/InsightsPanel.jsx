@@ -152,7 +152,7 @@ export default function InsightsPanel({
               </span>
               {' over 30 days'}
               {trend30.delta === null ? (
-                <span style={{ color: theme.text.muted }}> · building baseline</span>
+                <span style={{ color: theme.text.tertiary }}> · building baseline</span>
               ) : trend30.delta === 0 ? (
                 <span> · no change from last month</span>
               ) : (

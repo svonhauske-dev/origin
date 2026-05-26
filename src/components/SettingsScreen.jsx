@@ -457,7 +457,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
 
           const labelStyle = {
             fontSize: typography.label,
-            color: theme.text.muted,
+            color: theme.text.tertiary,
             fontFamily: typography.fontHeading,
             fontWeight: typography.semibold,
             letterSpacing: typography.labelSpacingWide,

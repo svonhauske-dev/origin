@@ -561,7 +561,7 @@ export default function Onboarding({ onComplete }) {
                   fontSize: typography.caption,
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, color: theme.text.primary }}>
-                    <span style={{ color: theme.text.muted, width: 14, textAlign: "center" }}>{row.icon}</span>
+                    <span style={{ color: theme.text.tertiary, width: 14, textAlign: "center" }}>{row.icon}</span>
                     <span>{row.label}</span>
                   </div>
                   <span style={{

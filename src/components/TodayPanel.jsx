@@ -148,7 +148,7 @@ export default function TodayPanel({
                 borderBottom: `${theme.borderWidth.default}px solid ${theme.border.subtle}`,
                 background: theme.surface.card,
               }}>
-                <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.muted }}>
+                <Heading level={2} visual="title" weight="medium" style={{ color: theme.text.tertiary }}>
                   Anytime
                 </Heading>
               </div>

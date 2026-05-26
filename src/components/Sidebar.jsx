@@ -280,7 +280,7 @@ export default function Sidebar({
               <div style={{
                 padding: `${spacing.sm}px ${spacing.sm}px ${spacing.xxs}px`,
                 fontSize: typography.label,
-                color: theme.text.muted,
+                color: theme.text.tertiary,
                 fontFamily: typography.fontBody,
                 letterSpacing: typography.labelSpacingWide,
                 textTransform: 'uppercase',

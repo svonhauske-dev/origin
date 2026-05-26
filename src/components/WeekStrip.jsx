@@ -150,7 +150,7 @@ export default function WeekStrip({
     background: 'none',
     border: 'none',
     cursor: enabled ? 'pointer' : 'default',
-    color: enabled ? theme.text.secondary : theme.text.muted,
+    color: enabled ? theme.text.secondary : theme.text.tertiary,
     padding: `${spacing.xxs}px`,
     minWidth: 32,
     minHeight: 32,

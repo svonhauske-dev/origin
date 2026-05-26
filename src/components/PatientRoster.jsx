@@ -116,7 +116,7 @@ function FilterChips({ active, onChange, options }) {
             {opt.count != null && (
               <span style={{
                 marginLeft: spacing.xs,
-                color: isOn ? theme.text.secondary : theme.text.muted,
+                color: isOn ? theme.text.secondary : theme.text.tertiary,
                 fontFamily: typography.fontData,
               }}>
                 {opt.count}

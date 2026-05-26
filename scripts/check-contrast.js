@@ -80,7 +80,7 @@ const theme = themes.achromatic;
 const TEXT_SURFACES = ["canvas", "card"];
 
 // Text tokens that serve as body text (normal size, ≤18px) require 4.5:1.
-// Everything else (muted, disabled, future tokens) is treated as large-text
+// Everything else (tertiary, disabled, future tokens) is treated as large-text
 // or UI-component text and gets the 3:1 floor.
 const BODY_TEXT_TOKENS = new Set(["primary", "secondary"]);
 

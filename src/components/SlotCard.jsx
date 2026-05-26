@@ -138,7 +138,7 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
                   <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 14, display: "flex", alignItems: "center", gap: spacing.xs }}>
                     <span>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</span>
                     {done && atTime && (
-                      <span style={{ color: theme.text.muted, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                      <span style={{ color: theme.text.tertiary, display: "inline-flex", alignItems: "center", gap: 2 }}>
                         <Clock size={10} />
                         at {atTime}
                       </span>

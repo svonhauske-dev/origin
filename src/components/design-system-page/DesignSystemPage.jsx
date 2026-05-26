@@ -40,7 +40,7 @@ function SectionBlock({ id, title, description, children, theme }) {
 
 function SubHead({ label, theme }) {
   return (
-    <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.muted, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.sm, marginTop: spacing.lg }}>
+    <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.tertiary, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.sm, marginTop: spacing.lg }}>
       {label}
     </div>
   );
@@ -56,8 +56,8 @@ function ColorSwatch({ token, value, theme }) {
     <div style={{ width: 110, flexShrink: 0 }}>
       <div style={{ width: '100%', height: 56, background: value, border: `1px solid ${theme.border.subtle}`, marginBottom: spacing.xxs }} />
       <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.secondary, marginBottom: 1, lineHeight: 1.4, wordBreak: 'break-word' }}>{token}</div>
-      <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.muted, lineHeight: 1.3 }}>{value}</div>
-      {rgb && <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.muted, lineHeight: 1.3 }}>rgb({rgb})</div>}
+      <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, lineHeight: 1.3 }}>{value}</div>
+      {rgb && <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, lineHeight: 1.3 }}>rgb({rgb})</div>}
     </div>
   );
 }
@@ -75,7 +75,7 @@ function ThemePaletteBlock({ name, tokens, isActive, theme }) {
           {name}
           {isActive && <span style={{ fontSize: typography.label, color: theme.accent.default, fontFamily: typography.fontBody, letterSpacing: typography.labelSpacing, fontWeight: typography.semibold }}>ACTIVE</span>}
         </span>
-        <span style={{ fontSize: typography.caption, color: theme.text.muted, display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>⌃</span>
+        <span style={{ fontSize: typography.caption, color: theme.text.tertiary, display: 'inline-block', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }}>⌃</span>
       </button>
       {open && (
         <div style={{ padding: `${spacing.md}px ${spacing.md}px ${spacing.lg}px` }}>
@@ -86,7 +86,7 @@ function ThemePaletteBlock({ name, tokens, isActive, theme }) {
             if (!entries.length) return null;
             return (
               <div key={cat} style={{ marginBottom: spacing.lg }}>
-                <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.muted, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.sm }}>
+                <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.tertiary, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.sm }}>
                   {cat}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.sm }}>
@@ -144,8 +144,8 @@ function TypographySection({ theme }) {
                 style={{ display: 'flex', alignItems: 'baseline', gap: spacing.xl, padding: `${spacing.md}px ${spacing.lg}px`, borderBottom: idx < TYPE_SCALE.length - 1 ? `1px solid ${theme.border.subtle}` : 'none' }}
               >
                 <div style={{ width: 76, flexShrink: 0 }}>
-                  <div style={{ fontSize: typography.label, color: theme.text.muted, fontFamily: typography.fontBody, letterSpacing: typography.labelSpacing, textTransform: 'uppercase' }}>{key}</div>
-                  <div style={{ fontSize: typography.label, color: theme.text.muted, fontFamily: typography.fontBody }}>{px}px</div>
+                  <div style={{ fontSize: typography.label, color: theme.text.tertiary, fontFamily: typography.fontBody, letterSpacing: typography.labelSpacing, textTransform: 'uppercase' }}>{key}</div>
+                  <div style={{ fontSize: typography.label, color: theme.text.tertiary, fontFamily: typography.fontBody }}>{px}px</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: px, fontFamily: typography[role.key], color: theme.text.primary, lineHeight: px >= 22 ? 1.25 : 1.5 }}>
@@ -182,7 +182,7 @@ function SpacingSection({ theme }) {
               <span style={{ fontSize: typography.caption, fontFamily: typography.fontBody, color: theme.text.primary, fontWeight: typography.semibold }}>spacing.{key}</span>
             </div>
             <div style={{ background: theme.accent.default, height: 20, width: px, flexShrink: 0, minWidth: 2 }} />
-            <span style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.muted }}>{px}px</span>
+            <span style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.tertiary }}>{px}px</span>
           </div>
         ))}
       </div>
@@ -213,8 +213,8 @@ function RadiusSection({ theme }) {
             <div key={key} style={{ textAlign: 'center', width: 96 }}>
               <div style={{ width: 80, height: 80, background: theme.surface.card, border: `1px solid ${theme.border.strong}`, borderRadius: Math.min(val, 40), margin: '0 auto', marginBottom: spacing.xs }} />
               <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold }}>radius.{key}</div>
-              <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.muted }}>{val === 9999 ? '9999 (full)' : `${val}px`}</div>
-              <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.muted, marginTop: 2, lineHeight: 1.3 }}>{desc}</div>
+              <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.tertiary }}>{val === 9999 ? '9999 (full)' : `${val}px`}</div>
+              <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, marginTop: 2, lineHeight: 1.3 }}>{desc}</div>
             </div>
           );
         })}
@@ -235,7 +235,7 @@ function ShadowsSection({ theme }) {
           <div key={key} style={{ textAlign: 'center' }}>
             <div style={{ width: 120, height: 72, background: theme.surface.modal, boxShadow: globalShadows[key], margin: '0 auto', marginBottom: spacing.sm }} />
             <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold }}>shadows.{key}</div>
-            <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.muted, maxWidth: 120, wordBreak: 'break-all', marginTop: 2, lineHeight: 1.3 }}>{globalShadows[key]}</div>
+            <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, maxWidth: 120, wordBreak: 'break-all', marginTop: 2, lineHeight: 1.3 }}>{globalShadows[key]}</div>
           </div>
         ))}
       </div>
@@ -250,7 +250,7 @@ function VariantGrid({ variants, Comp, theme }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-end' }}>
       {variants.map(v => (
         <div key={v.name}>
-          <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.muted, marginBottom: spacing.xxs, whiteSpace: 'nowrap' }}>{v.name}</div>
+          <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.tertiary, marginBottom: spacing.xxs, whiteSpace: 'nowrap' }}>{v.name}</div>
           <Comp {...v.props} />
         </div>
       ))}
@@ -404,7 +404,7 @@ function ComposedSection({ name, def, theme }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xl }}>
         {def.examples.map(ex => (
           <div key={ex.name}>
-            <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.muted, marginBottom: spacing.xs, letterSpacing: typography.labelSpacing, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.tertiary, marginBottom: spacing.xs, letterSpacing: typography.labelSpacing, textTransform: 'uppercase' }}>
               {ex.name}
             </div>
             <div style={{ border: `1px solid ${theme.border.subtle}`, padding: spacing.md, background: theme.surface.canvas }}>
@@ -452,7 +452,7 @@ function DSSidebar({ theme }) {
       </div>
       {NAV.map(section => (
         <div key={section.group} style={{ marginBottom: spacing.lg }}>
-          <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.muted, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.xs, paddingLeft: spacing.xs }}>
+          <div style={{ fontSize: typography.label, fontWeight: typography.semibold, color: theme.text.tertiary, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', fontFamily: typography.fontBody, marginBottom: spacing.xs, paddingLeft: spacing.xs }}>
             {section.group}
           </div>
           {section.items.map(item => (
@@ -507,7 +507,7 @@ function MobileNav({ theme }) {
       <div style={{ display: 'flex', minWidth: 'max-content', padding: `${spacing.xxs}px ${spacing.sm}px`, gap: spacing.xxs }}>
         {NAV.map(section => (
           <div key={section.group} style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: 9, color: theme.text.muted, fontFamily: typography.fontBody, padding: `${spacing.xs}px ${spacing.xxs}px`, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', flexShrink: 0 }}>{section.group}</span>
+            <span style={{ fontSize: 9, color: theme.text.tertiary, fontFamily: typography.fontBody, padding: `${spacing.xs}px ${spacing.xxs}px`, letterSpacing: typography.labelSpacingWide, textTransform: 'uppercase', flexShrink: 0 }}>{section.group}</span>
             {section.items.map(item => (
               <button key={item.id} onClick={() => scroll(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: `${spacing.xs}px ${spacing.sm}px`, fontSize: typography.caption, fontFamily: typography.fontBody, color: theme.text.secondary, whiteSpace: 'nowrap' }}>
                 {item.label}
