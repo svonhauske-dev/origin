@@ -25,16 +25,18 @@ export const radius = {
   full:  9999, // pill buttons, avatars
 };
 
-// Icon and avatar sizes — pulled out of inline magic numbers across SlotCard,
-// SupplementRow, Sidebar, Auth, SettingsScreen, etc. Previously 9 distinct
-// raw px values (16, 18, 20, 22, 24, 28, 32, 36, 40) for visually-similar
-// roles. This is the canonical scale; reach for it instead of literals.
+// Standalone icon sizes — for icons in buttons, headers, nav, and action
+// affordances. Text-inline glyphs (icons inside running text that scale
+// with the text, e.g. 10-14px Clock/CategoryIcon) should follow the
+// typography scale, not this scale. If unclear: part of a Button or
+// independent visual element → icon scale. Nested in running text → match
+// the typography.fontSize of the surrounding text.
 export const icon = {
   xs: 16,  // checkbox icons, inline glyphs
-  sm: 18,  // row icons, edit affordances, small avatars
+  sm: 18,  // row icons, edit affordances, nav icons (dominant size)
   md: 24,  // primary action icons, slot indicators
-  lg: 32,  // avatar (PatientRoster default)
-  xl: 40,  // hero / display contexts (rarely)
+  lg: 32,  // reserved (avatar / display contexts — currently unused)
+  xl: 40,  // reserved (hero / display contexts — currently unused)
 };
 
 // Motion tokens — durations in ms + canonical easings. Pre-Phase-2 the
