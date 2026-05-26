@@ -368,7 +368,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         {/* ── Account view ── */}
         {renderedSubView === 'account' && (
           <>
-            <div style={{ marginBottom: spacing.md }}>
+            <div style={{ marginBottom: spacing.xl }}>
               <Label>Full name</Label>
               <div style={{ position: 'relative' }}>
                 <Input
@@ -386,7 +386,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               </div>
             </div>
 
-            <form onSubmit={e => { e.preventDefault(); handleSaveEmail(); }} style={{ marginBottom: spacing.md }}>
+            <form onSubmit={e => { e.preventDefault(); handleSaveEmail(); }} style={{ marginBottom: spacing.xl }}>
               <Label>Email</Label>
               <div style={{ fontSize: typography.caption, color: theme.text.secondary, marginBottom: spacing.xs }}>{user.email}</div>
               <Input
