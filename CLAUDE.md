@@ -117,6 +117,38 @@ Foundation sections auto-render from `design-system.js` — no registry update n
 
 ---
 
+## Design system discipline
+
+Audit cycle history and screen-by-screen findings are documented in `APPLE-BAR-AUDIT.md` — that file is a historical record, not active guidance.
+
+**Enforcement scripts.** Four Node scripts block `prebuild` (and therefore every Vercel deploy). Combined runtime under one second.
+- `check-contrast.js` — WCAG contrast ratios for every text/surface token pair. Self-discovering: new tokens are tested automatically.
+- `check-tokens.js` — off-palette hex literals, off-scale font sizes, `outline: "none"` suppressions.
+- `check-registry.js` — every primitive in `src/components/` must be registered in `registry.js` or explicitly excepted.
+- `check-bypasses.js` — hand-rolled equivalents of primitives (raw `<button>`, `<h1>`–`<h6>`, `position: fixed`) must be on the allowlist with rationale.
+
+If a bypass is legitimate, add the file to `check-bypasses.js`'s allowlist with a comment. Don't remove the check.
+
+**Primitives vs style factories.** Origin has two kinds of design-system building blocks. Default to primitives (`Label`, `Heading`, `Button`, `Card`, `Row`, etc.) — they encapsulate behavior + styling + semantics. Style factories (`makeSegBtnStyle`) encapsulate styling only for narrow cases where native HTML provides the correct behavior and the pattern doesn't warrant a component. Do not promote style factories to primitives without explicit reasoning.
+
+**Typography heading patterns.** Three valid patterns, chosen by screen type:
+- **Identity moments** (Auth, PromptName): `display` 32px / bold. The screen establishes who you are.
+- **Utility screens** (NotificationPrompt, IFMigration, Onboarding): `heading` 22px / semibold. The screen asks you to do something.
+- **Drill-in detail** (ProtocolDetailScreen, SettingsScreen, ProtocolLibrary): `body` 16px / semibold nav-title — hierarchy from structural position (sticky header, border separation), not from size.
+
+When in doubt, look at adjacent screens. Same pattern = same treatment.
+
+**Drift prevention.** Every typography bug found during the audit cycle traced to a hand-rolled element that diverged from its equivalent elsewhere. Primitives prevented drift everywhere they were used consistently. When adding new UI: reach for the primitive first. When a primitive's API doesn't fit: expand the primitive (e.g., `Heading` gained a `font` prop). When a hand-roll genuinely needs to exist: document why and add to `check-bypasses.js`.
+
+**The text token ladder.** `text.primary` → `text.secondary` → `text.tertiary` form a content-importance ranking.
+- **primary**: content the user needs to read (names, titles, actions).
+- **secondary**: supporting content (descriptions, helper text, captions, paragraph copy). Passes WCAG 4.5:1.
+- **tertiary**: decorative or metadata (eyebrows, icons, edit affordances, disabled states). Passes WCAG 3:1 only — do not use for paragraph text.
+
+Avoid raw `rgba()` colors for text. The token ladder is the supported path.
+
+---
+
 ## prefers-reduced-motion exceptions
 
 Origin preserves four animations under `prefers-reduced-motion: reduce` as HIG-compliant exceptions:
@@ -132,4 +164,4 @@ Only add to the exception list for new functional feedback animations that are s
 
 ---
 
-*End of CLAUDE.md. Last updated: May 12, 2026.*
+*End of CLAUDE.md. Last updated: May 26, 2026.*
