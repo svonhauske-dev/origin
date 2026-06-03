@@ -265,11 +265,15 @@ export const componentRegistry = {
 
     Toast: {
       component: ToastPreview,
-      description: 'Bottom-center transient feedback. 3s default duration (5s with action), animated entrance/exit via translate + opacity. Three shapes: bare message, with leading icon, with trailing action button (Undo, Retry). Each variant renders a trigger button; click to fire a real toast at the bottom of the viewport.',
+      description: 'Bottom-center transient feedback. 3s default duration (5s with action), animated entrance/exit via translate + opacity. Pass `tone: "success" | "error" | "warning" | "info"` to surface state — colored icon auto-derives from the tone (CheckCircle / AlertCircle / AlertTriangle / Info). Explicit `icon` always wins over the tone default. Each variant renders a trigger button; click to fire a real toast at the bottom of the viewport.',
       variants: [
         { name: 'basic',        props: { variant: 'basic' } },
         { name: 'with icon',    props: { variant: 'with-icon' } },
         { name: 'with action',  props: { variant: 'with-action' } },
+        { name: 'success',      props: { variant: 'success' } },
+        { name: 'error',        props: { variant: 'error' } },
+        { name: 'warning',      props: { variant: 'warning' } },
+        { name: 'info',         props: { variant: 'info' } },
       ],
     },
 

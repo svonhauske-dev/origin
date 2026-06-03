@@ -1,7 +1,17 @@
 import { useState, useEffect, useContext } from "react";
-import { spacing, typography, touch, layout, shadows, zIndex as zIndexTokens } from "../design-system";
+import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { spacing, typography, touch, layout, shadows, zIndex as zIndexTokens, icon as iconScale } from "../design-system";
 import { useTheme } from "../lib/theme";
 import { ToastContext } from "./ToastContext";
+
+// Map tone → default lucide icon. Callers can override by passing their own
+// `icon` (e.g. Trash2 on undo-delete) — explicit icon wins over tone default.
+const TONE_DEFAULT_ICON = {
+  success: CheckCircle2,
+  error:   AlertCircle,
+  warning: AlertTriangle,
+  info:    Info,
+};
 
 function ToastItem({ toast, onDismiss }) {
   const { theme } = useTheme();
@@ -13,6 +23,23 @@ function ToastItem({ toast, onDismiss }) {
   }, []);
 
   const visible = entered && !toast.leaving;
+
+  // Resolve icon color from tone. Status tokens pass WCAG against canvas.
+  // Neutral (no tone) keeps the previous text.secondary so existing callers
+  // that pass an icon without a tone stay visually identical.
+  const toneColor = {
+    success: theme.status?.success,
+    error:   theme.status?.danger,
+    warning: theme.status?.warning,
+    info:    theme.text.secondary,
+  }[toast.tone] ?? theme.text.secondary;
+
+  // Resolve which icon to render: explicit > tone default > none.
+  let resolvedIcon = toast.icon;
+  if (!resolvedIcon && toast.tone && TONE_DEFAULT_ICON[toast.tone]) {
+    const IconCmp = TONE_DEFAULT_ICON[toast.tone];
+    resolvedIcon = <IconCmp size={iconScale.xs} strokeWidth={2.25} />;
+  }
 
   return (
     <div
@@ -33,9 +60,9 @@ function ToastItem({ toast, onDismiss }) {
         pointerEvents: "all",
       }}
     >
-      {toast.icon && (
-        <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: theme.text.secondary }}>
-          {toast.icon}
+      {resolvedIcon && (
+        <span style={{ display: "flex", alignItems: "center", flexShrink: 0, color: toneColor }}>
+          {resolvedIcon}
         </span>
       )}
       <span style={{ flex: 1, fontSize: typography.body, color: theme.text.primary }}>{toast.message}</span>

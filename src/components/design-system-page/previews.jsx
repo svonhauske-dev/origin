@@ -125,6 +125,10 @@ function ToastPreviewInner({ variant }) {
   const trigger = () => {
     if (variant === "with-icon") show("Saved", { icon: <Check size={16} /> });
     else if (variant === "with-action") show("Supplement archived", { action: { label: "Undo", onClick: () => {} } });
+    else if (variant === "success") show("Added Vitamin D3", { tone: "success" });
+    else if (variant === "error")   show("Couldn't save — try again", { tone: "error" });
+    else if (variant === "warning") show("Permission denied — enable in device settings", { tone: "warning" });
+    else if (variant === "info")    show("Check your inbox to confirm", { tone: "info" });
     else show("Reminders on");
   };
   return (

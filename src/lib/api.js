@@ -279,20 +279,34 @@ export async function dbGetAdherenceCounts(userId, suppIds, token, daysBack = 36
 
 // Returns true on success so callers can show a quiet "notifications won't
 // fire" hint if the edge function rejected the request. Most callers
-// fire-and-forget; in App.jsx we now `then(ok => ok || showToast(...))`.
-export async function recomputeNotifications(token) {
+// fire-and-forget; in App.jsx `recomputeAfterEnable` toasts on failure.
+//
+// Reads the current access_token from localStorage (not the caller-passed
+// token) and retries once on 401 via refreshSession(). The token argument
+// is accepted for API symmetry but ignored — by the time recompute fires
+// (e.g. after a supp edit) the supa() refresh-on-401 path may have minted
+// a newer token, and trusting the caller's stale snapshot 401'd every
+// background recompute. See Jun 3 2026 fix in this file's git log.
+export async function recomputeNotifications(_token) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const call = (jwt) => fetch(`${SUPA_URL}/functions/v1/recompute_notifications`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${jwt}`,
+      "apikey": SUPA_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ timezone }),
+  });
   try {
-    const res = await fetch(`${SUPA_URL}/functions/v1/recompute_notifications`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ timezone }),
-    });
+    let jwt = localStorage.getItem("sb_token") || "";
+    let res = await call(jwt);
+    if (res.status === 401) {
+      const refreshed = await refreshSession();
+      if (refreshed) res = await call(refreshed);
+    }
     if (!res.ok) {
-      console.error("Recompute failed:", await res.text());
+      console.error("Recompute failed:", res.status, await res.text());
       return false;
     }
     return true;

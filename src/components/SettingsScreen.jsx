@@ -114,9 +114,9 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       try {
         await dbUpdateProfile(user.id, { display_name: val.trim() || null, updated_at: new Date().toISOString() }, token);
         onProfileUpdate({ ...profile, display_name: val.trim() || null });
-        showToast('Name updated');
+        showToast('Name updated', { tone: "success" });
       } catch {
-        showToast("Couldn't save — try again");
+        showToast("Couldn't save — try again", { tone: "error" });
       } finally {
         setNameSaving(false);
       }
@@ -130,7 +130,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
     try {
       await updateEmail(newEmail.trim(), token);
       setNewEmail('');
-      showToast('Check your inbox to confirm the new email');
+      showToast('Check your inbox to confirm the new email', { tone: "info" });
     } catch {
       setEmailMsg("Couldn't update email — try again");
     } finally {
@@ -148,9 +148,9 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
       await updatePassword(newPassword, token);
       setNewPassword('');
       setConfirmPw('');
-      showToast('Password updated');
+      showToast('Password updated', { tone: "success" });
     } catch {
-      showToast("Couldn't update password — try again");
+      showToast("Couldn't update password — try again", { tone: "error" });
     } finally {
       setPwSaving(false);
     }
@@ -164,26 +164,26 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
         await unsubscribeFromPush();
         await dbUpdateScheduleField('notifications_enabled', false, user.id, token);
         setHasSubscription(false);
-        showToast('Reminders off');
+        showToast('Reminders off', { tone: "success" });
       } else {
         if (needsInstall) { setToggling(false); setView('install'); return; }
         await subscribeToPush();
         await dbUpdateScheduleField('notifications_enabled', true, user.id, token);
         setPermission('granted');
         setHasSubscription(true);
-        showToast('Reminders on');
+        showToast('Reminders on', { tone: "success" });
         if (onNotificationsEnabled) onNotificationsEnabled();
       }
     } catch (err) {
       if (err.message?.includes('denied')) {
-        showToast('Permission denied — enable in device settings');
+        showToast('Permission denied — enable in device settings', { tone: "warning" });
         setPermission('denied');
       } else if (err.message?.includes('PWA install')) {
         goToSubView('install');
       } else if (err.message?.includes('VAPID')) {
-        showToast('Reminders not configured yet');
+        showToast('Reminders not configured yet', { tone: "warning" });
       } else {
-        showToast("Couldn't update reminders");
+        showToast("Couldn't update reminders", { tone: "error" });
       }
     } finally {
       setToggling(false);

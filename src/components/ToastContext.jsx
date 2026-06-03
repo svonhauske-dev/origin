@@ -24,11 +24,11 @@ export function ToastProvider({ children }) {
   }, []);
 
   const show = useCallback((message, options = {}) => {
-    const { icon, action, duration } = options;
+    const { icon, action, duration, tone } = options;
     const effectiveDuration = duration ?? (action ? 5000 : 3000);
     const id = ++nextId;
 
-    setToasts(ts => [...ts, { id, message, icon, action, leaving: false }]);
+    setToasts(ts => [...ts, { id, message, icon, action, tone, leaving: false }]);
 
     const leaveTimer = setTimeout(() => {
       setToasts(ts => ts.map(x => x.id === id ? { ...x, leaving: true } : x));

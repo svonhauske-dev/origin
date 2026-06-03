@@ -868,7 +868,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       saveTimer.current = null;
       const pt = pillTimes[oldDk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(oldDk)));
-      dbUpsertLog({ user_id: user.id, log_date: oldDk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again"));
+      dbUpsertLog({ user_id: user.id, log_date: oldDk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
       pendingSaveRef.current = false;
     }
     lastDkRef.current = dk;
@@ -878,7 +878,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     saveTimer.current = setTimeout(() => {
       const pt = pillTimes[dk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk)));
-      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again"));
+      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
       pendingSaveRef.current = false;
     }, 200);
   }, [checked, pillTimes, dk, loading, isPast, pastDayEditing]);
@@ -1131,12 +1131,20 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     setFormOpen(true);
   };
 
-  // Fire-and-forget notif recompute that surfaces failures as a toast instead
-  // of silently swallowing them. Used by every recompute trigger that follows
-  // a user action; TZ-change recomputes stay silent.
-  const recomputeWithToast = () => {
+  // Silent background recompute. Used after every supp add/edit/pause/delete
+  // and IF migration — the user didn't ask for a notification reconcile, so
+  // failing surfaces as a console.error only (see api.js). Reserve the
+  // toast-on-failure path for moments where the user explicitly opted into
+  // reminders and would expect a result.
+  const recomputeQuiet = () => { recomputeNotifications(token); };
+
+  // Surfaces failure as a toast — only used right after the user explicitly
+  // turned reminders on (NotificationPrompt or SettingsScreen toggle), where
+  // a silent failure would leave them thinking reminders are armed when
+  // they aren't.
+  const recomputeAfterEnable = () => {
     recomputeNotifications(token).then(ok => {
-      if (!ok) showToast("Notifications didn't update — try again later");
+      if (!ok) showToast("Notifications didn't update — try again later", { tone: "warning" });
     });
   };
 
@@ -1170,18 +1178,18 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       if (editingId) {
         await dbUpdateSupp({ ...form, days: finalDays, category: cat, id: editingId, ...txFields }, token);
         setSupps(s => s.map(x => x.id === editingId ? { ...form, days: finalDays, category: cat, id: editingId, ...txFields } : x));
-        showToast(`Updated ${form.name}`);
+        showToast(`Updated ${form.name}`, { tone: "success" });
       } else {
         const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, paused: false, status: 'active', stopped_at: null, user_id: user.id, protocol_id: form.protocol_id || null, ...txFields }, token);
         if (rows?.[0]) setSupps(s => [...s, rows[0]]);
-        showToast(`Added ${form.name}`);
+        showToast(`Added ${form.name}`, { tone: "success" });
         const savedName = form.name.trim();
         if (savedName) {
           setSupplementHistory(h => h.includes(savedName) ? h : [savedName, ...h]);
           dbAddSupplementHistory(user.id, savedName, token).catch(() => {});
         }
       }
-      recomputeWithToast();
+      recomputeQuiet();
       closeForm();
     } catch (err) {
       setSubmitError("Couldn't save — try again");
@@ -1199,9 +1207,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       await dbDeleteSupp(editingId, token);
       setSupps(s => s.filter(x => x.id !== editingId));
       closeForm();
-      showToast(`Deleted ${supp.name}`);
+      showToast(`Deleted ${supp.name}`, { tone: "success" });
     } catch (err) {
-      showToast("Couldn't delete — try again");
+      showToast("Couldn't delete — try again", { tone: "error" });
       console.error(err);
     }
   };
@@ -1212,9 +1220,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     try {
       await dbDeleteSupp(suppId, token);
       setSupps(s => s.filter(x => x.id !== suppId));
-      showToast(`Deleted ${supp.name}`);
+      showToast(`Deleted ${supp.name}`, { tone: "success" });
     } catch (err) {
-      showToast("Couldn't delete — try again");
+      showToast("Couldn't delete — try again", { tone: "error" });
       console.error(err);
     }
   };
@@ -1224,9 +1232,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const updated = { ...supp, status: 'active', paused: false };
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));
-      showToast(`${supp.name} resumed`);
+      showToast(`${supp.name} resumed`, { tone: "success" });
     } catch (err) {
-      showToast(`Couldn't resume ${supp.name}. Try again.`);
+      showToast(`Couldn't resume ${supp.name}. Try again.`, { tone: "error" });
       console.error(err);
     }
   };
@@ -1260,9 +1268,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         setPillTimes(pt => ({ ...pt, [dk]: cTime }));
       }
 
-      recomputeWithToast();
+      recomputeQuiet();
     } catch (err) {
-      showToast("Couldn't save — try again");
+      showToast("Couldn't save — try again", { tone: "error" });
       console.error(err);
       return false;
     }
@@ -1275,10 +1283,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     try {
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));
-      showToast(wasPaused ? `Resumed ${supp.name}` : `Paused ${supp.name}`);
-      recomputeWithToast();
+      showToast(wasPaused ? `Resumed ${supp.name}` : `Paused ${supp.name}`, { tone: "success" });
+      recomputeQuiet();
     } catch (err) {
-      showToast("Couldn't update — try again");
+      showToast("Couldn't update — try again", { tone: "error" });
       console.error(err);
       return false;
     }
@@ -1301,16 +1309,16 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const rows = await dbAddProtocol({ ...data, status, user_id: user.id }, token);
       if (rows?.[0]) setProtocols(p => [...p, rows[0]]);
       const suffix = intent === 'replace' && archivedNames ? ` · ${archivedNames} saved` : '';
-      showToast(`${data.name} created${suffix}`);
+      showToast(`${data.name} created${suffix}`, { tone: "success" });
       return rows?.[0] ?? null;
-    } catch (err) { showToast("Couldn't create protocol. Try again."); console.error(err); return null; }
+    } catch (err) { showToast("Couldn't create protocol. Try again.", { tone: "error" }); console.error(err); return null; }
   };
 
   const updateProtocol = async (protocol) => {
     try {
       await dbUpdateProtocol(protocol, token);
       setProtocols(p => p.map(x => x.id === protocol.id ? protocol : x));
-    } catch (err) { showToast("Couldn't save. Try again."); console.error(err); }
+    } catch (err) { showToast("Couldn't save. Try again.", { tone: "error" }); console.error(err); }
   };
 
   const archiveProtocol = async (protocol) => {
@@ -1318,8 +1326,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       await dbArchiveProtocol(protocol.id, token);
       setProtocols(p => p.map(x => x.id === protocol.id ? { ...x, status: 'archived' } : x));
       setSupps(s => s.map(x => x.protocol_id === protocol.id ? { ...x, status: 'active', paused: false } : x));
-      showToast(`${protocol.name} saved`);
-    } catch (err) { showToast("Couldn't save. Try again."); console.error(err); }
+      showToast(`${protocol.name} saved`, { tone: "success" });
+    } catch (err) { showToast("Couldn't save. Try again.", { tone: "error" }); console.error(err); }
   };
 
   // Activate an archived protocol. `intent` controls what happens to the
@@ -1341,8 +1349,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       await dbActivateProtocol(protocol.id, token);
       setProtocols(p => p.map(x => x.id === protocol.id ? { ...x, status: 'active' } : x));
       const suffix = intent === 'replace' && archivedNames ? ` · ${archivedNames} saved` : '';
-      showToast(`${protocol.name} activated${suffix}`);
-    } catch (err) { showToast("Couldn't activate. Try again."); console.error(err); }
+      showToast(`${protocol.name} activated${suffix}`, { tone: "success" });
+    } catch (err) { showToast("Couldn't activate. Try again.", { tone: "error" }); console.error(err); }
   };
 
   const deleteProtocol = async (protocol) => {
@@ -1359,10 +1367,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       await dbDeleteProtocol(protocol.id, token);
       setSupps(s => s.filter(x => x.protocol_id !== protocol.id));
       setProtocols(p => p.filter(x => x.id !== protocol.id));
-      showToast(`${protocol.name} deleted`);
+      showToast(`${protocol.name} deleted`, { tone: "success" });
     } catch (err) {
       console.error(err);
-      showToast("Couldn't delete. Try again.");
+      showToast("Couldn't delete. Try again.", { tone: "error" });
     }
   };
 
@@ -1374,10 +1382,10 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     try {
       await dbUpdateProtocolSend(send.id, { status: 'declined' }, token);
       setPendingReceivedCount(c => Math.max(0, c - 1));
-      showToast(`${send.name} declined`);
+      showToast(`${send.name} declined`, { tone: "success" });
     } catch (err) {
       console.error(err);
-      showToast("Couldn't decline. Try again.");
+      showToast("Couldn't decline. Try again.", { tone: "error" });
     }
   };
 
@@ -1423,7 +1431,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       setPendingReceivedCount(c => Math.max(0, c - 1));
       const verb = intent === 'save_later' ? 'saved' : 'activated';
       const suffix = intent === 'replace' && archivedNames ? ` · ${archivedNames} saved` : '';
-      showToast(`${send.name} ${verb}${suffix}`);
+      showToast(`${send.name} ${verb}${suffix}`, { tone: "success" });
     } catch (err) {
       console.error(err);
       if (newProto) {
@@ -1438,7 +1446,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           console.error("activateReceived rollback also failed:", rollbackErr);
         }
       }
-      showToast("Couldn't save protocol. Try again.");
+      showToast("Couldn't save protocol. Try again.", { tone: "error" });
     }
   };
 
@@ -1446,8 +1454,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     try {
       const snapshot = visibleSupps.filter(s => s.protocol_id === protocol.id).map(s => ({ name: s.name, dose: s.dose, notes: s.notes, slots: s.slots, days: s.days, category: s.category }));
       await dbSendProtocol({ clinician_id: user.id, patient_id: patientId, source_protocol_id: protocol.id, name: protocol.name, supplements_snapshot: snapshot }, token);
-      showToast(`${protocol.name} sent`);
-    } catch (err) { showToast("Couldn't send protocol. Try again."); console.error(err); }
+      showToast(`${protocol.name} sent`, { tone: "success" });
+    } catch (err) { showToast("Couldn't send protocol. Try again.", { tone: "error" }); console.error(err); }
   };
 
   // Peer-to-peer protocol send. Resolves email to user id, writes the send
@@ -1476,7 +1484,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       }, token);
       const sendRow = Array.isArray(rows) ? rows[0] : rows;
       const recipientLabel = match.display_name?.trim().split(' ')[0] || cleanEmail;
-      showToast(`Sent to ${recipientLabel}`);
+      showToast(`Sent to ${recipientLabel}`, { tone: "success" });
       // Fire push notification — best-effort; failure doesn't undo the send.
       // dbNotifyProtocolSent logs response status + body to console so push
       // issues can still be diagnosed without surfacing a second toast.
@@ -1505,9 +1513,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       try {
         await dbDeleteSupp(supp.id, token);
         setSupps(s => s.filter(x => x.id !== supp.id));
-        recomputeWithToast();
+        recomputeQuiet();
       } catch (err) {
-        showToast("Couldn't delete — try again");
+        showToast("Couldn't delete — try again", { tone: "error" });
         console.error(err);
       } finally {
         setPendingDeletes(p => { const next = { ...p }; delete next[supp.id]; return next; });
@@ -1614,7 +1622,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           try { await dbUpdateSupp(s, token); } catch (e) { console.warn("IF slot migration write failed for", s.id, e); }
         }
         setNeedsIFMigration(false);
-        recomputeWithToast();
+        recomputeQuiet();
       }}
     />
   );
@@ -1880,7 +1888,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               token={token}
               profile={profile}
               onProfileUpdate={(updated) => setProfile(updated)}
-              onNotificationsEnabled={recomputeWithToast}
+              onNotificationsEnabled={recomputeAfterEnable}
               scheduleMode={scheduleMode}
               scheduleConfig={scheduleConfig}
               anchorBehavior={anchorBehavior}
@@ -2227,7 +2235,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         token={token}
         profile={profile}
         onProfileUpdate={(updated) => setProfile(updated)}
-        onNotificationsEnabled={recomputeWithToast}
+        onNotificationsEnabled={recomputeAfterEnable}
         scheduleMode={scheduleMode}
         scheduleConfig={scheduleConfig}
         anchorBehavior={anchorBehavior}
