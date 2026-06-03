@@ -210,9 +210,14 @@ function RadiusSection({ theme }) {
           const val = theme.radius[key];
           if (val === undefined) return null;
           return (
-            <div key={key} style={{ textAlign: 'center', width: 96 }}>
+            {/* Item width bumped 96 → 110, label drops the `radius.` prefix.
+                With the prefix included `radius.surfaceInner` rendered ~143px
+                wide in mono and bled into the next item, reading as
+                `radius.surfaceInnerradius.pill`. Section title already says
+                Radius, so the key alone is unambiguous. */}
+            <div key={key} style={{ textAlign: 'center', width: 110 }}>
               <div style={{ width: 80, height: 80, background: theme.surface.card, border: `1px solid ${theme.border.strong}`, borderRadius: Math.min(val, 40), margin: '0 auto', marginBottom: spacing.xs }} />
-              <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold }}>radius.{key}</div>
+              <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold, wordBreak: 'break-word' }}>{key}</div>
               <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.tertiary }}>{val === 9999 ? '9999 (full)' : `${val}px`}</div>
               <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, marginTop: 2, lineHeight: 1.3 }}>{desc}</div>
             </div>
@@ -234,7 +239,7 @@ function ShadowsSection({ theme }) {
         {SHADOW_KEYS.map(key => (
           <div key={key} style={{ textAlign: 'center' }}>
             <div style={{ width: 120, height: 72, background: theme.surface.modal, boxShadow: globalShadows[key], margin: '0 auto', marginBottom: spacing.sm }} />
-            <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold }}>shadows.{key}</div>
+            <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold }}>{key}</div>
             <div style={{ fontSize: 9, fontFamily: typography.fontBody, color: theme.text.tertiary, maxWidth: 120, wordBreak: 'break-all', marginTop: 2, lineHeight: 1.3 }}>{globalShadows[key]}</div>
           </div>
         ))}
