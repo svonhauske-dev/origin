@@ -27,10 +27,14 @@
          constrained to a centered ~440px phone-frame column. translateZ(0)
          on body makes it a containing block so fixed-position portals
          (Modal bottom sheet, Toast, Popover) anchor to the phone-frame
-         edges instead of the full viewport. */
+         edges instead of the full viewport. The `.design-system-route`
+         opt-out exempts the public /design-system page, which is the only
+         responsive surface in the app (portfolio-linked, needs to fill
+         desktop viewports). The class is applied synchronously in the
+         boot script below so the phone-frame doesn't flash on first paint. */
       @media (min-width: 1024px) {
-        html { background: #0D0D0D; }
-        body {
+        html:not(.design-system-route) { background: #0D0D0D; }
+        html:not(.design-system-route) body {
           max-width: 440px;
           margin: 0 auto;
           height: 100dvh;
@@ -90,6 +94,14 @@
   <body>
     <script>
       (function(){
+        // The /design-system page is the one responsive surface in the
+        // otherwise mobile-only app (portfolio-linked, public). Tag <html>
+        // synchronously so the desktop phone-frame CSS opts out on first
+        // paint — without this, the page briefly renders inside the 440px
+        // column before React mounts and corrects the layout.
+        if (location.pathname === '/design-system' || location.pathname === '/design') {
+          document.documentElement.classList.add('design-system-route');
+        }
         var CANVAS={achromatic:'#0D0D0D',dark:'#04060A',light:'#F4F6F8',terminalAmber:'#0D0D0D',terminalCyan:'#0D0D0D',terminalPhosphor:'#0D0D0D',terminalMagenta:'#0D0D0D'};
         try{
           var pref=localStorage.getItem('origin_theme_preference')||'system';
