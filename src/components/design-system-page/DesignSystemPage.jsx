@@ -407,7 +407,12 @@ function ComposedSection({ name, def, theme }) {
             <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.tertiary, marginBottom: spacing.xs, letterSpacing: typography.labelSpacing, textTransform: 'uppercase' }}>
               {ex.name}
             </div>
-            <div style={{ border: `1px solid ${theme.border.subtle}`, padding: spacing.md, background: theme.surface.canvas }}>
+            {/* Composed components (Hero, WeekStrip, SlotCard, etc.) are
+                authored against the 440px mobile column. Capping the example
+                wrapper at 480 keeps them in realistic context on wide
+                desktop viewports — otherwise they stretch into surfaces they
+                were never sized for. */}
+            <div style={{ border: `1px solid ${theme.border.subtle}`, padding: spacing.md, background: theme.surface.canvas, maxWidth: 480 }}>
               <Comp {...ex.props} />
             </div>
           </div>
@@ -480,18 +485,32 @@ function NavItem({ id, label, theme, onScroll }) {
 
 // ── Intro header (full-width band above sidebar+content) ─────────────────────
 
-function IntroHeader({ theme }) {
+// Layout constants — kept inline so IntroHeader and the main content column
+// can share the same horizontal alignment math. Sidebar is 220px (DSSidebar);
+// main column has spacing.xxl padding inset on desktop; content caps at
+// CONTENT_MAX so long-line paragraphs stay legible at 1920px+ viewports.
+const SIDEBAR_W   = 220;
+const CONTENT_MAX = 1100;
+
+function IntroHeader({ theme, isDesktop }) {
+  // On desktop, indent the inner content so the h1 left-aligns with the
+  // section h2s below (which sit inside main, offset by sidebar width +
+  // main padding). Without this the h1 anchors to the viewport edge and
+  // the section titles anchor 268px in — visually disconnected.
+  const innerPadL = isDesktop ? SIDEBAR_W + spacing.xxl : spacing.xl;
   return (
-    <div style={{ background: theme.surface.card, borderBottom: `1px solid ${theme.border.subtle}`, padding: `${spacing.xl}px`, flexShrink: 0 }}>
-      <h1 style={{ fontFamily: typography.fontHeading, fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, margin: `0 0 ${spacing.sm}px`, letterSpacing: '-0.02em' }}>
-        Origin Design System
-      </h1>
-      <p style={{ margin: `0 0 ${spacing.md}px`, fontSize: typography.body, fontFamily: typography.fontBody, color: theme.text.secondary, lineHeight: 1.6, maxWidth: 600 }}>
-        The live system behind Origin. Tokens, primitives, and composed components — auto-generated from the codebase. Switch themes via the picker (bottom right) to see Achromatic, the production identity, alongside the directional explorations that didn't ship.
-      </p>
-      <a href="https://origin-protocol.vercel.app/" style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, textDecoration: 'none', letterSpacing: typography.labelSpacing }}>
-        ← Back to Origin
-      </a>
+    <div style={{ background: theme.surface.card, borderBottom: `1px solid ${theme.border.subtle}`, padding: `${spacing.xl}px ${spacing.xl}px ${spacing.xl}px ${innerPadL}px`, flexShrink: 0 }}>
+      <div style={{ maxWidth: CONTENT_MAX }}>
+        <h1 style={{ fontFamily: typography.fontHeading, fontSize: typography.display, fontWeight: typography.bold, color: theme.text.primary, margin: `0 0 ${spacing.sm}px`, letterSpacing: '-0.02em' }}>
+          Origin Design System
+        </h1>
+        <p style={{ margin: `0 0 ${spacing.md}px`, fontSize: typography.body, fontFamily: typography.fontBody, color: theme.text.secondary, lineHeight: 1.6, maxWidth: 600 }}>
+          The live system behind Origin. Tokens, primitives, and composed components — auto-generated from the codebase. Achromatic is the production identity; the other theme palettes are directional explorations that didn't ship.
+        </p>
+        <a href="https://origin-protocol.vercel.app/" style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, textDecoration: 'none', letterSpacing: typography.labelSpacing }}>
+          ← Back to Origin
+        </a>
+      </div>
     </div>
   );
 }
@@ -546,12 +565,12 @@ export default function DesignSystemPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: theme.surface.canvas, color: theme.text.primary, fontFamily: typography.fontBody, WebkitFontSmoothing: 'antialiased' }}>
-      <IntroHeader theme={theme} />
+      <IntroHeader theme={theme} isDesktop={isDesktop} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
         {isDesktop && <DSSidebar theme={theme} />}
         <main style={{ flex: 1, overflowY: 'auto' }}>
           {!isDesktop && <MobileNav theme={theme} />}
-          <div style={{ padding: `${spacing.xl}px ${isDesktop ? spacing.xxl : spacing.md}px` }}>
+          <div style={{ padding: `${spacing.xl}px ${isDesktop ? spacing.xxl : spacing.md}px`, maxWidth: CONTENT_MAX }}>
             {/* Foundation */}
             <PaletteSection    theme={theme} themeName={themeName} />
             <TypographySection theme={theme} />
