@@ -206,15 +206,15 @@ function RadiusSection({ theme }) {
   return (
     <SectionBlock id="radius" title="Radius" description="Zero-radius across all UI shapes under Achromatic. radius.full (9999) reserved for genuinely circular elements: adherence rings, avatars, status dots." theme={theme}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xl }}>
+        {/* Item width bumped 96 → 110, label drops the `radius.` prefix.
+            With the prefix included `radius.surfaceInner` rendered ~143px
+            wide in mono and bled into the next item, reading as
+            `radius.surfaceInnerradius.pill`. Section title already says
+            Radius, so the key alone is unambiguous. */}
         {RADIUS_TOKENS.map(({ key, desc }) => {
           const val = theme.radius[key];
           if (val === undefined) return null;
           return (
-            {/* Item width bumped 96 → 110, label drops the `radius.` prefix.
-                With the prefix included `radius.surfaceInner` rendered ~143px
-                wide in mono and bled into the next item, reading as
-                `radius.surfaceInnerradius.pill`. Section title already says
-                Radius, so the key alone is unambiguous. */}
             <div key={key} style={{ textAlign: 'center', width: 110 }}>
               <div style={{ width: 80, height: 80, background: theme.surface.card, border: `1px solid ${theme.border.strong}`, borderRadius: Math.min(val, 40), margin: '0 auto', marginBottom: spacing.xs }} />
               <div style={{ fontSize: typography.label, fontFamily: typography.fontBody, color: theme.text.secondary, fontWeight: typography.semibold, wordBreak: 'break-word' }}>{key}</div>
