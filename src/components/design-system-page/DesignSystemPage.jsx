@@ -246,8 +246,15 @@ function ShadowsSection({ theme }) {
 // ── Primitive sections ────────────────────────────────────────────────────────
 
 function VariantGrid({ variants, Comp, theme }) {
+  // alignItems: 'flex-start' so every variant's caption sits at the same top
+  // y. With flex-end (the previous default) component bottoms shared a
+  // baseline, but the captions above them scattered to different vertical
+  // positions whenever component heights varied — most visibly in the
+  // Heading section where display=32px and label=12px put captions 20px
+  // apart on the same row. Top-aligning keeps the captions in a clean
+  // header line; components hang below at their natural heights.
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-end' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' }}>
       {variants.map(v => (
         <div key={v.name}>
           <div style={{ fontSize: 10, fontFamily: typography.fontBody, color: theme.text.tertiary, marginBottom: spacing.xxs, whiteSpace: 'nowrap' }}>{v.name}</div>
@@ -277,7 +284,7 @@ function ButtonPlayground({ theme }) {
           {variant === 'icon' ? '⚙' : label}
         </Button>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' }}>
         <div style={ctrl}>
           <span>variant</span>
           <select value={variant} onChange={e => setVariant(e.target.value)} style={sel}>
@@ -325,7 +332,7 @@ function InputPlayground({ theme }) {
           <Input variant={variant} placeholder={placeholder} disabled={disabled} value={value} onChange={e => setValue(e.target.value)} width={variant === 'number' ? 80 : undefined} />
         </div>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.lg, alignItems: 'flex-start' }}>
         <div style={ctrl}>
           <span>variant</span>
           <select value={variant} onChange={e => { setVariant(e.target.value); setValue(''); }} style={sel}>
