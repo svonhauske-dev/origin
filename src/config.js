@@ -131,3 +131,57 @@ export function deriveOffsets(mode, cfg) {
     topical:       null,
   };
 }
+
+const _hhmmToMin = (s) => {
+  if (typeof s !== "string") return null;
+  const [h, m] = s.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+};
+
+// ── Adaptive cascade delta (mirrors computeAdaptiveDelta in
+//    supabase/functions/_shared/helpers.ts — keep the two in sync) ───────────
+//
+// In offset-based modes (medication/wakeup), when "adaptive timing" is on, the
+// rest of today's schedule re-flows off when the user ACTUALLY logged each step.
+// This returns the scalar shift (in integer local minutes) plus the per-slot
+// actual times, so display (App.jsx getSlotTime) and notifications (the server
+// mirror) can apply it identically.
+//
+//   slotOffsets — { slotId: offsetMinutesFromAnchor }. Caller builds the
+//                 eligible set: includes rx:0, drops null offsets, and drops
+//                 after_dinner when it's an absolute evening slot (evening_mode
+//                 set) so it neither sources nor receives the shift.
+//   anchorMin   — anchor time as minutes-of-day (hh*60+mm).
+//   checked     — the day's `checked` map (keys `${dateKey}_${slotId}_${suppId}`,
+//                 value `true` or `{checked, at:"HH:MM"}`).
+//   dateKey     — that day's "YYYY-MM-DD" key prefix.
+//
+// Rule: a slot is "logged" if ≥1 of its supps has an `at`; its actual time is
+// the MAX `at` across them (slot-finished time). S* = the logged slot with the
+// greatest offset; delta = A(S*) − (anchorMin + offset(S*)). Nothing logged → 0.
+export function computeAdaptiveDelta(slotOffsets, anchorMin, checked, dateKey) {
+  const actuals = {}; // slotId -> actual minutes-of-day (max `at` in the slot)
+  const ck = checked || {};
+  for (const slotId of Object.keys(slotOffsets)) {
+    const prefix = `${dateKey}_${slotId}_`;
+    let maxAt = null;
+    for (const key of Object.keys(ck)) {
+      if (!key.startsWith(prefix)) continue;
+      const v = ck[key];
+      const at = v && typeof v === "object" ? v.at : null;
+      const mins = _hhmmToMin(at);
+      if (mins == null) continue;
+      if (maxAt == null || mins > maxAt) maxAt = mins;
+    }
+    if (maxAt != null) actuals[slotId] = maxAt;
+  }
+
+  let sStarOffset = null, sStarActual = null;
+  for (const slotId of Object.keys(actuals)) {
+    const off = slotOffsets[slotId];
+    if (sStarOffset == null || off > sStarOffset) { sStarOffset = off; sStarActual = actuals[slotId]; }
+  }
+  if (sStarOffset == null) return { delta: 0, sStarOffset: null, actuals };
+  return { delta: sStarActual - (anchorMin + sStarOffset), sStarOffset, actuals };
+}

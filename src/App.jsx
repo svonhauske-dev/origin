@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   spacing, typography, touch, layout, icon,
   shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
-import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS } from "./config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS, computeAdaptiveDelta } from "./config";
 import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library, Pencil, MoreHorizontal } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
@@ -369,6 +369,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   });
   const [anchorBehavior, setAnchorBehavior] = useState("flexible");
   const [consistentTime, setConsistentTime] = useState("07:00");
+  // Adaptive timing: when on (medication/wakeup only), today's downstream slots
+  // re-flow off the user's actual log times. Stored on user_schedule.adaptive_timing.
+  const [adaptiveEnabled, setAdaptiveEnabled] = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState({});
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [profile, setProfile]               = useState(null);
@@ -779,6 +782,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         if (log?.pill_time) setPillTimes(pt => ({ ...pt, [dk]: log.pill_time.slice(0, 5) }));
         if (log?.checked)   setChecked(log.checked);
         if (sched?.schedule_type) setScheduleMode(sched.schedule_type);
+        setAdaptiveEnabled(sched?.adaptive_timing === true);
 
         let behavior = "flexible";
         let cTime    = "07:00";
@@ -883,7 +887,15 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     saveTimer.current = setTimeout(() => {
       const pt = pillTimes[dk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk)));
-      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
+      // Adaptive timing: once the log (with its actual `at` times) is persisted,
+      // recompute notifications so today's downstream reminders re-flow. Chained
+      // off the save's resolve — not a parallel timer — so the edge function reads
+      // the just-written `checked`, never a stale copy. The 200ms debounce already
+      // coalesces rapid checks into one save → one recompute.
+      const shouldReflow = adaptiveEnabled && isToday && (scheduleMode === "medication" || scheduleMode === "wakeup");
+      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token)
+        .then(() => { if (shouldReflow) recomputeQuiet(); })
+        .catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
       pendingSaveRef.current = false;
     }, 200);
   }, [checked, pillTimes, dk, loading, isPast, pastDayEditing]);
@@ -937,6 +949,24 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     recomputeNotifications(token);
   };
 
+  // Adaptive cascade: compute the active shift (minutes) + logged-slot actuals
+  // for TODAY once per render, so getSlotTime can re-flow downstream slots.
+  // Only medication/wakeup, only today, only when the toggle is on.
+  const adaptiveActive = adaptiveEnabled && isToday && (scheduleMode === "medication" || scheduleMode === "wakeup");
+  const adaptiveInfo = useMemo(() => {
+    if (!adaptiveActive || !effectivePillTime || !slotOffsets) return null;
+    const eligible = { rx: 0 };
+    for (const sid of Object.keys(slotOffsets)) {
+      const off = slotOffsets[sid];
+      if (off === null || off === undefined) continue;
+      // Absolute evening slot (tied to bedtime) neither sources nor receives the shift.
+      if (sid === "after_dinner" && scheduleConfig.evening_mode !== undefined) continue;
+      eligible[sid] = off;
+    }
+    const [ah, am] = effectivePillTime.split(":").map(Number);
+    return computeAdaptiveDelta(eligible, ah * 60 + am, checked, dk);
+  }, [adaptiveActive, effectivePillTime, slotOffsets, scheduleConfig.evening_mode, checked, dk]);
+
   const getSlotTime = (sid) => {
     if (scheduleMode === "fixed") {
       if (sid === "pre_breakfast" || sid === "pre_lunch" || sid === "pre_dinner") {
@@ -977,7 +1007,20 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     if (sid === "rx") return parseHHMM(effectivePillTime);
     const offset = slotOffsets?.[sid];
     if (offset === null || offset === undefined) return null;
-    return addMins(parseHHMM(effectivePillTime), offset);
+    const base = parseHHMM(effectivePillTime);
+    if (adaptiveInfo) {
+      const [ah, am] = effectivePillTime.split(":").map(Number);
+      const anchorMin = ah * 60 + am;
+      // Logged slot → show its own actual time.
+      if (adaptiveInfo.actuals[sid] != null) return addMins(base, adaptiveInfo.actuals[sid] - anchorMin);
+      // Downstream of the most-recent log → shift by the delta; earlier slots stay put.
+      const shifted = adaptiveInfo.sStarOffset != null && offset > adaptiveInfo.sStarOffset;
+      const eff = shifted ? offset + adaptiveInfo.delta : offset;
+      // Midnight fallback: if the shift crosses out of today, show the unshifted plan.
+      if (anchorMin + eff < 0 || anchorMin + eff >= 1440) return addMins(base, offset);
+      return addMins(base, eff);
+    }
+    return addMins(base, offset);
   };
 
   const slotTimeStr     = (sid) => { const t = getSlotTime(sid); return t ? fmtTime(t) : "--:--"; };
@@ -1008,10 +1051,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         const { [k]: _omit, ...rest } = c;
         return rest;
       }
-      // Toggling on — preserve any prior `at` timestamp the user set via log-at.
+      // Toggling on — preserve any prior `at` (log-at). With adaptive timing on,
+      // a real-time check on today stamps the current clock as the dose time so
+      // the cascade can re-flow; "Log at" overrides it. Adaptive-off and past-day
+      // edits keep storing bare `true` (no behavior change).
       const prev = c[k];
       const prevAt = prev && typeof prev === "object" ? prev.at : null;
-      return { ...c, [k]: prevAt ? { checked: true, at: prevAt } : true };
+      const stampAt = prevAt || (adaptiveEnabled && isToday ? fmtTime(new Date()) : null);
+      return { ...c, [k]: stampAt ? { checked: true, at: stampAt } : true };
     });
   };
   // Explicit log-at-time: stamps the entry with a specific time and marks checked.
@@ -1025,6 +1072,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // that are already checked. No-op on read-only days.
   const takeAllInSlot   = (sid, supps) => {
     if (isReadOnly) return;
+    // One timestamp for the whole take-all action (adaptive + today only).
+    const stampNow = (adaptiveEnabled && isToday) ? fmtTime(new Date()) : null;
     setChecked(c => {
       const next = { ...c };
       for (const supp of supps) {
@@ -1033,7 +1082,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         const alreadyChecked = prev === true || (prev && typeof prev === "object" && prev.checked);
         if (alreadyChecked) continue;
         const prevAt = prev && typeof prev === "object" ? prev.at : null;
-        next[k] = prevAt ? { checked: true, at: prevAt } : true;
+        const stampAt = prevAt || stampNow;
+        next[k] = stampAt ? { checked: true, at: stampAt } : true;
       }
       return next;
     });
@@ -1244,15 +1294,16 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }
   };
 
-  const saveSchedule = async (mode, config, behavior, cTime) => {
+  const saveSchedule = async (mode, config, behavior, cTime, adaptive = adaptiveEnabled) => {
     // IF uses absolute-time scheduling — no anchor behavior or consistent time needed.
     const offsets = mode === "fasting"
       ? { ...config }
       : { ...config, _anchor_behavior: behavior, _consistent_time: cTime };
     try {
-      await dbSaveSchedule({ user_id: user.id, schedule_type: mode, offsets }, token);
+      await dbSaveSchedule({ user_id: user.id, schedule_type: mode, offsets, adaptive_timing: adaptive }, token);
       setScheduleMode(mode);
       setScheduleConfig(config);
+      setAdaptiveEnabled(adaptive);
       setAnchorBehavior(behavior);
       setConsistentTime(cTime);
 
@@ -1904,6 +1955,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
               scheduleConfig={scheduleConfig}
               anchorBehavior={anchorBehavior}
               consistentTime={consistentTime}
+              adaptiveEnabled={adaptiveEnabled}
               onSaveSchedule={saveSchedule}
               supplements={visibleSupps}
             />
@@ -2251,6 +2303,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         scheduleConfig={scheduleConfig}
         anchorBehavior={anchorBehavior}
         consistentTime={consistentTime}
+        adaptiveEnabled={adaptiveEnabled}
         onSaveSchedule={saveSchedule}
         supplements={visibleSupps}
         protocols={protocols}

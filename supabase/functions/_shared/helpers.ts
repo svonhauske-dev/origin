@@ -258,3 +258,51 @@ export function deriveOffsets(mode: string, cfg: any): Record<string, number | n
     after_dinner:  cfg.after_dinner ?? 660,
   };
 }
+
+function hhmmToMin(s: unknown): number | null {
+  if (typeof s !== "string") return null;
+  const [h, m] = s.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+// ── Adaptive cascade delta (mirrors computeAdaptiveDelta in src/config.js —
+//    keep the two in sync) ─────────────────────────────────────────────────────
+//
+// Returns the scalar shift (integer local minutes) the rest of today's schedule
+// should re-flow by, plus the per-slot actual log times. See the client copy in
+// src/config.js for the full contract. `slotOffsets` must already be the eligible
+// set (rx:0 included, null offsets dropped, evening-override after_dinner dropped).
+export function computeAdaptiveDelta(
+  // deno-lint-ignore no-explicit-any
+  slotOffsets: Record<string, number>,
+  anchorMin: number,
+  // deno-lint-ignore no-explicit-any
+  checked: Record<string, any>,
+  dateKey: string,
+): { delta: number; sStarOffset: number | null; actuals: Record<string, number> } {
+  const actuals: Record<string, number> = {};
+  const ck = checked ?? {};
+  for (const slotId of Object.keys(slotOffsets)) {
+    const prefix = `${dateKey}_${slotId}_`;
+    let maxAt: number | null = null;
+    for (const key of Object.keys(ck)) {
+      if (!key.startsWith(prefix)) continue;
+      const v = ck[key];
+      const at = v && typeof v === "object" ? v.at : null;
+      const mins = hhmmToMin(at);
+      if (mins == null) continue;
+      if (maxAt == null || mins > maxAt) maxAt = mins;
+    }
+    if (maxAt != null) actuals[slotId] = maxAt;
+  }
+
+  let sStarOffset: number | null = null;
+  let sStarActual: number | null = null;
+  for (const slotId of Object.keys(actuals)) {
+    const off = slotOffsets[slotId];
+    if (sStarOffset == null || off > sStarOffset) { sStarOffset = off; sStarActual = actuals[slotId]; }
+  }
+  if (sStarOffset == null) return { delta: 0, sStarOffset: null, actuals };
+  return { delta: (sStarActual as number) - (anchorMin + sStarOffset), sStarOffset, actuals };
+}

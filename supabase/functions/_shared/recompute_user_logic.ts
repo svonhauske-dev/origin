@@ -17,6 +17,7 @@ import {
   getLocalDayOfWeek,
   parseLocalHHMM,
   deriveOffsets,
+  computeAdaptiveDelta,
   getModeSlotLabel,
   getAnchorTitle,
   isSupplementActiveOn,
@@ -73,7 +74,7 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
       .eq("status", "active")
       .is("deleted_at", null),
     admin.from("daily_logs")
-      .select("pill_time")
+      .select("pill_time, checked")
       .eq("user_id", userId)
       .eq("log_date", localToday)
       .maybeSingle(),
@@ -86,7 +87,10 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
   // deno-lint-ignore no-explicit-any
   const supps: any[] = suppsResult.data ?? [];
   const pillTime: string | null = logResult.data?.pill_time?.slice(0, 5) ?? null;
+  // deno-lint-ignore no-explicit-any
+  const checkedToday: Record<string, any> = logResult.data?.checked ?? {};
   const hasSub   = (subResult.count ?? 0) > 0;
+  const adaptive: boolean = sched?.adaptive_timing === true;
 
   // ── Early exits ───────────────────────────────────────────────────────────────
   const mode: string = sched?.schedule_type ?? "none";
@@ -373,6 +377,25 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
     const offsets = deriveOffsets(mode, cfg);
     if (!offsets) continue;
 
+    // Adaptive cascade: when enabled, today's downstream slots re-flow off the
+    // user's actual log times. Computed once per day; only today has logs.
+    const adaptiveActive = adaptive && isToday && (mode === "medication" || mode === "wakeup");
+    let adaptiveInfo: { delta: number; sStarOffset: number | null; actuals: Record<string, number> } =
+      { delta: 0, sStarOffset: null, actuals: {} };
+    if (adaptiveActive) {
+      // Eligible set: rx:0 anchor, real numeric offsets, minus the absolute
+      // evening slot (it neither sources nor receives the shift).
+      const eligible: Record<string, number> = { rx: 0 };
+      for (const sid of Object.keys(offsets)) {
+        const off = offsets[sid];
+        if (off === null || off === undefined) continue;
+        if (sid === "after_dinner" && cfg.evening_mode !== undefined) continue;
+        eligible[sid] = off as number;
+      }
+      const [ah, am] = anchorHHMM.split(":").map(Number);
+      adaptiveInfo = computeAdaptiveDelta(eligible, ah * 60 + am, checkedToday, dateStr);
+    }
+
     for (const slotId of TIMED_SLOT_IDS) {
       if (slotId === "rx") continue; // already handled above
 
@@ -411,8 +434,18 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
       const offset = offsets[slotId];
       if (offset === null || offset === undefined) continue;
 
-      const fireAt = addMins(anchorDate, offset);
+      // Adaptive: a slot the user already logged needs no reminder; downstream
+      // unlogged slots shift by the active delta. Earlier unlogged slots stay put.
+      if (adaptiveActive && adaptiveInfo.actuals[slotId] != null) continue;
+      const effOffset = (adaptiveActive && adaptiveInfo.sStarOffset != null && offset > adaptiveInfo.sStarOffset)
+        ? offset + adaptiveInfo.delta
+        : offset;
+
+      const fireAt = addMins(anchorDate, effOffset);
       if (fireAt <= now) continue;
+      // Midnight clamp: if the shift pushes the slot onto another local day, drop
+      // today's row so it can't collide with tomorrow's independently-computed one.
+      if (adaptiveActive && fireAt.toLocaleDateString("sv-SE", { timeZone: tz }) !== dateStr) continue;
 
       const slotSupps = supps.filter(
         (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&

@@ -76,7 +76,7 @@ const seedConfigForMode = (cfg, mode) => {
   return cfg;
 };
 
-export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavior, consistentTime, onSave, supplements = [] }) {
+export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavior, consistentTime, adaptive = false, onSave, supplements = [] }) {
   const { theme } = useTheme();
   // Cascade migration only applies to anchor/fasting modes, not fixed.
   const needsMigration     = useRef(scheduleMode !== 'fixed' && scheduleConfig.first_meal_offset_hours === undefined);
@@ -98,11 +98,14 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
     return scheduleMode === 'fixed' ? merged : migrateConfig(merged);
   });
   const [localBehavior, setLocalBehavior] = useState(anchorBehavior);
+  const [localAdaptive, setLocalAdaptive] = useState(adaptive);
   const [localTime,     setLocalTime]     = useState(consistentTime);
   const [saveError,     setSaveError]     = useState(null);
   const [orphanConfirm, setOrphanConfirm] = useState(null); // pending meal_count to confirm
 
-  const scheduleSave = (mode, config, behavior, time, delay = 500) => {
+  // adaptiveVal defaults to the current toggle state so every existing save
+  // carries it; the adaptive toggle handler passes the new value explicitly.
+  const scheduleSave = (mode, config, behavior, time, delay = 500, adaptiveVal = localAdaptive) => {
     setSaveError(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     // Mode/behavior changes call with delay=0 — fire immediately rather than
@@ -110,15 +113,20 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
     // Combined with keepalive on the fetch, this closes the window where a
     // fast force-close could drop the save.
     if (delay === 0) {
-      onSave(mode, config, behavior, time).then(ok => {
+      onSave(mode, config, behavior, time, adaptiveVal).then(ok => {
         if (ok === false) setSaveError("Couldn't save. Try again.");
       });
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const ok = await onSave(mode, config, behavior, time);
+      const ok = await onSave(mode, config, behavior, time, adaptiveVal);
       if (ok === false) setSaveError("Couldn't save. Try again.");
     }, delay);
+  };
+
+  const handleAdaptiveChange = (val) => {
+    setLocalAdaptive(val);
+    scheduleSave(localMode, localConfig, localBehavior, localTime, 0, val);
   };
 
   // Persist cascade-migrated config on first mount for anchor/fasting users.
@@ -370,6 +378,20 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
               <Input variant="time" value={localTime} onChange={e => handleTimeChange(e.target.value)} />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Adaptive timing — offset modes only. When on, logging a dose late or
+          early re-flows the rest of today's slots (and reminders) to keep the gaps. */}
+      {isOffsetMode && (
+        <div style={{ marginBottom: spacing.md }}>
+          <Label>Adaptive timing</Label>
+          <HelperText>Slot times shift based on when you actually log each step.</HelperText>
+          <div style={{ display: 'flex', gap: spacing.xs, marginBottom: spacing.xs }}>
+            {[[false, 'Off'], [true, 'On']].map(([val, label]) => (
+              <button key={label} onClick={() => handleAdaptiveChange(val)} style={segBtnStyle(localAdaptive === val)}>{label}</button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -244,9 +244,14 @@ export const dbSaveSchedule = async (data, t) => {
   // Without this preservation step, the DELETE-then-INSERT cycle silently
   // reset notifications_enabled to FALSE on every schedule save — the bug
   // that took down Bego's notifications on May 18, discovered May 19 evening.
-  const existing = await supa("GET", `/rest/v1/user_schedule?user_id=eq.${data.user_id}&select=notifications_enabled`, null, t).catch(() => []);
+  const existing = await supa("GET", `/rest/v1/user_schedule?user_id=eq.${data.user_id}&select=notifications_enabled,adaptive_timing`, null, t).catch(() => []);
   const preservedFlags = {
     notifications_enabled: existing?.[0]?.notifications_enabled ?? data.notifications_enabled ?? false,
+    // Adaptive timing is a per-user behavior flag (like notifications_enabled).
+    // The DELETE+INSERT cycle would reset it without this preservation. A value
+    // passed in `data` (the schedule editor saving a fresh choice) wins over the
+    // existing DB value so the toggle can be changed in the same save.
+    adaptive_timing: data.adaptive_timing ?? existing?.[0]?.adaptive_timing ?? false,
   };
   await supa("DELETE", `/rest/v1/user_schedule?user_id=eq.${data.user_id}`, null, t).catch(() => {});
   return supa("POST", "/rest/v1/user_schedule", { ...data, ...preservedFlags, timezone, updated_at: new Date().toISOString() }, t);
