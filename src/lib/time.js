@@ -15,6 +15,8 @@ function convertToDays(value, unit) {
   return 0;
 }
 
+const parseLocalDate = (s) => { const [y, m, d] = s.split("-").map(Number); return startOfDay(new Date(y, m - 1, d)); };
+
 export function isSupplementActiveOn(supp, date) {
   const checkDate = startOfDay(date);
 
@@ -33,9 +35,24 @@ export function isSupplementActiveOn(supp, date) {
     if (checkDate >= deletedLocal) return false;
   }
 
+  // Pause windows. A supp is not expected on days it was paused. Each interval is
+  // [from, to) in local time; `to: null` means still paused (open-ended, covers
+  // today + future). This is what keeps a paused-then-resumed supp's history
+  // honest: pre-pause days still show, the paused window hides, resume shows
+  // again. Pausing/resuming records the dates (App.jsx togglePause/resumeSupp);
+  // without that history this check is a no-op (empty array).
+  if (Array.isArray(supp.pause_intervals)) {
+    for (const iv of supp.pause_intervals) {
+      if (!iv || !iv.from) continue;
+      const from = parseLocalDate(iv.from);
+      if (checkDate < from) continue;
+      if (iv.to == null) return false;           // open interval: paused from `from` onward
+      if (checkDate < parseLocalDate(iv.to)) return false;  // within [from, to)
+    }
+  }
+
   if (!supp.treatment_mode || supp.treatment_mode === "indefinite") return true;
 
-  const parseLocalDate = (s) => { const [y, m, d] = s.split("-").map(Number); return startOfDay(new Date(y, m - 1, d)); };
   const startsAt  = supp.starts_at ? parseLocalDate(supp.starts_at) : null;
   const endsAt    = supp.ends_at   ? parseLocalDate(supp.ends_at)   : null;
 
@@ -63,4 +80,28 @@ export function isActiveSupp(supp) {
 
 export function isPausedSupp(supp) {
   return supp.status === 'paused' || (!supp.status && supp.paused === true);
+}
+
+// "Stopped" = discontinued/archived (anything that's neither active nor paused).
+// Stopped supps drop out of day views and adherence entirely. Paused supps do
+// NOT — they flow through and are masked per-day by `pause_intervals` instead,
+// so their pre-pause history stays visible. Use this (not `isActiveSupp`) as the
+// gate for "should this supp be considered on a given day".
+export function isStoppedSupp(supp) {
+  return !isActiveSupp(supp) && !isPausedSupp(supp);
+}
+
+// Pure helpers for maintaining the pause_intervals history. `dateStr` is a local
+// YYYY-MM-DD key (use dateKey). withPauseStarted opens an interval (no-op if one
+// is already open); withPauseEnded closes the open interval at `dateStr`.
+export function withPauseStarted(supp, dateStr) {
+  const intervals = Array.isArray(supp.pause_intervals) ? [...supp.pause_intervals] : [];
+  if (intervals.some(iv => iv && iv.to == null)) return intervals;
+  intervals.push({ from: dateStr, to: null });
+  return intervals;
+}
+
+export function withPauseEnded(supp, dateStr) {
+  const intervals = Array.isArray(supp.pause_intervals) ? [...supp.pause_intervals] : [];
+  return intervals.map(iv => (iv && iv.to == null) ? { ...iv, to: dateStr } : iv);
 }

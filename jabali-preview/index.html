@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jabalí — Café de especialidad de Finca Coyametla, Veracruz</title>
+<meta name="description" content="Jabalí — café de especialidad de Finca Coyametla, sierra de Zongolica, Veracruz. Cultivado por seis generaciones, tostado para disfrutarse con calma." />
+
+<!-- ================================================================ -->
+<!--  ASSETS PENDING: logo, photography and brand color palette will   -->
+<!--  be supplied by the client. Image slots use labelled .ph blocks   -->
+<!--  (swap for <img src="./images/...">). The per-direction palettes   -->
+<!--  below are PROVISIONAL placeholders until the real palette lands.  -->
+<!-- ================================================================ -->
+
+<!-- FONTS — brand stack is mono-forward. Space Mono loads from Google
+     now; Adelle Mono + Hendersons Sans are @font-face'd from ./fonts/
+     below and upgrade in automatically once the files are dropped. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+
+<style>
+/* ================================================================ */
+/*  RESET + GLOBAL                                                   */
+/* ================================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+html { scroll-behavior: smooth; }
+
+/* Labelled placeholder frame. A real image drops in as a child:
+   <div class="ph"><img src="./images/xyz.jpeg" alt="..."></div>
+   The img fills the frame (cover) and inherits its aspect-ratio /
+   border-radius from the per-direction .ph rules. Empty .ph blocks
+   still show the hatched label (used for the two pending images). */
+.ph {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(0,0,0,0.45);
+  background: repeating-linear-gradient(45deg,
+    rgba(0,0,0,0.035) 0 12px, rgba(0,0,0,0.06) 12px 24px);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+.ph > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* ================================================================ */
+/*  BRAND LAYER — shared identity tokens + logo lockup.             */
+/*  Type: Space Grotesk (display) + Space Mono (body), via Google.  */
+/* ================================================================ */
+:root {
+  --brand-oxblood: #4f0d00;   /* primary — confirm exact hex against brand guide */
+  --brand-oxblood-deep: #380900;
+  --brand-oxblood-soft: #6a282c;
+  --brand-cream: #ece8e4;
+  --font-mono: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-display: "Space Grotesk", "Space Mono", system-ui, sans-serif;
+}
+
+/* Logo lockup — the white cursive wordmark sits on an oxblood ground
+   (the Instagram-avatar pattern) so it reads on light surfaces. Size
+   it via font-size on the parent. On dark/oxblood fields, drop the
+   ground with .brandmark--bare. */
+.brandmark { display: inline-flex; align-items: center; justify-content: center;
+  background: var(--brand-oxblood); padding: 0.45em 0.7em; border-radius: 6px; line-height: 0; }
+.brandmark img { height: 1em; width: auto; display: block; }
+.brandmark--bare { background: transparent; padding: 0; }
+
+/* ================================================================ */
+/* ================================================================ */
+/*  DIRECTION 4 — "MONTE CLARO"                                            */
+/*  Layout system: asymmetric, off-grid, overlapping, full-bleed    */
+/*  on a dark soil canvas.                                          */
+/*  Hero concept: full-viewport condensed wordmark that drifts on    */
+/*  scroll.                                                         */
+/*  Bold move: scroll-triggered kinetics — the masthead drifts and  */
+/*  a varietal MARQUEE drags across the page. The boar unleashed.   */
+/* ================================================================ */
+.dir-4 {
+  /* Accents drawn from the brand book's "Paleta Cromática: Origen" — the only Origen
+     members with enough contrast on the dark oxblood field are sage + cream. */
+  --d4-soil:#e9e6e1; --d4-bone:#1c1714; --d4-dim:rgba(28,23,20,0.62); --d4-ember:#1c1714; --d4-moss:#1c1714;
+  background: var(--d4-soil); color: var(--d4-bone);
+  font-family: var(--font-mono); line-height: 1.5; overflow-x: clip;
+}
+.dir-4 .d4-wrap { max-width: 1280px; margin: 0 auto; padding: 0 1.25rem; }
+.dir-4 .d4-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.85rem 1.5rem; max-width: 1280px; margin: 0 auto; font-size: clamp(0.62rem, 2.3vw, 0.75rem); letter-spacing: 0.16em; text-transform: uppercase; color: var(--d4-dim); }
+.dir-4 .d4-nav .d4-mark { color: var(--d4-bone); font-weight: 700; }
+
+.dir-4 .d4-hero-screen { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+.dir-4 .d4-hero { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative; max-width: 1280px; margin: 0 auto; width: 100%; padding: 1rem 1.5rem 1.25rem; overflow: hidden; }
+.dir-4 .d4-hero-lockup { display: flex; flex-direction: column-reverse; align-items: center; gap: 0; width: 100%; }
+.dir-4 .d4-hero-word { font-family: var(--font-display); text-transform: uppercase; line-height: 0.82; letter-spacing: -0.01em; font-size: clamp(4.5rem, 26vw, 22rem); margin: 0; }
+.dir-4 .d4-hero-word--mark { line-height: 1; }
+.dir-4 .d4-hero-word--mark img { display: block; width: min(95vw, 1140px); height: auto; margin: 0 auto; }
+.dir-4 .d4-hero-copy { max-width: 60ch; margin: 1.1rem auto 0; }
+.dir-4 .d4-hero-copy p { font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.55; margin: 0; }
+.dir-4 .d4-hero-copy strong { color: #ece8e4; font-weight: 500; }
+.dir-4 .d4-hero-cta { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; margin-top: 1.25rem; }
+.dir-4 .d4-boar { width: clamp(76px, 7.5vw, 98px); aspect-ratio: 4/5; padding: 0; border: none; margin: 0 0 -2.75rem; }
+.dir-4 .d4-boar img { width: 100%; height: 100%; object-fit: contain; }
+
+.dir-4 .d4-marquee { border-top: 1px solid rgba(28,23,20,0.18); border-bottom: 1px solid rgba(28,23,20,0.18); padding: 0.7rem 0; overflow: hidden; white-space: nowrap; background: var(--d4-ember); color: var(--d4-soil); }
+.dir-4 .d4-marquee-track { display: inline-block; will-change: transform; animation: d4-drift 30s linear infinite; transform: translateX(calc(var(--scroll, 0px) * -0.2)); }
+.dir-4 .d4-marquee-track span { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(1.3rem, 4vw, 2.2rem); letter-spacing: 0.02em; padding: 0 1.5rem; }
+.dir-4 .d4-marquee-track span::after { content: "✦"; padding-left: 3rem; opacity: 0.55; }
+@keyframes d4-drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.dir-4 .d4-sec-label { font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--d4-ember); margin: 0 0 1.5rem; }
+.dir-4 .d4-h2 { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2rem, 6vw, 3.6rem); line-height: 0.95; margin: 0 0 1.25rem; }
+.dir-4 p.d4-body { color: var(--d4-bone); max-width: 60ch; margin: 0 0 1rem; }
+.dir-4 p.d4-body strong { color: var(--d4-bone); font-weight: 500; }
+
+.dir-4 .d4-story { position: relative; padding: 4rem 0; }
+.dir-4 .d4-story-fig, .dir-4 .d4-name-fig, .dir-4 .d4-buy-fig { margin: 0; }
+.dir-4 .d4-story-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: center; }
+.dir-4 .d4-story-fig .ph { aspect-ratio: 4/3; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 12px, rgba(255,255,255,0.07) 12px 24px); border-color: rgba(28,23,20,0.18); color: var(--d4-dim); }
+.dir-4 .d4-watermark { font-family: var(--font-display); font-size: clamp(5rem, 16vw, 12rem); color: rgba(79,13,0,0.10); line-height: 0.8; margin: 0 0 -0.5rem -0.06em; }
+
+/* El nombre — full statement band */
+.dir-4 .d4-name { padding: 4rem 0; border-top: 1px solid rgba(28,23,20,0.18); }
+.dir-4 .d4-name-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: center; }
+.dir-4 .d4-name-fig .ph { aspect-ratio: 4 / 5; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); }
+.dir-4 .d4-name h2 { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2rem, 6vw, 3.6rem); line-height: 0.95; margin: 0 0 1.25rem; }
+.dir-4 .d4-name h2 .ember { color: var(--d4-ember); }
+
+/* Maker */
+.dir-4 .d4-maker { padding: 4rem 0; border-top: 1px solid rgba(28,23,20,0.18); }
+.dir-4 .d4-maker-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; align-items: center; }
+.dir-4 .d4-maker .ph { aspect-ratio: 4/5; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 12px, rgba(255,255,255,0.07) 12px 24px); }
+
+/* Cafés — staggered cards */
+.dir-4 .d4-cafes { padding: 4rem 0; border-top: 1px solid rgba(28,23,20,0.18); }
+/* Mobile: full-bleed horizontal scroll-snap carousel — cards run to the screen
+   edges; only a leading gutter sits before the first card, next card peeks. */
+.dir-4 .d4-var-stack { display: grid; grid-auto-flow: column; grid-auto-columns: 82%; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin: 0 -1.25rem; padding: 0 1.25rem 1rem; scroll-padding-left: 1.25rem; scrollbar-width: none; }
+.dir-4 .d4-var-stack::-webkit-scrollbar { display: none; }
+.dir-4 .d4-var-card { scroll-snap-align: start; }
+.dir-4 .d4-var-card { border: 1px solid rgba(28,23,20,0.18); padding: 1.75rem; background: transparent; position: relative; display: flex; flex-direction: column; }
+.dir-4 .d4-var-card .ph { aspect-ratio: 4 / 5; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); margin: -1.75rem -1.75rem 1.5rem; width: calc(100% + 3.5rem); }
+.dir-4 .d4-var-card .idx { font-family: var(--font-display); font-size: 2.5rem; color: var(--d4-moss); line-height: 1; }
+.dir-4 .d4-var-card h3 { font-family: var(--font-display); text-transform: uppercase; font-size: 1.75rem; margin: 0.25rem 0; }
+.dir-4 .d4-var-card .sub { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--d4-ember); margin-bottom: 0.75rem; min-height: 2rem; }
+.dir-4 .d4-var-card .desc { color: var(--d4-bone); font-size: 0.875rem; margin: 0 0 1.25rem; min-height: 5.25rem; }
+.dir-4 .d4-spec { list-style: none; margin: 0 0 1.25rem; padding: 0; font-size: 0.875rem; }
+.dir-4 .d4-spec li { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.75rem; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid rgba(28,23,20,0.18); }
+.dir-4 .d4-spec li span:first-child { color: var(--d4-dim); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6875rem; }
+.dir-4 .d4-price { margin: auto 0 0; }
+.dir-4 .d4-price-row { display: grid; grid-template-columns: 4.5rem 1fr; gap: 0.75rem; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid rgba(28,23,20,0.18); font-size: 0.875rem; }
+.dir-4 .d4-price-row span { font-family: var(--font-mono); color: var(--d4-dim); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6875rem; }
+.dir-4 .d4-price b { font-family: var(--font-display); color: var(--d4-ember); font-size: 1.0625rem; }
+.dir-4 .d4-ideal { font-size: 0.875rem; color: var(--d4-dim); margin: 0.75rem 0 0; }
+.dir-4 .d4-var-card .d4-btn { display: block; width: 100%; margin-top: 1.25rem; font-size: 0.875rem; padding: 0.85rem 1.25rem; }
+
+/* Bundles */
+.dir-4 .d4-bundles-label { font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--d4-dim); margin: 3rem 0 1.25rem; }
+/* Mobile: full-bleed horizontal scroll-snap carousel (matches the cafés cards) */
+.dir-4 .d4-bundles { display: grid; grid-auto-flow: column; grid-auto-columns: 86%; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; margin: 0 -1.25rem; padding: 0 1.25rem 1rem; scroll-padding-left: 1.25rem; scrollbar-width: none; }
+.dir-4 .d4-bundles::-webkit-scrollbar { display: none; }
+.dir-4 .d4-bundle { scroll-snap-align: start; display: grid; grid-template-columns: 1fr; border: 1px solid rgba(28,23,20,0.18); overflow: hidden; background: transparent; }
+.dir-4 .d4-bundle .ph { aspect-ratio: 3/2; border: none; color: var(--d4-dim); }
+.dir-4 .d4-bundle-body { padding: 1.75rem; display: flex; flex-direction: column; }
+.dir-4 .d4-bundle h3 { font-family: var(--font-display); text-transform: uppercase; font-size: 1.6rem; line-height: 1; margin: 0; }
+.dir-4 .d4-bundle .b-sub { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--d4-ember); margin: 0.5rem 0 1.1rem; }
+.dir-4 .d4-bundle .b-desc { font-size: 0.875rem; color: var(--d4-bone); line-height: 1.55; margin: 0 0 1.25rem; }
+.dir-4 .d4-bundle .b-incl { list-style: none; margin: 0 0 1.5rem; padding: 0; font-size: 0.8125rem; }
+.dir-4 .d4-bundle .b-incl li { display: grid; grid-template-columns: 2.25rem 1fr; gap: 0.5rem; align-items: baseline; padding: 0.4rem 0; border-bottom: 1px solid rgba(28,23,20,0.12); color: var(--d4-dim); }
+.dir-4 .d4-bundle .b-incl li span:first-child { font-family: var(--font-display); color: var(--d4-bone); }
+.dir-4 .d4-bundle .b-foot { margin-top: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.dir-4 .d4-bundle .b-price { font-family: var(--font-display); font-size: 1.75rem; color: var(--d4-bone); }
+@media (min-width: 768px) {
+  .dir-4 .d4-bundles { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: 1fr 1fr; gap: 1.5rem; overflow: visible; margin: 0; padding: 0; }
+  .dir-4 .d4-bundle { grid-template-columns: 0.82fr 1.18fr; align-items: stretch; }
+  .dir-4 .d4-bundle .ph { aspect-ratio: auto; height: 100%; min-height: 340px; }
+  .dir-4 .d4-bundle .b-foot { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+
+/* Cómo comprar */
+.dir-4 .d4-buy { padding: 4rem 0; border-top: 1px solid rgba(28,23,20,0.18); }
+.dir-4 .d4-buy-grid { display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: center; }
+.dir-4 .d4-buy-fig { margin: 0; }
+.dir-4 .d4-buy-fig .ph { aspect-ratio: 4/5; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); }
+@media (min-width: 768px) { .dir-4 .d4-buy-grid { grid-template-columns: 1.05fr 0.95fr; gap: 3.5rem; } }
+.dir-4 .d4-steps { list-style: none; counter-reset: s; margin: 0 0 1.5rem; padding: 0; display: grid; grid-template-columns: 1fr; gap: 0; }
+.dir-4 .d4-steps li { counter-increment: s; padding: 0.75rem 0 0.75rem 3rem; border-bottom: 1px solid rgba(28,23,20,0.18); position: relative; color: var(--d4-bone); }
+.dir-4 .d4-steps li::before { content: counter(s, decimal-leading-zero); position: absolute; left: 0; font-family: var(--font-display); color: var(--d4-ember); }
+.dir-4 .d4-ship { color: var(--d4-dim); }
+
+/* Complementarios */
+.dir-4 .d4-extras { background: #e2ded7; padding: 4rem 0; }
+.dir-4 .d4-feature-extra { display: grid; grid-template-columns: 1fr; gap: 1.25rem; border: 1px solid rgba(28,23,20,0.18); padding: 1.5rem; margin-bottom: 1.5rem; align-items: center; }
+.dir-4 .d4-feature-extra .ph { aspect-ratio: 16/10; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); }
+.dir-4 .d4-feature-extra h3 { font-family: var(--font-display); text-transform: uppercase; font-size: 1.5rem; margin: 0 0 0.5rem; }
+.dir-4 .d4-feature-extra .price { color: var(--d4-ember); font-weight: 500; }
+.dir-4 .d4-merch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.dir-4 .d4-merch-item .ph { aspect-ratio: 1/1; border-color: rgba(28,23,20,0.18); color: var(--d4-dim); margin-bottom: 0.5rem; }
+.dir-4 .d4-merch-item h4 { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.dir-4 .d4-merch-item span { color: var(--d4-ember); font-size: 0.875rem; }
+
+/* Cierre / CTA */
+.dir-4 .d4-cta { padding: 5rem 1.25rem; text-align: center; }
+.dir-4 .d4-ritual { color: var(--d4-dim); line-height: 2.1; margin: 0 auto 1.5rem; max-width: 40ch; }
+.dir-4 .d4-cta h2 { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2.4rem, 8vw, 4.4rem); line-height: 0.95; margin: 0 0 1.5rem; }
+.dir-4 .d4-btn { display: block; width: 100%; text-align: center; white-space: nowrap; text-decoration: none; background: var(--d4-ember); color: var(--d4-soil); font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 1rem; padding: 1rem 2.25rem; transition: transform 0.15s ease, background 0.15s ease; }
+.dir-4 .d4-btn:hover { background: var(--d4-bone); transform: translateY(-2px); }
+.dir-4 .d4-btn.ghost { background: transparent; color: var(--d4-bone); border: 1px solid var(--d4-dim); }
+.dir-4 .d4-btn.ghost:hover { background: var(--d4-bone); color: var(--d4-soil); border-color: var(--d4-bone); }
+.dir-4 a:focus-visible, .dir-4 button:focus-visible { outline: 2px solid var(--d4-bone); outline-offset: 3px; }
+.dir-4 .d4-top a:focus-visible { outline-color: #ece8e4; }
+
+.dir-4 .d4-footer { border-top: 1px solid rgba(28,23,20,0.18); padding: 2.5rem 0 1.5rem; }
+.dir-4 .d4-footer-top { display: grid; grid-template-columns: 1fr 1fr; gap: 2.25rem 1.5rem; }
+.dir-4 .d4-footer-brand { grid-column: 1 / -1; }
+.dir-4 .d4-footer-mark { display: block; font-size: 3.6rem; margin: 0 0 1.25rem; }
+.dir-4 .d4-footer-tag { color: var(--d4-dim); max-width: 40ch; margin: 0; font-size: 0.875rem; line-height: 1.6; }
+.dir-4 .d4-footer-col h4 { font-family: var(--font-display); text-transform: uppercase; font-size: 0.6875rem; letter-spacing: 0.18em; color: var(--d4-dim); margin: 0 0 0.9rem; }
+.dir-4 .d4-footer-col a, .dir-4 .d4-footer-col span { display: block; font-size: 0.875rem; padding: 0.28rem 0; line-height: 1.4; }
+.dir-4 .d4-footer-col a { width: fit-content; color: var(--d4-bone); text-decoration: none; }
+.dir-4 .d4-footer-col a:hover { color: #4f0d00; }
+.dir-4 .d4-footer-col span { color: var(--d4-dim); }
+.dir-4 .d4-footer-legal { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid rgba(28,23,20,0.12); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--d4-dim); }
+.dir-4 .d4-footer-legal a { color: var(--d4-dim); text-decoration: none; }
+.dir-4 .d4-footer-legal a:hover { color: #4f0d00; }
+
+@media (min-width: 768px) {
+  .dir-4 .d4-story-grid { grid-template-columns: 1fr 1.2fr; gap: 3rem; }
+  .dir-4 .d4-story-fig { margin-left: -3rem; }
+  .dir-4 .d4-maker-grid { grid-template-columns: 1fr 1.3fr; gap: 3rem; }
+  .dir-4 .d4-var-stack { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch; overflow: visible; margin: 0; padding: 0; }
+  .dir-4 .d4-name-grid { grid-template-columns: 1fr 1.3fr; gap: 3.5rem; }
+  .dir-4 .d4-name-fig { margin-right: -3rem; }
+  .dir-4 .d4-feature-extra { grid-template-columns: 1fr 1.6fr; }
+  .dir-4 .d4-merch-grid { grid-template-columns: repeat(4, 1fr); }
+  .dir-4 .d4-footer-top { grid-template-columns: 1.6fr 1fr 1fr; gap: 3rem; align-items: start; }
+  .dir-4 .d4-footer-brand { grid-column: auto; }
+  .dir-4 .d4-btn { display: inline-block; width: auto; }
+}
+
+
+/* DIRECTION 4 — colour overrides: oxblood band covers the top nav + hero, rest is light */
+.dir-4 .d4-top { background: #4f0d00; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dir-4 .d4-nav { color: rgba(236,232,228,0.85); }
+.dir-4 .d4-nav .d4-mark { color: #ece8e4; }
+.dir-4 .d4-hero { color: #ece8e4; }
+.dir-4 .d4-hero-copy p { color: rgba(236,232,228,0.82); }
+.dir-4 .d4-hero-copy strong { color: #ece8e4; }
+.dir-4 .d4-hero .d4-btn { background: #ece8e4; color: #4f0d00; }
+.dir-4 .d4-hero .d4-btn:hover { background: #ffffff; }
+.dir-4 .d4-hero .d4-btn.ghost { background: transparent; color: #ece8e4; border-color: rgba(236,232,228,0.5); }
+.dir-4 .d4-hero .d4-btn.ghost:hover { background: #ece8e4; color: #4f0d00; }
+.dir-4 .d4-boar { border-color: rgba(236,232,228,0.4); color: rgba(236,232,228,0.7); }
+.dir-4 .d4-marquee { background: transparent; color: #1c1714; }
+.dir-4 .d4-var-card { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .dir-2 .d2-marquee-track, .dir-4 .d4-marquee-track { animation: none; }
+  .dir-2 .d2-hero-word, .dir-2 .d2-hero-word .stroke, .dir-2 .d2-marquee-track { transform: none !important; }
+  .dir-4 .d4-hero-word, .dir-4 .d4-hero-word .stroke, .dir-4 .d4-marquee-track { transform: none !important; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================== -->
+<!--  TOGGLE BAR — preview tool only (see CSS note). Delete on ship. -->
+<!-- ============================================================== -->
+<!-- DIRECTION 4 — "MONTE CLARO"
+     Concept: The wild boar unleashed. A dark, earthy, full-bleed
+     canvas where an enormous condensed wordmark drifts on scroll, with
+     off-grid overlapping blocks and a varietal marquee that drags as
+     you move. The genre's calm is deliberately ruptured by one
+     kinetic, oversized type moment — nocturnal, soil-and-ember.      -->
+<!-- ============================================================== -->
+<div class="dir dir-4" id="dir-4">
+
+  <div class="d4-hero-screen">
+  <div class="d4-top">
+  <nav class="d4-nav">
+    <span>Est. 1830</span>
+    <span>Zongolica · Veracruz</span>
+  </nav>
+
+  <!-- 1 · HERO -->
+  <section class="d4-hero">
+    <div class="d4-hero-lockup">
+      <h1 class="d4-hero-word d4-hero-word--mark"><img src="./images/wordmark-blanco.png" alt="Jabalí"></h1>
+      <div class="d4-boar"><img src="./images/boar-blanco.png" alt="Jabalí — la manada"></div>
+    </div>
+    <div class="d4-hero-copy">
+      <p>Café de especialidad desde Finca Coyametla, Veracruz, directo a tu casa.</p>
+    </div>
+    <div class="d4-hero-cta">
+      <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20hacer%20un%20pedido.%0ACaf%C3%A9%3A%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%20de%20entrega%3A" target="_blank" rel="noopener">Comprar por WhatsApp</a>
+      <a class="d4-btn ghost" href="#d4-cafes">Conoce nuestros cafés</a>
+    </div>
+  </section>
+  </div>
+
+  <!-- MARQUEE — scroll-triggered varietal band (bold move) -->
+  <div class="d4-marquee" aria-hidden="true">
+    <div class="d4-marquee-track">
+      <span>Finca Coyametla</span><span>Jabalí</span><span>Lavado</span><span>Natural</span><span>Zongolica</span><span>Veracruz</span><span>1600 msnm</span>
+      <span>Finca Coyametla</span><span>Jabalí</span><span>Lavado</span><span>Natural</span><span>Zongolica</span><span>Veracruz</span><span>1600 msnm</span>
+    </div>
+  </div>
+  </div>
+
+  <div class="d4-wrap">
+
+    <!-- 2 · HISTORIA -->
+    <section class="d4-story">
+      <div class="d4-story-grid">
+        <figure class="d4-story-fig">
+          <div class="ph"><img src="./images/finca-coyametla.jpg" alt="Finca Coyametla, sierra de Zongolica — vista aérea" loading="lazy"></div>
+        </figure>
+        <div>
+          <p class="d4-watermark">01</p>
+          <p class="d4-sec-label">Nuestra historia</p>
+          <h2 class="d4-h2">De Finca Coyametla a tu taza</h2>
+          <p class="d4-body">Nuestra historia comienza en <strong>Finca Coyametla</strong>, una finca familiar en Veracruz construida en 1830, donde el café se cultiva desde hace tres generaciones, con una pasión inquebrantable y compromiso con la calidad y el territorio.</p>
+          <p class="d4-body">Visitar Coyametla es adentrarse en un rincón de la naturaleza: la neblina suave, la vegetación exuberante y el trabajo paciente. De ese origen nace Jabalí — un café cuidado desde su origen y tostado para expresar la complejidad de cada grano.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · EL NOMBRE -->
+    <section class="d4-name">
+      <div class="d4-name-grid">
+        <div>
+          <p class="d4-watermark">02</p>
+          <p class="d4-sec-label">El nombre</p>
+          <h2>Tierra de <span class="ember">jabalíes</span></h2>
+          <p class="d4-body">El nombre Jabalí no es una ocurrencia. Es un homenaje directo a nuestras raíces: «Coyametla», el término náhuatl que nombra nuestra finca ancestral, significa <strong>«tierra de jabalíes»</strong>.</p>
+          <p class="d4-body">Refleja nuestro origen: la tierra, la familia, la historia y la fuerza silenciosa de un lugar que ha cultivado café durante generaciones.</p>
+        </div>
+        <figure class="d4-name-fig">
+          <div class="ph"><img src="./images/finca-2.jpg" alt="Casco histórico de Finca Coyametla — sierra de Zongolica, Veracruz" loading="lazy"></div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 4 · LA SEXTA GENERACIÓN -->
+    <section class="d4-maker">
+      <div class="d4-maker-grid">
+        <div class="ph"><img src="./images/alexia.jpeg" alt="Alexia Zavaleta Guraieb, sexta generación de Finca Coyametla" loading="lazy"></div>
+        <div>
+          <p class="d4-watermark">03</p>
+          <p class="d4-sec-label">El oficio</p>
+          <h2 class="d4-h2">La sexta generación</h2>
+          <p class="d4-body"><strong>Finca familiar desde 1830</strong>, con seis generaciones de historia y tres generaciones dedicadas al café.</p>
+          <p class="d4-body">Alexia Zavaleta Guraieb es la sexta generación: productora, procesadora y artista. Combina su visión creativa con el cultivo, la selección y el procesamiento de cada grano — y cada bolsa de Jabalí lleva algo de ese proceso.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · NUESTROS CAFÉS -->
+    <section class="d4-cafes" id="d4-cafes">
+      <p class="d4-watermark">04</p>
+      <p class="d4-sec-label">Nuestros cafés — elige tu café</p>
+      <div class="d4-var-stack">
+
+        <article class="d4-var-card">
+          <div class="ph"><img src="./images/cafe-1.jpeg" alt="Café Jabalí — Natural, Typica y Caturra" loading="lazy"></div>
+          <div class="idx">01</div>
+          <h3>Natural</h3>
+          <div class="sub">Typica · Caturra</div>
+          <p class="desc">Elegante, ligeramente frutal, con una acidez muy expresiva y balanceada.</p>
+          <ul class="d4-spec">
+            <li><span>Notas</span><span>Fresa, cacao, mora</span></li>
+            <li><span>Altitud</span><span>1600 msnm</span></li>
+            <li><span>Región</span><span>Zongolica</span></li>
+          </ul>
+          <div class="d4-price">
+            <div class="d4-price-row"><span>250 g</span><b>$300</b></div>
+            <div class="d4-price-row"><span>1 kg</span><b>$700</b></div>
+          </div>
+          <p class="d4-ideal">Para quienes buscan una taza especial, con carácter.</p>
+          <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20pedir%20el%20Natural%20(Typica%20y%20Caturra).%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%3A" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </article>
+
+        <article class="d4-var-card">
+          <div class="ph"><img src="./images/cafe-2.jpeg" alt="Café Jabalí — Natural, Obata" loading="lazy"></div>
+          <div class="idx">02</div>
+          <h3>Natural</h3>
+          <div class="sub">Obata</div>
+          <p class="desc">Muy limpio y jugoso, una taza llena de vida.</p>
+          <ul class="d4-spec">
+            <li><span>Notas</span><span>Ciruela, naranja, frambuesa</span></li>
+            <li><span>Altitud</span><span>1500 msnm</span></li>
+            <li><span>Región</span><span>Zongolica</span></li>
+          </ul>
+          <div class="d4-price">
+            <div class="d4-price-row"><span>250 g</span><b>$300</b></div>
+            <div class="d4-price-row"><span>1 kg</span><b>$700</b></div>
+          </div>
+          <p class="d4-ideal">Para quienes buscan una taza distinta, con mucha personalidad.</p>
+          <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20pedir%20el%20Natural%20(Obata).%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%3A" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </article>
+
+        <article class="d4-var-card">
+          <div class="ph"><img src="./images/cafe-3.jpeg" alt="Café Jabalí — Lavado" loading="lazy"></div>
+          <div class="idx">03</div>
+          <h3>Lavado</h3>
+          <div class="sub">Caturra · Bourbon · Typica</div>
+          <p class="desc">Balanceado, dulce y redondo.</p>
+          <ul class="d4-spec">
+            <li><span>Notas</span><span>Caramelo, limón, mandarina</span></li>
+            <li><span>Altitud</span><span>1600 msnm</span></li>
+            <li><span>Región</span><span>Zongolica</span></li>
+          </ul>
+          <div class="d4-price">
+            <div class="d4-price-row"><span>250 g</span><b>$280</b></div>
+            <div class="d4-price-row"><span>1 kg</span><b>$600</b></div>
+          </div>
+          <p class="d4-ideal">Para quienes buscan una taza fácil de tomar todos los días.</p>
+          <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20pedir%20el%20Lavado.%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%3A" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+        </article>
+      </div>
+
+      <!-- Bundles -->
+      <p class="d4-bundles-label">Bundles — los tres perfiles juntos</p>
+      <div class="d4-bundles">
+
+        <article class="d4-bundle">
+          <div class="ph"><img src="./images/bundle-degustacion.jpg" alt="Bundle Degustación Jabalí — tres bolsas de 250 g" loading="lazy"></div>
+          <div class="d4-bundle-body">
+            <h3>Bundle Degustación</h3>
+            <div class="b-sub">3 bolsas · 250 g</div>
+            <p class="b-desc">Una forma de conocer los tres perfiles de Jabalí: frutal y elegante, expresivo y jugoso, dulce y balanceado.</p>
+            <ul class="b-incl">
+              <li><span>1×</span><span>Natural · Typica · Caturra</span></li>
+              <li><span>1×</span><span>Natural · Obata</span></li>
+              <li><span>1×</span><span>Lavado</span></li>
+            </ul>
+            <div class="b-foot">
+              <span class="b-price">$880</span>
+              <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20el%20Bundle%20Degustaci%C3%B3n%20(3%20bolsas%20de%20250%20g).%0ADirecci%C3%B3n%20de%20entrega%3A" target="_blank" rel="noopener">Pedir bundle</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="d4-bundle">
+          <div class="ph"><img src="./images/bundle-ritual.jpg" alt="Bundle Ritual Jabalí — cuatro bolsas de 250 g" loading="lazy"></div>
+          <div class="d4-bundle-body">
+            <h3>Bundle Ritual</h3>
+            <div class="b-sub">4 bolsas · 250 g · envío gratis CDMX</div>
+            <p class="b-desc">El bundle ideal para tener Jabalí y un extra para que no te quedes sin café. Incluye nuestros tres perfiles y envío gratis en CDMX.</p>
+            <ul class="b-incl">
+              <li><span>1×</span><span>Natural · Typica · Caturra</span></li>
+              <li><span>1×</span><span>Natural · Obata</span></li>
+              <li><span>2×</span><span>Lavado</span></li>
+            </ul>
+            <div class="b-foot">
+              <span class="b-price">$1,180</span>
+              <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20el%20Bundle%20Ritual%20(4%20bolsas%20de%20250%20g).%0ADirecci%C3%B3n%20de%20entrega%3A" target="_blank" rel="noopener">Pedir bundle</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 6 · CÓMO COMPRAR -->
+    <section class="d4-buy">
+      <div class="d4-buy-grid">
+        <div>
+          <p class="d4-watermark">05</p>
+          <p class="d4-sec-label">Cómo comprar</p>
+          <h2 class="d4-h2">Directo a tu casa</h2>
+          <p class="d4-body">Por ahora vendemos directo por WhatsApp. Para hacer tu pedido, mándanos:</p>
+          <ol class="d4-steps">
+            <li>Qué café quieres</li>
+            <li>Presentación: 250 g o 1 kg</li>
+            <li>Cantidad</li>
+            <li>Dirección de entrega</li>
+          </ol>
+          <p class="d4-body">Te confirmamos disponibilidad, el total y los datos de pago por WhatsApp.</p>
+          <p class="d4-body d4-ship">Envíos en CDMX. Gratis a partir de 4 bolsas de 250 g.</p>
+          <div class="d4-hero-cta">
+            <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20hacer%20un%20pedido.%0ACaf%C3%A9%3A%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%20de%20entrega%3A" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+          </div>
+        </div>
+        <figure class="d4-buy-fig">
+          <div class="ph"><img src="./images/secado.jpeg" alt="Secado del café en camas — Finca Coyametla" loading="lazy"></div>
+        </figure>
+      </div>
+    </section>
+  </div>
+
+  <!-- 7 · PRODUCTOS COMPLEMENTARIOS -->
+  <section class="d4-extras">
+    <div class="d4-wrap">
+      <p class="d4-sec-label">Productos complementarios</p>
+      <div class="d4-feature-extra">
+        <div class="ph"><img src="./images/miel.jpeg" alt="Miel multiflora Jabalí" loading="lazy"></div>
+        <div>
+          <h3>Miel multiflora <span class="price">— $200</span></h3>
+          <p class="d4-body">Miel producida en una pequeña comunidad de la sierra de Zongolica. Un producto que conecta con el mismo territorio que inspira a Jabalí. Botella de 177 ml.</p>
+        </div>
+      </div>
+      <div class="d4-merch-grid">
+        <div class="d4-merch-item"><div class="ph"><img src="./images/merch-tote.jpeg" alt="Tote bag Jabalí" loading="lazy"></div><h4>Tote bag</h4><span>$400</span></div>
+        <div class="d4-merch-item"><div class="ph"><img src="./images/merch-calcetines.jpeg" alt="Calcetines Jabalí" loading="lazy"></div><h4>Calcetines</h4><span>$380</span></div>
+        <div class="d4-merch-item"><div class="ph"><img src="./images/merch-tshirt.jpeg" alt="T-shirt Jabalí" loading="lazy"></div><h4>T-shirt</h4><span>$450</span></div>
+        <div class="d4-merch-item"><div class="ph"><img src="./images/merch-buckethat.jpeg" alt="Bucket hat Jabalí" loading="lazy"></div><h4>Bucket hat</h4><span>$450</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · CIERRE / CTA -->
+  <section class="d4-cta">
+    <p class="d4-ritual">Moler café. Esperar el agua. Compartir una taza. Hacer una pausa antes de seguir. Jabalí vive en esos pequeños rituales diarios que tienen alma.</p>
+    <h2>Únete a la manada</h2>
+    <a class="d4-btn" href="https://wa.me/521XXXXXXXXXX?text=Hola%20Jabal%C3%AD%2C%20quiero%20hacer%20un%20pedido.%0ACaf%C3%A9%3A%0APresentaci%C3%B3n%20(250%20g%20%2F%201%20kg)%3A%0ACantidad%3A%0ADirecci%C3%B3n%20de%20entrega%3A" target="_blank" rel="noopener">Comprar por WhatsApp</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="d4-footer">
+    <div class="d4-wrap">
+      <div class="d4-footer-top">
+        <div class="d4-footer-brand">
+          <span class="d4-footer-mark brandmark brandmark--bare"><img src="./images/logo-negro.png?v=2" alt="Jabalí"></span>
+          <p class="d4-footer-tag">Café de especialidad de Finca Coyametla, sierra de Zongolica, Veracruz. Tostado para disfrutarse con calma.</p>
+        </div>
+        <div class="d4-footer-col">
+          <h4>Contacto</h4>
+          <a href="https://wa.me/521XXXXXXXXXX" target="_blank" rel="noopener">WhatsApp</a>
+          <a href="https://www.instagram.com/jabali______/" target="_blank" rel="noopener">Instagram</a>
+          <a href="mailto:jabali.coyametla@gmail.com">Correo</a>
+        </div>
+        <div class="d4-footer-col">
+          <h4>Origen</h4>
+          <span>Coyametla · Zongolica</span>
+          <span>Veracruz, México</span>
+        </div>
+      </div>
+      <div class="d4-footer-legal">
+        <span>© 2026 Jabalí — La manada</span>
+        <a href="https://www.instagram.com/jabali______/" target="_blank" rel="noopener">@jabali______</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ============================================================== -->
+
+</body>
+</html>

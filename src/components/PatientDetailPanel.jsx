@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { dbGetPatientLogs } from '../lib/api';
-import { dateKey, startOfDay, isActiveSupp, isSupplementActiveOn } from '../lib/time';
+import { dateKey, startOfDay, isStoppedSupp, isSupplementActiveOn } from '../lib/time';
 import { calculateAdherenceForDate } from '../lib/adherence';
 import { SLOTS, IF_SLOTS } from '../lib/notifications';
 import { DEFAULT_CONFIG } from '../config';
@@ -115,7 +115,7 @@ export default function PatientDetailPanel({
   const viewDayLog = weekLogs.find(l => l.log_date === dk) || null;
 
   const activeProtocolIds = new Set(patientProtos.filter(p => p.status === 'active').map(p => p.id));
-  const homeSupps         = patientSupps.filter(s => isActiveSupp(s) && isSupplementActiveOn(s, viewDate) && (!s.protocol_id || activeProtocolIds.has(s.protocol_id)));
+  const homeSupps         = patientSupps.filter(s => !isStoppedSupp(s) && isSupplementActiveOn(s, viewDate) && (!s.protocol_id || activeProtocolIds.has(s.protocol_id)));
   const anytimeSupps      = homeSupps.filter(s => s.slots.length === 0 && s.days.includes(viewDay));
   const getSuppsForSlot   = (sid) => homeSupps.filter(s => s.slots.includes(sid) && s.days.includes(viewDay));
   const isChecked         = (slot, suppId) => {

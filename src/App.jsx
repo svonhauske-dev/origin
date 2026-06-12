@@ -59,7 +59,7 @@ import {
   dbUpsertClinicianNote,
   dbGetClinicianNotes,
 } from './lib/api';
-import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp } from './lib/time';
+import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp, isStoppedSupp, withPauseStarted, withPauseEnded } from './lib/time';
 import { calculateProtocolAdherence, calculateAdherenceForDate, buildHomeInsights } from './lib/adherence';
 import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush, retryPendingPushCleanup } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
@@ -645,7 +645,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const slotOffsets   = (scheduleMode === "fixed" || scheduleMode === "fasting") ? null : deriveOffsets(scheduleMode, scheduleConfig);
   const visibleSupps  = supps.filter(s => !pendingDeletes[s.id]);
   const activeProtocolIds = new Set(protocols.filter(p => p.status === 'active').map(p => p.id));
-  const homeSupps     = visibleSupps.filter(s => isActiveSupp(s) && isSupplementActiveOn(s, viewDate) && (!s.protocol_id || activeProtocolIds.has(s.protocol_id)));
+  // Gate on !isStoppedSupp (not isActiveSupp) so PAUSED supps flow through and get
+  // masked per-day by isSupplementActiveOn's pause_intervals check. That's what
+  // preserves a paused supp's pre-pause history on past days while still hiding it
+  // today/future (the open interval covers today onward). Stopped/discontinued
+  // supps stay excluded.
+  const homeSupps     = visibleSupps.filter(s => !isStoppedSupp(s) && isSupplementActiveOn(s, viewDate) && (!s.protocol_id || activeProtocolIds.has(s.protocol_id)));
 
   const dk         = dateKey(viewDate);
   const isToday    = dateKey(viewDate) === dateKey(TODAY);
@@ -894,7 +899,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const pt  = pillTimes[ddk];
       if (!pt && scheduleMode !== "fixed" && scheduleMode !== "fasting" && scheduleMode !== "none" && anchorBehavior !== "consistent") break;
       const day = d.getDay();
-      const daySupps = supps.filter(x => isActiveSupp(x) && x.days.includes(day));
+      const daySupps = supps.filter(x => !isStoppedSupp(x) && isSupplementActiveOn(x, d) && x.days.includes(day));
       if (daySupps.length === 0) break;
       const allDone = daySupps.every(x => {
         if (!x.slots || x.slots.length === 0) return !!checked[`${ddk}_anytime_${x.id}`];
@@ -1229,7 +1234,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
 
   const resumeSupp = async (supp) => {
     try {
-      const updated = { ...supp, status: 'active', paused: false };
+      const updated = { ...supp, status: 'active', paused: false, pause_intervals: withPauseEnded(supp, dateKey(TODAY)) };
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));
       showToast(`${supp.name} resumed`, { tone: "success" });
@@ -1279,7 +1284,13 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
 
   const togglePause = async (supp) => {
     const wasPaused = isPausedSupp(supp);
-    const updated = { ...supp, status: wasPaused ? 'active' : 'paused', paused: !wasPaused };
+    const today = dateKey(TODAY);
+    const updated = {
+      ...supp,
+      status: wasPaused ? 'active' : 'paused',
+      paused: !wasPaused,
+      pause_intervals: wasPaused ? withPauseEnded(supp, today) : withPauseStarted(supp, today),
+    };
     try {
       await dbUpdateSupp(updated, token);
       setSupps(s => s.map(x => x.id === supp.id ? updated : x));

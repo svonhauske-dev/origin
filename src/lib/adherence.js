@@ -1,4 +1,4 @@
-import { dateKey, startOfDay, TODAY, isActiveSupp, isSupplementActiveOn } from './time';
+import { dateKey, startOfDay, TODAY, isActiveSupp, isStoppedSupp, isSupplementActiveOn } from './time';
 
 // One "expected check" per (slot, supp) pair, plus one for each anytime supp.
 // Iterating per supplement (not per fixed slot set) keeps this correct for any
@@ -28,7 +28,7 @@ export function calculateAdherenceForDate(date, supplements, log, activeSlotIds 
   const checked = log.checked || {};
 
   const activeSupps = supplements.filter(s =>
-    isActiveSupp(s) && isSupplementActiveOn(s, date) && s.days.includes(dayOfWeek)
+    !isStoppedSupp(s) && isSupplementActiveOn(s, date) && s.days.includes(dayOfWeek)
   );
 
   let total = 0, done = 0;
@@ -48,7 +48,7 @@ export function calculateCurrentStreak(supplements, checked, scheduleMode, ancho
     if (!pt && needsAnchor) return false;
     const day = d.getDay();
     const daySupps = supplements.filter(s =>
-      isActiveSupp(s) && isSupplementActiveOn(s, d) && s.days.includes(day)
+      !isStoppedSupp(s) && isSupplementActiveOn(s, d) && s.days.includes(day)
     );
     if (daySupps.length === 0) return false;
     return daySupps.every(supp => {
