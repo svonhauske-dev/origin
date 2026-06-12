@@ -523,9 +523,24 @@ export default function ScheduleTab({ scheduleMode, scheduleConfig, anchorBehavi
           form should immediately disappear. */}
       {selectedCard === 'fasting' && (
         <div style={{ marginBottom: spacing.lg }}>
+          {/* Fixed vs Flexible window. Flexible = tap to open/close each day; meal
+              times re-flow off the actual open. Fixed = the same clock every day. */}
           <div style={{ marginBottom: spacing.md }}>
-            <Label>Eating window start</Label>
-            <HelperText>When your eating window opens each day</HelperText>
+            <Label>Eating window</Label>
+            <HelperText>
+              {localConfig.eating_window_flexible
+                ? 'Tap to open your window each day; meal times flow from when you actually start.'
+                : 'Your eating window opens at the same time every day.'}
+            </HelperText>
+            <div style={{ display: 'flex', gap: spacing.xs }}>
+              {[[false, 'Fixed'], [true, 'Flexible']].map(([val, label]) => (
+                <button key={label} onClick={() => updateConfig('eating_window_flexible', val)} style={segBtnStyle(!!localConfig.eating_window_flexible === val)}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: spacing.md }}>
+            <Label>{localConfig.eating_window_flexible ? 'Target window start' : 'Eating window start'}</Label>
+            <HelperText>{localConfig.eating_window_flexible ? 'When to nudge you to open your window' : 'When your eating window opens each day'}</HelperText>
             <Input
               variant="time"
               value={localConfig.eating_window_start || ''}

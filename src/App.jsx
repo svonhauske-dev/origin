@@ -352,6 +352,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   });
   const [supps, setSupps]                   = useState([]);
   const [pillTimes, setPillTimes]           = useState({});
+  // Flexible IF: the actual eating-window open/close times the user taps, keyed by date.
+  const [eatingWindowOpens, setEatingWindowOpens]   = useState({});
+  const [eatingWindowCloses, setEatingWindowCloses] = useState({});
   const [checked, setChecked]               = useState({});
   const [loading, setLoading]               = useState(true);
   const [viewDate, setViewDate]             = useState(TODAY);
@@ -780,6 +783,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           try { await dbUpdateSupp(supp, token); } catch (e) { console.warn("Migration write failed for", supp.id, e); }
         }
         if (log?.pill_time) setPillTimes(pt => ({ ...pt, [dk]: log.pill_time.slice(0, 5) }));
+        if (log?.eating_window_open)  setEatingWindowOpens(m => ({ ...m, [dk]: log.eating_window_open.slice(0, 5) }));
+        if (log?.eating_window_close) setEatingWindowCloses(m => ({ ...m, [dk]: log.eating_window_close.slice(0, 5) }));
         if (log?.checked)   setChecked(log.checked);
         if (sched?.schedule_type) setScheduleMode(sched.schedule_type);
         setAdaptiveEnabled(sched?.adaptive_timing === true);
@@ -827,6 +832,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     dbGetLog(user.id, dk, token).then(log => {
       if (!log) return;
       if (log.pill_time) setPillTimes(pt => ({ ...pt, [dk]: log.pill_time.slice(0, 5) }));
+      if (log.eating_window_open)  setEatingWindowOpens(m => ({ ...m, [dk]: log.eating_window_open.slice(0, 5) }));
+      if (log.eating_window_close) setEatingWindowCloses(m => ({ ...m, [dk]: log.eating_window_close.slice(0, 5) }));
       if (log.checked)   setChecked(c => ({ ...c, ...log.checked }));
     }).catch(e => console.error(e));
   }, [dk]);
@@ -841,12 +848,18 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       setWeekLogs(rows || []);
       const mergedChecked = {};
       const mergedPillTimes = {};
+      const mergedOpens = {};
+      const mergedCloses = {};
       for (const row of (rows || [])) {
         if (row.checked) Object.assign(mergedChecked, row.checked);
         if (row.pill_time) mergedPillTimes[row.log_date] = row.pill_time.slice(0, 5);
+        if (row.eating_window_open)  mergedOpens[row.log_date]  = row.eating_window_open.slice(0, 5);
+        if (row.eating_window_close) mergedCloses[row.log_date] = row.eating_window_close.slice(0, 5);
       }
       if (Object.keys(mergedChecked).length > 0) setChecked(c => ({ ...c, ...mergedChecked }));
       if (Object.keys(mergedPillTimes).length > 0) setPillTimes(pt => ({ ...pt, ...mergedPillTimes }));
+      if (Object.keys(mergedOpens).length > 0)  setEatingWindowOpens(m => ({ ...m, ...mergedOpens }));
+      if (Object.keys(mergedCloses).length > 0) setEatingWindowCloses(m => ({ ...m, ...mergedCloses }));
     }).catch(e => console.error('Week logs fetch failed:', e));
   }, [viewedWeekEnd, loading]);
 
@@ -877,7 +890,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       saveTimer.current = null;
       const pt = pillTimes[oldDk];
       const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(oldDk)));
-      dbUpsertLog({ user_id: user.id, log_date: oldDk, pill_time: pt || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
+      dbUpsertLog({ user_id: user.id, log_date: oldDk, pill_time: pt || null, eating_window_open: eatingWindowOpens[oldDk] || null, eating_window_close: eatingWindowCloses[oldDk] || null, checked: dayChecked }, token).catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
       pendingSaveRef.current = false;
     }
     lastDkRef.current = dk;
@@ -893,12 +906,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       // the just-written `checked`, never a stale copy. The 200ms debounce already
       // coalesces rapid checks into one save → one recompute.
       const shouldReflow = adaptiveEnabled && isToday && (scheduleMode === "medication" || scheduleMode === "wakeup");
-      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, checked: dayChecked }, token)
+      dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: pt || null, eating_window_open: eatingWindowOpens[dk] || null, eating_window_close: eatingWindowCloses[dk] || null, checked: dayChecked }, token)
         .then(() => { if (shouldReflow) recomputeQuiet(); })
         .catch(() => showToast("Couldn't save check — try again", { tone: "error" }));
       pendingSaveRef.current = false;
     }, 200);
-  }, [checked, pillTimes, dk, loading, isPast, pastDayEditing]);
+  }, [checked, pillTimes, eatingWindowOpens, eatingWindowCloses, dk, loading, isPast, pastDayEditing]);
 
   // Streak — count consecutive days where every active supplement has all its
   // expected checks (slotted entries by (date,slot,supp) and anytime entries by
@@ -949,6 +962,21 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     recomputeNotifications(token);
   };
 
+  // Flexible IF: tap to open the eating window (sets today's actual anchor) and to
+  // close it (confirms the actual end). Each triggers a recompute so meal/close
+  // reminders re-flow off the actual times. Persistence rides the autosave effect.
+  const openEatingWindow = () => {
+    if (isFuture) return;
+    setEatingWindowOpens(m => ({ ...m, [dk]: fmtTime(new Date()) }));
+    setFlashGreen(true); setTimeout(() => setFlashGreen(false), 600);
+    recomputeNotifications(token);
+  };
+  const closeEatingWindow = () => {
+    if (isFuture) return;
+    setEatingWindowCloses(m => ({ ...m, [dk]: fmtTime(new Date()) }));
+    recomputeNotifications(token);
+  };
+
   // Adaptive cascade: compute the active shift (minutes) + logged-slot actuals
   // for TODAY once per render, so getSlotTime can re-flow downstream slots.
   // Only medication/wakeup, only today, only when the toggle is on.
@@ -989,7 +1017,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         }
         return null;
       }
-      const ifTimes = computeIFSlotTimes(scheduleConfig);
+      // Flexible IF: once the user has opened the window today, meal_1+ re-anchor
+      // to the actual open time (fasted stays at target). Past/other days and Fixed
+      // IF use the configured absolute times.
+      const effectiveWs = (scheduleConfig.eating_window_flexible && isToday) ? (eatingWindowOpens[dk] || null) : null;
+      const ifTimes = computeIFSlotTimes(scheduleConfig, effectiveWs);
       const t = ifTimes[sid];
       return t ? parseHHMM(t) : null;
     }
@@ -2215,6 +2247,11 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         pct={pct} coreTotal={coreTotal} coreDone={coreDone}
         pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
         eatingWindowStart={scheduleConfig.eating_window_start}
+        isFlexibleIF={scheduleMode === "fasting" && !!scheduleConfig.eating_window_flexible}
+        eatingWindowOpen={eatingWindowOpens[dk] || null}
+        eatingWindowClose={eatingWindowCloses[dk] || null}
+        openEatingWindow={openEatingWindow}
+        closeEatingWindow={closeEatingWindow}
         editPillTime={editPillTime} setEditPillTime={setEditPillTime}
         tmpTime={tmpTime} setTmpTime={setTmpTime} setPillForDay={setPillForDay}
         isFuture={isFuture} flashGreen={flashGreen} startDay={startDay} viewDay={viewDay}

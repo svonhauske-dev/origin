@@ -112,24 +112,27 @@ export const SLOT_LABELS: Record<string, string> = {
 
 /**
  * IF v2: compute absolute slot times from eating window config.
- * Mirrors computeIFSlotTimes in src/config.js.
+ * Mirrors computeIFSlotTimes in src/config.js (incl. the Flexible-IF effectiveWs
+ * override: meal_1+ re-anchor to the actual open; `fasted` stays at target).
  */
 // deno-lint-ignore no-explicit-any
-export function computeIFSlotTimesHHMM(cfg: Record<string, any>): Record<string, string> {
+export function computeIFSlotTimesHHMM(cfg: Record<string, any>, effectiveWs: string | null = null): Record<string, string> {
   const ws = cfg.eating_window_start as string | undefined;
   if (!ws) return {};
   const durationMins = ((cfg.eating_window_duration_hours as number) ?? 8) * 60;
   const mealCount    = (cfg.meal_count as number) ?? 3;
   const pmw          = (cfg.pre_meal_window as number) ?? 30;
-  const [wh, wm]     = ws.split(":").map(Number);
-  const wsMins       = wh * 60 + wm;
+  const toMins = (hhmm: string): number => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+  const targetWsMins = toMins(ws);          // configured target — drives `fasted`
+  const anchor       = effectiveWs || ws;   // meal anchor — actual open if flexible+opened
+  const wsMins       = toMins(anchor);
   const toHHMM = (mins: number): string => {
     const t = ((mins % 1440) + 1440) % 1440;
     return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
   };
   const result: Record<string, string> = {
-    fasted: toHHMM(wsMins - pmw),
-    meal_1: ws,
+    fasted: toHHMM(targetWsMins - pmw),
+    meal_1: anchor,
   };
   if (mealCount >= 2) {
     const meal2Mins = mealCount === 2 ? wsMins + durationMins - pmw : wsMins + durationMins / 2;

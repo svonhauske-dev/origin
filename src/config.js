@@ -79,15 +79,23 @@ export const IF_SLOT_IDS = ["fasted", "meal_1", "pre_meal_2", "meal_2", "pre_mea
  * Compute absolute HH:MM times for each IF slot from the v2 config.
  * Returns a partial map — only slots that exist for the current meal_count.
  * The `evening` slot is not included here; it's handled via evening_mode like offset modes.
+ *
+ * `effectiveWs` (optional, "HH:MM") — Flexible IF: the ACTUAL eating-window open
+ * the user tapped today. When given, meal_1 and all downstream meal/pre-meal slots
+ * re-anchor to it (window length still counts from it). `fasted` always stays at
+ * the configured TARGET (eating_window_start − pre_meal_window), because the
+ * pre-first-meal supps are taken before the user opens the window.
  */
-export function computeIFSlotTimes(cfg) {
+export function computeIFSlotTimes(cfg, effectiveWs = null) {
   const ws = cfg.eating_window_start;
   if (!ws) return {};
   const durationMins = (cfg.eating_window_duration_hours ?? 8) * 60;
   const mealCount    = cfg.meal_count ?? 3;
   const pmw          = cfg.pre_meal_window ?? 30;
-  const [wh, wm]     = ws.split(":").map(Number);
-  const wsMins       = wh * 60 + wm;
+  const toMins = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+  const targetWsMins = toMins(ws);          // configured target — drives `fasted`
+  const anchor       = effectiveWs || ws;   // meal anchor — actual open if flexible+opened
+  const wsMins       = toMins(anchor);
 
   const toHHMM = (mins) => {
     const t = ((mins % 1440) + 1440) % 1440;
@@ -95,8 +103,8 @@ export function computeIFSlotTimes(cfg) {
   };
 
   const result = {
-    fasted: toHHMM(wsMins - pmw),
-    meal_1: ws,
+    fasted: toHHMM(targetWsMins - pmw),
+    meal_1: anchor,
   };
   if (mealCount >= 2) {
     // Last meal (2-meal) or middle meal (3-meal).

@@ -23,6 +23,7 @@ import AdherenceRing from './AdherenceRing';
 function getHeroState({
   scheduleMode, isToday, isPast, isFuture, isReadOnly, viewDate,
   pillTime, anchorBehavior, consistentTime, eatingWindowStart,
+  isFlexibleIF, eatingWindowOpen, eatingWindowClose,
   nextFixedSlot, pct, coreTotal, coreDone,
 }) {
   const isAnchor      = scheduleMode === "medication" || scheduleMode === "wakeup";
@@ -146,6 +147,34 @@ function getHeroState({
     if (allDone) {
       return { eyebrow: { text: todayEyebrowText }, status: "Done for today", submeta: null, statusKind: "text" };
     }
+    // Flexible IF: two-tap window. Not opened → prompt to open; open → prompt to
+    // close; closed → fasting. ifAction drives the CTA in the renderer.
+    if (isFlexibleIF) {
+      if (eatingWindowClose) {
+        return {
+          eyebrow: { text: todayEyebrowText },
+          status: "Fasting",
+          submeta: eatingWindowOpen ? `Window ${eatingWindowOpen}–${eatingWindowClose}` : `Closed ${eatingWindowClose}`,
+          statusKind: "text",
+        };
+      }
+      if (eatingWindowOpen) {
+        return {
+          eyebrow: { text: todayEyebrowText },
+          status: `Open since ${eatingWindowOpen}`,
+          submeta: completionText,
+          statusKind: "text",
+          ifAction: "close",
+        };
+      }
+      return {
+        eyebrow: { text: todayEyebrowText },
+        status: eatingWindowStart || "--:--",
+        submeta: "Tap to open your window",
+        statusKind: "time",
+        ifAction: "open",
+      };
+    }
     return {
       eyebrow: { text: todayEyebrowText },
       status: eatingWindowStart || "--:--",
@@ -224,6 +253,7 @@ const STATUS_ROW_MIN_HEIGHT = 44;
 export default function Hero({
   scheduleMode, isToday, viewDate, shortDate, pct, coreTotal, coreDone,
   pillTime, anchorBehavior, consistentTime, eatingWindowStart,
+  isFlexibleIF, eatingWindowOpen, eatingWindowClose, openEatingWindow, closeEatingWindow,
   editPillTime, setEditPillTime, tmpTime, setTmpTime, setPillForDay,
   isFuture, flashGreen, startDay, viewDay,
   isPast, isReadOnly,
@@ -234,6 +264,7 @@ export default function Hero({
   const state = getHeroState({
     scheduleMode, isToday, isPast, isFuture, isReadOnly, viewDate,
     pillTime, anchorBehavior, consistentTime, eatingWindowStart,
+    isFlexibleIF, eatingWindowOpen, eatingWindowClose,
     nextFixedSlot, pct, coreTotal, coreDone,
   });
 
@@ -417,6 +448,36 @@ export default function Hero({
               aria-label={`Start my day — set ${scheduleMode === "wakeup" ? "wake" : "meds"} anchor to now`}
             >
               {START_LABELS[scheduleMode] || "Start my day"}
+            </button>
+          )}
+
+          {/* Flexible IF: open/close eating-window CTA. "open" mirrors the accent
+              startDay button; "close" is a quieter outlined treatment (confirming
+              the end is optional, not the primary daily action). */}
+          {state.ifAction && !isReadOnly && (
+            <button
+              onClick={state.ifAction === "open" ? openEatingWindow : closeEatingWindow}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                marginTop: spacing.xs,
+                padding: `${spacing.xxs}px ${spacing.sm}px`,
+                border: state.ifAction === "open" ? "none" : `${theme.borderWidth.default}px solid ${theme.border.strong}`,
+                background: state.ifAction === "open" ? theme.accent.default : "transparent",
+                color: state.ifAction === "open" ? theme.text.onAccent : theme.text.primary,
+                fontSize: typography.body,
+                fontWeight: typography.semibold,
+                fontFamily: "inherit",
+                cursor: "pointer",
+                boxSizing: "border-box",
+                WebkitTapHighlightColor: "transparent",
+              }}
+              aria-label={state.ifAction === "open" ? "Start eating window — set to now" : "Close eating window and start fast"}
+            >
+              {state.ifAction === "open" ? "Start eating window" : "Close eating window"}
             </button>
           )}
         </div>

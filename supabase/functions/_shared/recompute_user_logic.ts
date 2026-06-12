@@ -74,7 +74,7 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
       .eq("status", "active")
       .is("deleted_at", null),
     admin.from("daily_logs")
-      .select("pill_time, checked")
+      .select("pill_time, checked, eating_window_open, eating_window_close")
       .eq("user_id", userId)
       .eq("log_date", localToday)
       .maybeSingle(),
@@ -89,6 +89,8 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
   const pillTime: string | null = logResult.data?.pill_time?.slice(0, 5) ?? null;
   // deno-lint-ignore no-explicit-any
   const checkedToday: Record<string, any> = logResult.data?.checked ?? {};
+  const eatingWindowOpenToday:  string | null = logResult.data?.eating_window_open?.slice(0, 5)  ?? null;
+  const eatingWindowCloseToday: string | null = logResult.data?.eating_window_close?.slice(0, 5) ?? null;
   const hasSub   = (subResult.count ?? 0) > 0;
   const adaptive: boolean = sched?.adaptive_timing === true;
 
@@ -177,7 +179,15 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
       if (!wsHHMM) continue;
 
       const durationMins = ((cfg.eating_window_duration_hours as number) ?? 8) * 60;
-      const slotTimes    = computeIFSlotTimesHHMM(cfg);
+      const flexible     = cfg.eating_window_flexible === true;
+      // Actual open/close only apply to today (the fetched log is today's). Tomorrow
+      // has no anchor yet, so flexible tomorrow shows only the target nudges.
+      const openHHMM     = (flexible && isToday) ? eatingWindowOpenToday : null;
+      const closeAt      = (flexible && isToday && eatingWindowCloseToday)
+        ? parseLocalHHMM(dateStr, eatingWindowCloseToday, tz) : null;
+      const afterClose   = (d: Date) => closeAt != null && d > closeAt;
+      const effectiveWs  = flexible ? (openHHMM || wsHHMM) : wsHHMM;
+      const slotTimes    = computeIFSlotTimesHHMM(cfg, flexible ? effectiveWs : null);
 
       // fasted — unconditional window-opening warning, body lists fasted supplements if any
       if (slotTimes.fasted) {
@@ -201,78 +211,103 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
         }
       }
 
-      // meal_1 / window open — unconditional state transition, lists meal_1 supplements
-      const windowOpenAt = parseLocalHHMM(dateStr, wsHHMM, tz);
-      if (windowOpenAt > now) {
-        const meal1Supps = supps.filter(
-          (s) => Array.isArray(s.slots) && s.slots.includes("meal_1") &&
-                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
-                 isSupplementActiveOn(s, dateStr),
-        );
-        rows.push({
-          user_id:            userId,
-          fire_at:            windowOpenAt.toISOString(),
-          scheduled_for_date: windowOpenAt.toLocaleDateString("sv-SE", { timeZone: tz }),
-          title:              "Your eating window is open",
-          body:               meal1Supps.map((s) => s.name).join(", "),
-          slot_id:            "meal_1",
-          tag:                `${dateStr}_meal_1`,
-          fired:              false,
-        });
-      }
+      if (flexible && !openHHMM) {
+        // Flexible, not yet opened (today-before-tap, or tomorrow): emit the
+        // target-time "open your window" PROMPT (no supps). Meal/closing rows wait
+        // until she taps open — there's no anchor yet. The next recompute after the
+        // tap deletes this unfired prompt and emits the real meal_1 + closing.
+        const promptAt = parseLocalHHMM(dateStr, wsHHMM, tz);
+        if (promptAt > now) {
+          rows.push({
+            user_id:            userId,
+            fire_at:            promptAt.toISOString(),
+            scheduled_for_date: promptAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+            title:              "Time to open your eating window",
+            body:               "",
+            slot_id:            "window_open_prompt",
+            tag:                `${dateStr}_window_open_prompt`,
+            fired:              false,
+          });
+        }
+      } else {
+        // Fixed, or flexible + opened: window-open + closing + meal slots, anchored
+        // to effectiveWs (the actual open in flexible). Rows past a recorded close
+        // are dropped.
 
-      // window_closing — 30-min warning, unless a meal slot with supplements fires at the same minute.
-      const closingAt    = addMins(windowOpenAt, durationMins - 30);
-      const closingTime  = closingAt.getTime();
-      const CLOSING_DEDUPE_MS = 5 * 60 * 1000;
-      const closingCoveredByMeal = IF_TIMED_SLOT_IDS.some((slotId) => {
-        if (slotId === "evening") return false;
-        const hhmm = slotTimes[slotId as string];
-        if (!hhmm) return false;
-        const at = parseLocalHHMM(dateStr, hhmm, tz);
-        if (Math.abs(at.getTime() - closingTime) >= CLOSING_DEDUPE_MS) return false;
-        return supps.some(
-          (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
-                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
-                 isSupplementActiveOn(s, dateStr),
-        );
-      });
-      if (closingAt > now && !closingCoveredByMeal) {
-        rows.push({
-          user_id:            userId,
-          fire_at:            closingAt.toISOString(),
-          scheduled_for_date: closingAt.toLocaleDateString("sv-SE", { timeZone: tz }),
-          title:              "Your eating window closes in 30 minutes",
-          body:               "",
-          slot_id:            "window_closing",
-          tag:                `${dateStr}_window_closing`,
-          fired:              false,
-        });
-      }
+        // meal_1 / window open — state transition, lists meal_1 supplements
+        const windowOpenAt = parseLocalHHMM(dateStr, effectiveWs, tz);
+        if (windowOpenAt > now && !afterClose(windowOpenAt)) {
+          const meal1Supps = supps.filter(
+            (s) => Array.isArray(s.slots) && s.slots.includes("meal_1") &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
+          rows.push({
+            user_id:            userId,
+            fire_at:            windowOpenAt.toISOString(),
+            scheduled_for_date: windowOpenAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+            title:              "Your eating window is open",
+            body:               meal1Supps.map((s) => s.name).join(", "),
+            slot_id:            "meal_1",
+            tag:                `${dateStr}_meal_1`,
+            fired:              false,
+          });
+        }
 
-      // Meal slots conditional on supplements (pre_meal_2, meal_2, pre_meal_3, meal_3).
-      for (const slotId of IF_TIMED_SLOT_IDS) {
-        if (slotId === "evening") continue; // handled separately below
-        const hhmm = slotTimes[slotId as string];
-        if (!hhmm) continue;
-        const fireAt = parseLocalHHMM(dateStr, hhmm, tz);
-        if (fireAt <= now) continue;
-        const slotSupps = supps.filter(
-          (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
-                 Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
-                 isSupplementActiveOn(s, dateStr),
-        );
-        if (!slotSupps.length) continue;
-        rows.push({
-          user_id:            userId,
-          fire_at:            fireAt.toISOString(),
-          scheduled_for_date: fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
-          title:              `Time for ${SLOT_LABELS[slotId] ?? slotId}`,
-          body:                slotSupps.map((s) => s.name).join(", "),
-          slot_id:             slotId,
-          tag:                 `${dateStr}_${slotId}`,
-          fired:               false,
+        // window_closing — 30-min warning, unless a meal slot with supplements fires at the same minute.
+        const closingAt    = addMins(windowOpenAt, durationMins - 30);
+        const closingTime  = closingAt.getTime();
+        const CLOSING_DEDUPE_MS = 5 * 60 * 1000;
+        const closingCoveredByMeal = IF_TIMED_SLOT_IDS.some((slotId) => {
+          if (slotId === "evening") return false;
+          const hhmm = slotTimes[slotId as string];
+          if (!hhmm) return false;
+          const at = parseLocalHHMM(dateStr, hhmm, tz);
+          if (Math.abs(at.getTime() - closingTime) >= CLOSING_DEDUPE_MS) return false;
+          return supps.some(
+            (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
         });
+        if (closingAt > now && !closingCoveredByMeal && !afterClose(closingAt)) {
+          rows.push({
+            user_id:            userId,
+            fire_at:            closingAt.toISOString(),
+            scheduled_for_date: closingAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+            title:              "Your eating window closes in 30 minutes",
+            body:               "",
+            slot_id:            "window_closing",
+            tag:                `${dateStr}_window_closing`,
+            fired:              false,
+          });
+        }
+
+        // Meal slots conditional on supplements (pre_meal_2, meal_2, pre_meal_3, meal_3).
+        for (const slotId of IF_TIMED_SLOT_IDS) {
+          if (slotId === "evening") continue; // handled separately below
+          const hhmm = slotTimes[slotId as string];
+          if (!hhmm) continue;
+          const fireAt = parseLocalHHMM(dateStr, hhmm, tz);
+          if (fireAt <= now) continue;
+          if (afterClose(fireAt)) continue;
+          const slotSupps = supps.filter(
+            (s) => Array.isArray(s.slots) && s.slots.includes(slotId) &&
+                   Array.isArray(s.days)  && s.days.includes(dayOfWeek) &&
+                   isSupplementActiveOn(s, dateStr),
+          );
+          if (!slotSupps.length) continue;
+          rows.push({
+            user_id:            userId,
+            fire_at:            fireAt.toISOString(),
+            scheduled_for_date: fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+            title:              `Time for ${SLOT_LABELS[slotId] ?? slotId}`,
+            body:                slotSupps.map((s) => s.name).join(", "),
+            slot_id:             slotId,
+            tag:                 `${dateStr}_${slotId}`,
+            fired:               false,
+          });
+        }
       }
 
       // evening — conditional on evening_mode and supplements
