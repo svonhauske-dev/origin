@@ -22,7 +22,10 @@ import { recomputeForUser, type RecomputeResult } from "../_shared/recompute_use
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Cron-Secret",
+  // apikey + x-client-info added for parity with notify_protocol_sent (the
+  // client no longer sends apikey here since verify_jwt=false, but allowing it
+  // future-proofs the preflight if it's ever re-added). See Jun 15 2026 fix.
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Cron-Secret, apikey, x-client-info",
 };
 
 const jsonResponse = (body: unknown, status = 200) =>

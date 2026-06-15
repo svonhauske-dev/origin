@@ -294,11 +294,18 @@ export async function dbGetAdherenceCounts(userId, suppIds, token, daysBack = 36
 // background recompute. See Jun 3 2026 fix in this file's git log.
 export async function recomputeNotifications(_token) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // NOTE: recompute_notifications runs with verify_jwt=false (see
+  // supabase/config.toml), so the Supabase gateway does NOT require an `apikey`
+  // header — the function verifies the user JWT internally via getUser(). The
+  // June 3 "apikey for parity" addition only forced a CORS preflight asking to
+  // send `apikey`, which the function's Access-Control-Allow-Headers never
+  // listed → the browser blocked every JWT-mode recompute with
+  // "TypeError: Load failed". Dropping it lets the preflight pass (Authorization
+  // + Content-Type are both allowed). See Jun 15 2026 fix.
   const call = (jwt) => fetch(`${SUPA_URL}/functions/v1/recompute_notifications`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${jwt}`,
-      "apikey": SUPA_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ timezone }),
