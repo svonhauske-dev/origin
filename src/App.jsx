@@ -1230,8 +1230,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // a silent failure would leave them thinking reminders are armed when
   // they aren't.
   const recomputeAfterEnable = () => {
-    recomputeNotifications(token).then(ok => {
-      if (!ok) showToast("Notifications didn't update — try again later", { tone: "warning" });
+    recomputeNotifications(token).then(res => {
+      // TEMP DEBUG: show the real server error instead of the generic message
+      if (res !== true) showToast(`Debug: ${String(res).slice(0, 240)}`, { tone: "warning" });
     });
   };
 
