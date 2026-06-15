@@ -318,14 +318,13 @@ export async function recomputeNotifications(_token) {
       if (refreshed) res = await call(refreshed);
     }
     if (!res.ok) {
-      const detail = await res.text();
-      console.error("Recompute failed:", res.status, detail);
-      return `HTTP ${res.status} — ${detail}`; // TEMP DEBUG: surface server detail to caller
+      console.error("Recompute failed:", res.status, await res.text());
+      return false;
     }
     return true;
   } catch (e) {
     console.error("Recompute error:", e);
-    return `exception — ${String(e)}`; // TEMP DEBUG
+    return false;
   }
 }
 
