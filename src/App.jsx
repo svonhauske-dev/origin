@@ -957,24 +957,50 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     return d > todayCap ? todayCap : d;
   });
 
+  // Persist the viewed day's daily-log row immediately (with a field override
+  // carrying the just-set value) and recompute notifications only AFTER the
+  // write resolves. The tap-to-set handlers below can't rely on the 200ms
+  // autosave: the edge function reads the row straight from the DB, so a
+  // recompute fired before the save lands reads a stale/empty value — and the
+  // autosave's `shouldReflow` only covers adaptive medication/wakeup, never
+  // fasting, so for Flexible IF nothing would re-recompute until the 4h cron.
+  // Mirrors the day-switch flush payload so columns never desync. The 200ms
+  // autosave still runs (idempotent re-write of the same values) — harmless.
+  const persistDayLogThenRecompute = (override) => {
+    const dayChecked = Object.fromEntries(Object.entries(checked).filter(([k]) => k.startsWith(dk)));
+    return dbUpsertLog({
+      user_id: user.id,
+      log_date: dk,
+      pill_time: pillTimes[dk] || null,
+      eating_window_open: eatingWindowOpens[dk] || null,
+      eating_window_close: eatingWindowCloses[dk] || null,
+      checked: dayChecked,
+      ...override,
+    }, token)
+      .then(() => recomputeNotifications())
+      .catch(() => showToast("Couldn't save — try again", { tone: "error" }));
+  };
+
   const setPillForDay = (t) => {
     setPillTimes(pt => ({ ...pt, [dk]: t }));
-    recomputeNotifications();
+    persistDayLogThenRecompute({ pill_time: t || null });
   };
 
   // Flexible IF: tap to open the eating window (sets today's actual anchor) and to
-  // close it (confirms the actual end). Each triggers a recompute so meal/close
-  // reminders re-flow off the actual times. Persistence rides the autosave effect.
+  // close it (confirms the actual end). Each persists the new time then recomputes
+  // so meal/close reminders re-flow off the actual times (see helper above).
   const openEatingWindow = () => {
     if (isFuture) return;
-    setEatingWindowOpens(m => ({ ...m, [dk]: fmtTime(new Date()) }));
+    const t = fmtTime(new Date());
+    setEatingWindowOpens(m => ({ ...m, [dk]: t }));
     setFlashGreen(true); setTimeout(() => setFlashGreen(false), 600);
-    recomputeNotifications();
+    persistDayLogThenRecompute({ eating_window_open: t });
   };
   const closeEatingWindow = () => {
     if (isFuture) return;
-    setEatingWindowCloses(m => ({ ...m, [dk]: fmtTime(new Date()) }));
-    recomputeNotifications();
+    const t = fmtTime(new Date());
+    setEatingWindowCloses(m => ({ ...m, [dk]: t }));
+    persistDayLogThenRecompute({ eating_window_close: t });
   };
 
   // Adaptive cascade: compute the active shift (minutes) + logged-slot actuals
