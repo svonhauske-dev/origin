@@ -1,4 +1,4 @@
-import { dateKey, startOfDay, TODAY, isActiveSupp, isStoppedSupp, isSupplementActiveOn, shortDate } from './time';
+import { dateKey, startOfDay, isActiveSupp, isStoppedSupp, isSupplementActiveOn } from './time';
 import { makeCheckKey } from '../config';
 
 // One "expected check" per (slot, supp) pair, plus one for each anytime supp.
@@ -39,36 +39,6 @@ export function calculateAdherenceForDate(date, supplements, log, activeSlotIds 
     done  += r.done;
   }
   return total === 0 ? 0 : Math.round((done / total) * 100);
-}
-
-export function calculateCurrentStreak(supplements, checked, scheduleMode, anchorBehavior, pillTimes) {
-  function isDayComplete(d, ddk) {
-    const pt = pillTimes[ddk];
-    // Modes without a daily user-set anchor don't need pillTime to count the day.
-    const needsAnchor = scheduleMode !== 'fixed' && scheduleMode !== 'fasting' && scheduleMode !== 'none' && anchorBehavior !== 'consistent';
-    if (!pt && needsAnchor) return false;
-    const day = d.getDay();
-    const daySupps = supplements.filter(s =>
-      !isStoppedSupp(s) && isSupplementActiveOn(s, d) && s.days.includes(day)
-    );
-    if (daySupps.length === 0) return false;
-    return daySupps.every(supp => {
-      const r = countExpectedChecks(supp, ddk, checked);
-      return r.total === r.done;
-    });
-  }
-
-  const d = new Date(TODAY);
-  if (!isDayComplete(d, dateKey(d))) d.setDate(d.getDate() - 1);
-
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const ddk = dateKey(d);
-    if (!isDayComplete(d, ddk)) break;
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
 }
 
 // Per-protocol adherence for the clinician's patient view (Phase 2).
@@ -218,76 +188,6 @@ export function buildActivityLog(supplements = [], protocols = [], daysBack = 30
 
   events.sort((a, b) => b.at - a.at);
   return events.slice(0, limit);
-}
-
-// Quick prototype — a short list of contextual insights for the home screen.
-// Returns `{ id, kind, label, body }[]`, highest-priority first. Caller
-// typically renders only the first item to keep the home quiet. Insights
-// are computed each render from current state, so they appear and disappear
-// as the underlying conditions change — no dismissal state to track.
-export function buildHomeInsights({ supplements = [], protocols = [], logs = [] }) {
-  const out = [];
-  const today = startOfDay(new Date());
-
-  // (1) Upcoming endings — highest priority because action is required.
-  const endings = getUpcomingEndings(supplements, 7);
-  if (endings.length > 0) {
-    const next = endings[0];
-    const [y, m, dd] = next.ends_at.split('-').map(Number);
-    const endDate = startOfDay(new Date(y, m - 1, dd));
-    const days = Math.round((endDate - today) / 86400000);
-    const whenStr =
-      days === 0 ? 'today'         :
-      days === 1 ? 'tomorrow'      :
-      days < 7   ? endDate.toLocaleDateString('en-US', { weekday: 'long' }) :
-                   shortDate(endDate);
-    out.push({
-      id: `ending-${next.id}`,
-      kind: 'upcoming-ending',
-      label: 'Coming up',
-      body: `${next.name} ends ${whenStr}`,
-    });
-  }
-
-  // (2) Protocol milestones — quiet acknowledgement when an active protocol
-  //     crosses a multiple of 30 days today. Single milestone per render.
-  const activeProtocols = protocols.filter(p => p.status === 'active');
-  for (const p of activeProtocols) {
-    const startStr = p.starts_at || p.created_at;
-    if (!startStr) continue;
-    const start = startOfDay(new Date(startStr));
-    const ageDays = Math.round((today - start) / 86400000);
-    if (ageDays > 0 && ageDays % 30 === 0) {
-      out.push({
-        id: `milestone-${p.id}-${ageDays}`,
-        kind: 'milestone',
-        label: 'Milestone',
-        body: `${ageDays} days on ${p.name}`,
-      });
-      break;
-    }
-  }
-
-  return out;
-}
-
-// Days the oldest active protocol has been running. Used by the InsightsScreen
-// summary line ("Day 47 of Origin Protocol"). Returns null if no active
-// protocol has a usable start date.
-export function getCurrentProtocolAge(protocols) {
-  const active = (protocols || []).filter(p => p.status === 'active');
-  if (active.length === 0) return null;
-  const today = startOfDay(new Date());
-  let oldest = null;
-  for (const p of active) {
-    const startStr = p.starts_at || p.created_at;
-    if (!startStr) continue;
-    const start = startOfDay(new Date(startStr));
-    if (!oldest || start < oldest.start) oldest = { protocol: p, start };
-  }
-  if (!oldest) return null;
-  const ageDays = Math.round((today - oldest.start) / 86400000);
-  return { protocol: oldest.protocol, ageDays };
 }
 
 export function getUpcomingEndings(supplements, daysAhead = 14) {

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { spacing, typography, touch, layout, icon, motion } from '../design-system';
 import { useTheme } from '../lib/theme';
-import { shortDate } from '../lib/time';
 import { useToast } from './ToastContext';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -17,7 +16,6 @@ import {
   getCurrentSubscription, subscribeToPush, unsubscribeFromPush,
 } from '../lib/notifications';
 import { dbUpdateScheduleField, dbUpdateProfile, updateEmail, updatePassword } from '../lib/api';
-import { calculateProtocolAdherence, getUpcomingEndings, getCurrentProtocolAge } from '../lib/adherence';
 import ScheduleTab from './ScheduleTab';
 import Modal from './Modal';
 
@@ -42,7 +40,7 @@ function PasswordRule({ met, label }) {
   );
 }
 
-const TITLES = { main: 'Settings', schedule: 'Schedule', account: 'Account', install: 'Add to home screen', insights: 'Insights' };
+const TITLES = { main: 'Settings', schedule: 'Schedule', account: 'Account', install: 'Add to home screen' };
 
 export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token, profile, onProfileUpdate, onNotificationsEnabled, scheduleMode, scheduleConfig, anchorBehavior, consistentTime, adaptiveEnabled = false, onSaveSchedule, supplements = [], protocols = [], weekLogs = [], desktop = false }) {
   const { theme } = useTheme();
@@ -295,23 +293,6 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
               }
             />
 
-            {/* DEV-ONLY: insights nav row (prototype). vercel.json pins `vite
-                build` so import.meta.env.DEV is reliably false in production. */}
-            {import.meta.env.DEV && (
-              <>
-                {divider}
-                <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Insights</Heading>
-                <Row
-                  onClick={() => goToSubView('insights')}
-                  ariaLabel="Adherence and upcoming changes"
-                  leftContent={
-                    <span style={{ fontSize: typography.body, color: theme.text.secondary }}>
-                      Adherence + upcoming changes
-                    </span>
-                  }
-                />
-              </>
-            )}
 
             {divider}
 
@@ -438,113 +419,6 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
             </ol>
           </div>
         )}
-
-        {/* ── Insights view (DEV-ONLY prototype) ── */}
-        {import.meta.env.DEV && renderedSubView === 'insights' && (() => {
-          // For the prototype we treat "your" adherence as the first active
-          // protocol's adherence — for the common 1-protocol case that's exact;
-          // multi-protocol users get a partial picture for now.
-          const active = protocols.filter(p => p.status === 'active')[0];
-          const adh7  = active ? calculateProtocolAdherence(active, supplements, weekLogs, null, 7)  : null;
-          const adh30 = active ? calculateProtocolAdherence(active, supplements, weekLogs, null, 30) : null;
-          const protoAge = getCurrentProtocolAge(protocols);
-          const endings = getUpcomingEndings(supplements, 14);
-          const hasAny = adh7 || adh30 || protoAge || endings.length > 0;
-
-          if (!hasAny) {
-            return (
-              <HelperText>Not enough data yet. Insights appear as you build a history.</HelperText>
-            );
-          }
-
-          const labelStyle = {
-            fontSize: typography.label,
-            color: theme.text.tertiary,
-            fontFamily: typography.fontHeading,
-            fontWeight: typography.semibold,
-            letterSpacing: typography.labelSpacingWide,
-            textTransform: 'uppercase',
-            marginBottom: spacing.xxxs,
-          };
-          const numStyle = {
-            fontSize: typography.display,
-            fontWeight: typography.bold,
-            color: theme.text.primary,
-            fontFamily: typography.fontData,
-            letterSpacing: typography.headingLetterSpacing,
-            lineHeight: 1,
-          };
-
-          return (
-            <>
-              {(adh7 || adh30) && (
-                <>
-                  <Heading level={2} visual="label" style={{ marginBottom: spacing.sm }}>Adherence</Heading>
-                  <div style={{ display: 'flex', gap: spacing.md, marginBottom: spacing.md }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={labelStyle}>Last 7 days</div>
-                      <div style={numStyle}>{adh7 ? `${adh7.pct}%` : '—'}</div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={labelStyle}>Last 30 days</div>
-                      <div style={numStyle}>{adh30 ? `${adh30.pct}%` : '—'}</div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {protoAge && (
-                <>
-                  {divider}
-                  <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Protocol</Heading>
-                  <div style={{ fontSize: typography.body, color: theme.text.primary, marginBottom: spacing.md }}>
-                    Day{' '}
-                    <span style={{ fontFamily: typography.fontData, fontWeight: typography.semibold }}>
-                      {protoAge.ageDays}
-                    </span>
-                    {' '}of {protoAge.protocol.name}
-                  </div>
-                </>
-              )}
-
-              {endings.length > 0 && (
-                <>
-                  {divider}
-                  <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Coming up</Heading>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {endings.map((s, i) => {
-                      const [y, m, dd] = s.ends_at.split('-').map(Number);
-                      const endDate = new Date(y, m - 1, dd);
-                      const formatted = shortDate(endDate);
-                      return (
-                        <div key={s.id} style={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          justifyContent: 'space-between',
-                          padding: `${spacing.xs}px 0`,
-                          borderBottom: i < endings.length - 1
-                            ? `${theme.borderWidth.default}px solid ${theme.border.subtle}`
-                            : 'none',
-                        }}>
-                          <span style={{ fontSize: typography.body, color: theme.text.primary }}>
-                            {s.name}
-                          </span>
-                          <span style={{
-                            fontFamily: typography.fontData,
-                            fontSize: typography.caption,
-                            color: theme.text.secondary,
-                          }}>
-                            {formatted}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </>
-          );
-        })()}
 
         </div>
       </div>

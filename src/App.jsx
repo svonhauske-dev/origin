@@ -60,7 +60,7 @@ import {
   dbGetClinicianNotes,
 } from './lib/api';
 import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp, isStoppedSupp, withPauseStarted, withPauseEnded, shortDate } from './lib/time';
-import { calculateProtocolAdherence, calculateAdherenceForDate, buildHomeInsights } from './lib/adherence';
+import { calculateProtocolAdherence, calculateAdherenceForDate } from './lib/adherence';
 import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush, retryPendingPushCleanup } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
 import IFMigrationScreen from "./components/IFMigrationScreen";
@@ -363,7 +363,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   const [formOpen, setFormOpen]             = useState(false);
   const [editingId, setEditingId]           = useState(null);
   const [form, setForm]                     = useState({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false });
-  const [streak, setStreak]                 = useState(0);
   const [flashGreen, setFlashGreen]         = useState(false);
   const [scheduleMode, setScheduleMode]     = useState("none");
   const [scheduleConfig, setScheduleConfig] = useState({
@@ -912,29 +911,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       pendingSaveRef.current = false;
     }, 200);
   }, [checked, pillTimes, eatingWindowOpens, eatingWindowCloses, dk, loading, isPast, pastDayEditing]);
-
-  // Streak — count consecutive days where every active supplement has all its
-  // expected checks (slotted entries by (date,slot,supp) and anytime entries by
-  // (date,'anytime',supp)). Iterating per supplement avoids assuming any fixed
-  // slot set (works for IF v2 slots and anytime supps alike).
-  useEffect(() => {
-    let s = 0; const d = new Date(TODAY);
-    for (let i = 0; i < 30; i++) {
-      const ddk = dateKey(d);
-      const pt  = pillTimes[ddk];
-      if (!pt && scheduleMode !== "fixed" && scheduleMode !== "fasting" && scheduleMode !== "none" && anchorBehavior !== "consistent") break;
-      const day = d.getDay();
-      const daySupps = supps.filter(x => !isStoppedSupp(x) && isSupplementActiveOn(x, d) && x.days.includes(day));
-      if (daySupps.length === 0) break;
-      const allDone = daySupps.every(x => {
-        if (!x.slots || x.slots.length === 0) return !!checked[makeCheckKey(ddk, 'anytime', x.id)];
-        return x.slots.every(sid => !!checked[makeCheckKey(ddk, sid, x.id)]);
-      });
-      if (!allDone) break;
-      s++; d.setDate(d.getDate() - 1);
-    }
-    setStreak(s);
-  }, [checked, pillTimes, supps, scheduleMode, anchorBehavior]);
 
   const viewedWeekStart = new Date(viewedWeekEnd);
   viewedWeekStart.setDate(viewedWeekStart.getDate() - 6);
@@ -1975,7 +1951,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
                 supplements={supps}
                 weekDates={weekDates}
                 weekLogs={weekLogs}
-                streak={streak}
                 scheduleMode={scheduleMode}
                 anchorBehavior={anchorBehavior}
                 consistentTime={consistentTime}
@@ -2291,50 +2266,6 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
         isPast={isPast} isReadOnly={isReadOnly}
         nextFixedSlot={nextFixedSlot}
       />
-
-      {/* Contextual insight — quiet single-line note that appears when there's
-          something worth surfacing (upcoming ending, milestone day). Only on
-          today, only when the home is past the empty state. Computed from
-          current state every render, so it disappears as conditions change.
-          DEV-ONLY: gated behind `import.meta.env.DEV` while the surface is
-          still in prototype. vercel.json pins `vite build` so this is
-          reliably false in production builds. */}
-      {import.meta.env.DEV && isToday && !isPast && homeSupps.length > 0 && (() => {
-        const insights = buildHomeInsights({ supplements: visibleSupps, protocols, logs: weekLogs });
-        if (insights.length === 0) return null;
-        const top = insights[0];
-        return (
-          <div style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: spacing.sm,
-            padding: `${spacing.xs}px ${spacing.sm}px`,
-            marginBottom: spacing.md,
-            borderLeft: `2px solid ${theme.accent.default}`,
-            background: theme.surface.card,
-          }}>
-            <span style={{
-              fontSize: typography.label,
-              color: theme.text.tertiary,
-              fontFamily: typography.fontHeading,
-              fontWeight: typography.semibold,
-              letterSpacing: typography.labelSpacingWide,
-              textTransform: "uppercase",
-              flexShrink: 0,
-            }}>
-              {top.label}
-            </span>
-            <span style={{
-              fontSize: typography.caption,
-              color: theme.text.primary,
-              fontFamily: typography.fontBody,
-              lineHeight: 1.5,
-            }}>
-              {top.body}
-            </span>
-          </div>
-        );
-      })()}
 
       {/* Main slot list — read-only state is signaled by the in-Hero eyebrow
           ("Viewing X · read-only"), no opacity dim on the content tree. */}
