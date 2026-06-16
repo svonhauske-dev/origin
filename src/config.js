@@ -172,7 +172,7 @@ export function computeAdaptiveDelta(slotOffsets, anchorMin, checked, dateKey) {
   const actuals = {}; // slotId -> actual minutes-of-day (max `at` in the slot)
   const ck = checked || {};
   for (const slotId of Object.keys(slotOffsets)) {
-    const prefix = `${dateKey}_${slotId}_`;
+    const prefix = checkKeyPrefix(dateKey, slotId);
     let maxAt = null;
     for (const key of Object.keys(ck)) {
       if (!key.startsWith(prefix)) continue;
@@ -193,3 +193,9 @@ export function computeAdaptiveDelta(slotOffsets, anchorMin, checked, dateKey) {
   if (sStarOffset == null) return { delta: 0, sStarOffset: null, actuals };
   return { delta: sStarActual - (anchorMin + sStarOffset), sStarOffset, actuals };
 }
+
+// Daily-log `checked` map key: `${dateKey}_${slotId}_${suppId}` (anytime supps
+// use slotId "anytime"). Single client-side source of truth for the format —
+// the server keeps its own copy in helpers.ts since it can't import this module.
+export const makeCheckKey   = (dateKey, slotId, suppId) => `${dateKey}_${slotId}_${suppId}`;
+export const checkKeyPrefix = (dateKey, slotId)         => `${dateKey}_${slotId}_`;

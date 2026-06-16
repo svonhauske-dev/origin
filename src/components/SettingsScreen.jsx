@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { spacing, typography, touch, layout, icon, motion } from '../design-system';
 import { useTheme } from '../lib/theme';
+import { shortDate } from '../lib/time';
 import { useToast } from './ToastContext';
 import Button from './Button';
 import Checkbox from './Checkbox';
@@ -514,7 +515,7 @@ export default function SettingsScreen({ isOpen, onBack, onSignOut, user, token,
                     {endings.map((s, i) => {
                       const [y, m, dd] = s.ends_at.split('-').map(Number);
                       const endDate = new Date(y, m - 1, dd);
-                      const formatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      const formatted = shortDate(endDate);
                       return (
                         <div key={s.id} style={{
                           display: 'flex',

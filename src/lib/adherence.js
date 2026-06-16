@@ -1,4 +1,5 @@
-import { dateKey, startOfDay, TODAY, isActiveSupp, isStoppedSupp, isSupplementActiveOn } from './time';
+import { dateKey, startOfDay, TODAY, isActiveSupp, isStoppedSupp, isSupplementActiveOn, shortDate } from './time';
+import { makeCheckKey } from '../config';
 
 // One "expected check" per (slot, supp) pair, plus one for each anytime supp.
 // Iterating per supplement (not per fixed slot set) keeps this correct for any
@@ -10,13 +11,13 @@ import { dateKey, startOfDay, TODAY, isActiveSupp, isStoppedSupp, isSupplementAc
 // without filtering, the denominator gets inflated by uncheckable legacy slots.
 function countExpectedChecks(supp, dk, checked, activeSlotIds) {
   if (!supp.slots || supp.slots.length === 0) {
-    return { total: 1, done: checked[`${dk}_anytime_${supp.id}`] ? 1 : 0 };
+    return { total: 1, done: checked[makeCheckKey(dk, 'anytime', supp.id)] ? 1 : 0 };
   }
   let total = 0, done = 0;
   for (const sid of supp.slots) {
     if (activeSlotIds && !activeSlotIds.has(sid)) continue;
     total++;
-    if (checked[`${dk}_${sid}_${supp.id}`]) done++;
+    if (checked[makeCheckKey(dk, sid, supp.id)]) done++;
   }
   return { total, done };
 }
@@ -127,18 +128,10 @@ export function calculateSupplementAdherence(supp, logs, activeSlotIds = null, d
     if (isSupplementActiveOn(supp, d) && supp.days?.includes(d.getDay())) {
       activeDays++;
       const dk = dateKey(d);
-      const log = logMap[dk] || null;
-      const checked = log?.checked || {};
-      if (!supp.slots || supp.slots.length === 0) {
-        total++;
-        if (checked[`${dk}_anytime_${supp.id}`]) done++;
-      } else {
-        for (const sid of supp.slots) {
-          if (activeSlotIds && !activeSlotIds.has(sid)) continue;
-          total++;
-          if (checked[`${dk}_${sid}_${supp.id}`]) done++;
-        }
-      }
+      const checked = logMap[dk]?.checked || {};
+      const r = countExpectedChecks(supp, dk, checked, activeSlotIds);
+      total += r.total;
+      done  += r.done;
     }
     d.setDate(d.getDate() + 1);
   }
@@ -174,7 +167,7 @@ export function calculateSlotAdherence(slotId, supplements, logs, daysWindow = 3
       if (!isSupplementActiveOn(s, d)) continue;
       if (!s.days?.includes(dow)) continue;
       total++;
-      if (checked[`${dk}_${slotId}_${s.id}`]) done++;
+      if (checked[makeCheckKey(dk, slotId, s.id)]) done++;
     }
     d.setDate(d.getDate() + 1);
   }
@@ -247,7 +240,7 @@ export function buildHomeInsights({ supplements = [], protocols = [], logs = [] 
       days === 0 ? 'today'         :
       days === 1 ? 'tomorrow'      :
       days < 7   ? endDate.toLocaleDateString('en-US', { weekday: 'long' }) :
-                   endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                   shortDate(endDate);
     out.push({
       id: `ending-${next.id}`,
       kind: 'upcoming-ending',

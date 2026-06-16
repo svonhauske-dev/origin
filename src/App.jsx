@@ -4,7 +4,7 @@ import {
   shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
-import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS, computeAdaptiveDelta, CORE_SLOTS } from "./config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS, computeAdaptiveDelta, CORE_SLOTS, makeCheckKey } from "./config";
 import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library, Pencil, MoreHorizontal } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
@@ -59,7 +59,7 @@ import {
   dbUpsertClinicianNote,
   dbGetClinicianNotes,
 } from './lib/api';
-import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp, isStoppedSupp, withPauseStarted, withPauseEnded } from './lib/time';
+import { fmtTime, addMins, parseHHMM, dateKey, startOfDay, TODAY, isSupplementActiveOn, isActiveSupp, isPausedSupp, isStoppedSupp, withPauseStarted, withPauseEnded, shortDate } from './lib/time';
 import { calculateProtocolAdherence, calculateAdherenceForDate, buildHomeInsights } from './lib/adherence';
 import { SLOTS, IF_SLOTS, isPushSupported, needsHomeScreenInstall, registerServiceWorker, subscribeToPush, unsubscribeFromPush, retryPendingPushCleanup } from './lib/notifications';
 import NotificationPrompt from "./components/NotificationPrompt";
@@ -927,8 +927,8 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const daySupps = supps.filter(x => !isStoppedSupp(x) && isSupplementActiveOn(x, d) && x.days.includes(day));
       if (daySupps.length === 0) break;
       const allDone = daySupps.every(x => {
-        if (!x.slots || x.slots.length === 0) return !!checked[`${ddk}_anytime_${x.id}`];
-        return x.slots.every(sid => !!checked[`${ddk}_${sid}_${x.id}`]);
+        if (!x.slots || x.slots.length === 0) return !!checked[makeCheckKey(ddk, 'anytime', x.id)];
+        return x.slots.every(sid => !!checked[makeCheckKey(ddk, sid, x.id)]);
       });
       if (!allDone) break;
       s++; d.setDate(d.getDate() - 1);
@@ -1088,7 +1088,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   //   { checked: boolean, at?: "HH:MM" } — new shape, captures actual log time
   //                                        for late or retro logs
   // Read helpers treat both shapes as equivalent for the boolean check.
-  const checkValue      = (sid, suppId) => checked[`${dk}_${sid}_${suppId}`];
+  const checkValue      = (sid, suppId) => checked[makeCheckKey(dk, sid, suppId)];
   const isChecked       = (sid, suppId) => {
     const v = checkValue(sid, suppId);
     if (v === true) return true;
@@ -1101,7 +1101,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   };
   const toggleCheck     = (sid, suppId) => {
     if (isReadOnly) return;
-    const k = `${dk}_${sid}_${suppId}`;
+    const k = makeCheckKey(dk, sid, suppId);
     setChecked(c => {
       const nextChecked = !isChecked(sid, suppId);
       // Toggling off — remove the entry entirely (cleaner persistence than `false`).
@@ -1122,7 +1122,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // Explicit log-at-time: stamps the entry with a specific time and marks checked.
   const logCheckAt      = (sid, suppId, atTime) => {
     if (isReadOnly) return;
-    const k = `${dk}_${sid}_${suppId}`;
+    const k = makeCheckKey(dk, sid, suppId);
     setChecked(c => ({ ...c, [k]: { checked: true, at: atTime } }));
   };
   // Bulk-complete all incomplete supps in a slot (Session 6 / D3 — take-all).
@@ -1135,7 +1135,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     setChecked(c => {
       const next = { ...c };
       for (const supp of supps) {
-        const k = `${dk}_${sid}_${supp.id}`;
+        const k = makeCheckKey(dk, sid, supp.id);
         const prev = next[k];
         const alreadyChecked = prev === true || (prev && typeof prev === "object" && prev.checked);
         if (alreadyChecked) continue;
@@ -1664,7 +1664,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     onSignOut();
   };
 
-  const shortDate = viewDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const shortDateStr = shortDate(viewDate);
 
   if (loading) return null;
   if (needsNamePrompt) return (
@@ -2276,7 +2276,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
 
       {/* Hero card */}
       <Hero
-        scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDate}
+        scheduleMode={scheduleMode} isToday={isToday} viewDate={viewDate} shortDate={shortDateStr}
         pct={pct} coreTotal={coreTotal} coreDone={coreDone}
         pillTime={pillTime} anchorBehavior={anchorBehavior} consistentTime={consistentTime}
         eatingWindowStart={scheduleConfig.eating_window_start}

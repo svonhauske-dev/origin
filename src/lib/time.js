@@ -5,6 +5,9 @@ export const addMins    = (d, m) => new Date(d.getTime() + m * 60000);
 export const parseHHMM  = (s) => { const [h, m] = s.split(":"); const d = new Date(); d.setHours(+h, +m, 0, 0); return d; };
 export const dateKey    = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 export const startOfDay = (d) => { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; };
+// "Jun 15" — the app's standard short date. Single source so the format can't
+// drift across the ~5 screens that show it.
+export const shortDate  = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 export const TODAY = startOfDay(new Date());
 

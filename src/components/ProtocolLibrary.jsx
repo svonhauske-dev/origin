@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { dbGetReceivedProtocols } from "../lib/api";
+import { shortDate } from "../lib/time";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { spacing, typography, touch, layout, motion, icon } from "../design-system";
 import { useTheme } from "../lib/theme";
@@ -16,7 +17,7 @@ import Row from "./Row";
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return shortDate(new Date(y, m - 1, d));
 }
 
 function addDuration(startStr, value, unit) {

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { spacing, typography } from '../design-system';
 import { useTheme } from '../lib/theme';
 import { calculateAdherenceForDate, getUpcomingEndings } from '../lib/adherence';
-import { dateKey, startOfDay } from '../lib/time';
+import { dateKey, startOfDay, shortDate } from '../lib/time';
 import Heading from './Heading';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ function formatRelativeDate(dateString) {
   if (diffDays === 0) return 'today';
   if (diffDays === 1) return 'tomorrow';
   if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'short' });
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return shortDate(date);
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
