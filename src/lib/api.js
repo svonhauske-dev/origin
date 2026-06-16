@@ -260,39 +260,17 @@ export const dbSaveSchedule = async (data, t) => {
 export const dbUpdateScheduleField = (field, value, userId, token) =>
   supa("PATCH", `/rest/v1/user_schedule?user_id=eq.${userId}`, { [field]: value }, token);
 
-export async function dbGetAdherenceCounts(userId, suppIds, token, daysBack = 365) {
-  if (!suppIds.length) return {};
-  // Cap the scan so the query doesn't grow unbounded as a user's log_date
-  // history accumulates. 365 days is the default — the count is "lifetime
-  // adherence" for practical purposes since the supps aren't expected to
-  // outlive a year.
-  const since = new Date();
-  since.setDate(since.getDate() - daysBack);
-  const sinceStr = since.toISOString().slice(0, 10);
-  const rows = await supa("GET", `/rest/v1/daily_logs?user_id=eq.${userId}&log_date=gte.${sinceStr}&select=checked`, null, token);
-  const counts = Object.fromEntries(suppIds.map(id => [id, 0]));
-  for (const row of (rows || [])) {
-    for (const [key, val] of Object.entries(row.checked || {})) {
-      if (!val) continue;
-      // key format: "${slot_id}_${suppId}" — UUID (36 chars, no underscores) is always last
-      const suppId = key.slice(key.lastIndexOf('_') + 1);
-      if (suppId in counts) counts[suppId]++;
-    }
-  }
-  return counts;
-}
-
 // Returns true on success so callers can show a quiet "notifications won't
 // fire" hint if the edge function rejected the request. Most callers
 // fire-and-forget; in App.jsx `recomputeAfterEnable` toasts on failure.
 //
-// Reads the current access_token from localStorage (not the caller-passed
-// token) and retries once on 401 via refreshSession(). The token argument
-// is accepted for API symmetry but ignored — by the time recompute fires
-// (e.g. after a supp edit) the supa() refresh-on-401 path may have minted
-// a newer token, and trusting the caller's stale snapshot 401'd every
-// background recompute. See Jun 3 2026 fix in this file's git log.
-export async function recomputeNotifications(_token) {
+// Takes no token: reads the current access_token from localStorage at call
+// time and retries once on 401 via refreshSession(). It deliberately does NOT
+// accept a caller-passed token — by the time recompute fires (e.g. after a supp
+// edit) the supa() refresh-on-401 path may have minted a newer token, and
+// trusting a caller's stale snapshot 401'd every background recompute. See
+// Jun 3 2026 fix in this file's git log.
+export async function recomputeNotifications() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // NOTE: recompute_notifications runs with verify_jwt=false (see
   // supabase/config.toml), so the Supabase gateway does NOT require an `apikey`
@@ -352,7 +330,6 @@ export async function getThemePreference(userId, token) {
 
 // Clinician helpers
 export const dbGetMyPatients    = (clinicianId, t)              => supa("GET", `/rest/v1/user_profiles?clinician_user_id=eq.${clinicianId}&select=*`, null, t);
-export const dbGetPatientLog    = (patientId, date, t)          => supa("GET", `/rest/v1/daily_logs?user_id=eq.${patientId}&log_date=eq.${date}&select=*`, null, t).then(r => r?.[0] || null);
 export const dbGetPatientLogs   = (patientId, start, end, t)   => supa("GET", `/rest/v1/daily_logs?user_id=eq.${patientId}&log_date=gte.${start}&log_date=lte.${end}&select=*`, null, t);
 export const dbSendProtocol     = (send, t)                     => supa("POST", "/rest/v1/protocol_sends", send, t);
 // Patient-side view: protocols sent TO this user. Filter by patient_id so we

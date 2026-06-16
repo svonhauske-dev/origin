@@ -4,7 +4,7 @@ import {
   shadows, zIndex, breakpoints,
 } from "./design-system";
 import { ThemeProvider, useTheme } from './lib/theme';
-import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS, computeAdaptiveDelta } from "./config";
+import { DEFAULT_CONFIG, FIXED_SLOTS, ANCHOR_NOTES, toHrMin, fromHrMin, MODES, deriveOffsets, getSlotLabelForMode, computeIFSlotTimes, IF_SLOT_IDS, computeAdaptiveDelta, CORE_SLOTS } from "./config";
 import { Trash2, ChevronLeft, ChevronRight, Pause, Play, Plus, Library, Pencil, MoreHorizontal } from "lucide-react";
 import Button from "./components/Button";
 import Input from "./components/Input";
@@ -70,8 +70,8 @@ import DesignSystemPage from "./components/design-system-page/DesignSystemPage";
 
 // BG_GRADIENT is derived from theme inside ProtocolApp
 
-// Non-IF core slot IDs. IF uses IF_SLOT_IDS from config.js (mode-aware, filtered by meal_count).
-const CORE_SLOTS = ["rx", "pre_breakfast", "breakfast", "pre_lunch", "lunch", "pre_dinner", "dinner", "after_dinner"];
+// CORE_SLOTS (non-IF core slot IDs) is imported from config.js — single source
+// of truth. IF uses IF_SLOT_IDS from config.js (mode-aware, filtered by meal_count).
 
 // Day-1 inline tip content keyed by schedule mode. Renders once per user in the
 // home empty state then disappears after dismiss (or after the user adds their
@@ -723,7 +723,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       const currentTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (currentTz !== lastTzRef.current) {
         lastTzRef.current = currentTz;
-        recomputeNotifications(token);
+        recomputeNotifications();
       }
       if (user?.id) {
         dbGetReceivedProtocols(user.id, token)
@@ -959,7 +959,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
 
   const setPillForDay = (t) => {
     setPillTimes(pt => ({ ...pt, [dk]: t }));
-    recomputeNotifications(token);
+    recomputeNotifications();
   };
 
   // Flexible IF: tap to open the eating window (sets today's actual anchor) and to
@@ -969,12 +969,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     if (isFuture) return;
     setEatingWindowOpens(m => ({ ...m, [dk]: fmtTime(new Date()) }));
     setFlashGreen(true); setTimeout(() => setFlashGreen(false), 600);
-    recomputeNotifications(token);
+    recomputeNotifications();
   };
   const closeEatingWindow = () => {
     if (isFuture) return;
     setEatingWindowCloses(m => ({ ...m, [dk]: fmtTime(new Date()) }));
-    recomputeNotifications(token);
+    recomputeNotifications();
   };
 
   // Adaptive cascade: compute the active shift (minutes) + logged-slot actuals
@@ -1223,14 +1223,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // failing surfaces as a console.error only (see api.js). Reserve the
   // toast-on-failure path for moments where the user explicitly opted into
   // reminders and would expect a result.
-  const recomputeQuiet = () => { recomputeNotifications(token); };
+  const recomputeQuiet = () => { recomputeNotifications(); };
 
   // Surfaces failure as a toast — only used right after the user explicitly
   // turned reminders on (NotificationPrompt or SettingsScreen toggle), where
   // a silent failure would leave them thinking reminders are armed when
   // they aren't.
   const recomputeAfterEnable = () => {
-    recomputeNotifications(token).then(ok => {
+    recomputeNotifications().then(ok => {
       if (!ok) showToast("Notifications didn't update — try again later", { tone: "warning" });
     });
   };
@@ -1343,7 +1343,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       // "Start my day" CTA reappears — but only if the user hasn't checked
       // anything off yet (checked entries = real logged data, don't touch those).
       if (behavior === "flexible" && isToday) {
-        const hasAnyChecks = Object.values(checked[dk] || {}).some(v => v === true);
+        // `checked` is a FLAT map keyed `${dk}_${slot}_${suppId}` — there is no
+        // `checked[dk]` sub-object, so the old `checked[dk]` read was always
+        // undefined and this guard never fired, wiping logged checks on every
+        // flexible switch. Scan flat keys for today and honor both value shapes
+        // (`true` and `{ checked: true, at }`).
+        const hasAnyChecks = Object.keys(checked).some(
+          k => k.startsWith(dk + "_") && (checked[k] === true || (checked[k] && checked[k].checked))
+        );
         if (!hasAnyChecks) {
           setPillTimes(pt => { const next = { ...pt }; delete next[dk]; return next; });
           dbUpsertLog({ user_id: user.id, log_date: dk, pill_time: null, checked: {} }, token)

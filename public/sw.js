@@ -1,4 +1,4 @@
-// public/sw.js — Tether service worker for Web Push notifications
+// public/sw.js — Origin service worker for Web Push notifications
 
 self.addEventListener("push", (event) => {
   if (!event.data) return;

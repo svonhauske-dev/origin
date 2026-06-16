@@ -1,6 +1,6 @@
 # Supabase project config
 # Run `supabase link --project-ref yahimlivfieuknagusxp` to link to the remote project.
-project_id = "tether"
+project_id = "origin"
 
 # Disable Supabase gateway JWT check for recompute_notifications so pg_cron
 # can call it with an X-Cron-Secret header instead of a JWT. The function
