@@ -1157,6 +1157,12 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     : CORE_SLOTS;
 
   const anytimeSupps = homeSupps.filter(s => s.slots.length === 0 && s.days.includes(viewDay));
+  // Anytime supps with a pinned_time break out into their own time-stamped cards
+  // (interleaved into the day by clock time); the rest stay in the untimed
+  // "Anytime" card. Both still count toward the daily total via the "anytime"
+  // check namespace, so coreTotal/coreDone keep using the full anytimeSupps list.
+  const pinnedSupps  = anytimeSupps.filter(s => s.pinned_time);
+  const untimedSupps = anytimeSupps.filter(s => !s.pinned_time);
   let coreTotal = anytimeSupps.length, coreDone = 0;
   anytimeSupps.forEach(s => { if (isChecked("anytime", s.id)) coreDone++; });
   coreSlotIds.forEach(sid => {
@@ -1184,7 +1190,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     }
   }
 
-  const blankForm = (protocol_id = null) => ({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', protocol_id, treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null });
+  const blankForm = (protocol_id = null) => ({ name: "", dose: "", notes: "", slots: [], days: [], category: "Oral", paused: false, status: 'active', protocol_id, treatment_mode: "indefinite", starts_at: null, ends_at: null, cycle_on_value: null, cycle_on_unit: null, cycle_off_value: null, cycle_off_unit: null, pinned_time: null });
 
   const openAdd   = () => {
     const active = protocols.filter(p => p.status === 'active');
@@ -1193,7 +1199,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     setSubmitError(null);
     setFormOpen(true);
   };
-  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...(supp.slots || [])], days: [...(supp.days || [])], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', protocol_id: supp.protocol_id || null, treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null }); setSubmitError(null); setFormOpen(true); };
+  const openEdit  = (supp) => { setEditingId(supp.id); setForm({ name: supp.name, dose: supp.dose, notes: supp.notes || "", slots: [...(supp.slots || [])], days: [...(supp.days || [])], category: supp.category || "Oral", paused: supp.paused ?? false, status: supp.status ?? 'active', protocol_id: supp.protocol_id || null, treatment_mode: supp.treatment_mode || "indefinite", starts_at: supp.starts_at || null, ends_at: supp.ends_at || null, cycle_on_value: supp.cycle_on_value || null, cycle_on_unit: supp.cycle_on_unit || null, cycle_off_value: supp.cycle_off_value || null, cycle_off_unit: supp.cycle_off_unit || null, pinned_time: supp.pinned_time || null }); setSubmitError(null); setFormOpen(true); };
 
   // Log-at sheet helpers — opens the time-picker sheet for a specific
   // (slot, supplement) pair and writes the picked time to the daily log.
@@ -1263,13 +1269,16 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       cycle_off_value: txMode === "cycled" ? (form.cycle_off_value || null) : null,
       cycle_off_unit:  txMode === "cycled" ? (form.cycle_off_unit  || (form.cycle_off_value ? "days" : null)) : null,
     };
+    // Pinned time only applies to anytime supps (no cascade slot). A slotted supp
+    // gets its time from the slot, so null any stale pinned_time on save.
+    const pinnedField = { pinned_time: form.slots.length === 0 ? (form.pinned_time || null) : null };
     try {
       if (editingId) {
-        await dbUpdateSupp({ ...form, days: finalDays, category: cat, id: editingId, ...txFields }, token);
-        setSupps(s => s.map(x => x.id === editingId ? { ...form, days: finalDays, category: cat, id: editingId, ...txFields } : x));
+        await dbUpdateSupp({ ...form, days: finalDays, category: cat, id: editingId, ...txFields, ...pinnedField }, token);
+        setSupps(s => s.map(x => x.id === editingId ? { ...form, days: finalDays, category: cat, id: editingId, ...txFields, ...pinnedField } : x));
         showToast(`Updated ${form.name}`, { tone: "success" });
       } else {
-        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, paused: false, status: 'active', stopped_at: null, user_id: user.id, protocol_id: form.protocol_id || null, ...txFields }, token);
+        const rows = await dbAddSupp({ name: form.name, dose: form.dose, notes: form.notes, slots: form.slots, days: finalDays, category: cat, paused: false, status: 'active', stopped_at: null, user_id: user.id, protocol_id: form.protocol_id || null, ...txFields, ...pinnedField }, token);
         if (rows?.[0]) setSupps(s => [...s, rows[0]]);
         showToast(`Added ${form.name}`, { tone: "success" });
         const savedName = form.name.trim();
@@ -1747,6 +1756,54 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     anytimeSupps.length >= 2 ||
     activeSlotList.some(s => getSuppsForSlot(s.id).length >= 2);
 
+  const renderSlotCard = (slot) => {
+    const slotSupps = getSuppsForSlot(slot.id);
+    if (!slotSupps.length) return null;
+    const hasOffset = scheduleMode === "fixed"
+      ? !!scheduleConfig.fixed_times?.[slot.id]
+      : scheduleMode === "fasting"
+        ? !!computeIFSlotTimes(scheduleConfig)[slot.id] || (slot.id === "evening" && !!scheduleConfig.evening_mode)
+        : slot.id === "rx"
+          ? !!pillTime
+          : slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
+    const noSched = scheduleMode === "none";
+    const timeLabel = noSched ? "" : (hasOffset ? slotTimeStr(slot.id) : "variable");
+    const status = noSched ? "future" : slotStatus(slot.id);
+    const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
+    const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
+    return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
+  };
+
+  // A pinned-time anytime supp renders as its own single-item card with a real
+  // clock time and status. It keeps the "anytime" check namespace (so checks,
+  // adherence, and totals are unchanged), but shows its time even in No Schedule
+  // mode — the one path that gives a checklist-only user a timed reminder.
+  const renderPinnedCard = (supp) => {
+    const t = parseHHMM(supp.pinned_time);
+    let status;
+    if (isFuture) status = "future";
+    else if (isChecked("anytime", supp.id)) status = "done";
+    else if (!isToday) status = "missed";
+    else { const diff = (new Date() - t) / 60000; status = diff > 15 ? "missed" : diff > -5 ? "now" : "future"; }
+    const pinnedSlot = { id: "anytime", label: supp.name, sublabel: "", icon: ANYTIME_SLOT.icon, color: ANYTIME_SLOT.color };
+    return <SlotCard key={`pinned_${supp.id}`} slot={pinnedSlot} slotSupps={[supp]} status={status} timeLabel={fmtTime(t)} hasOffset pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={false} isReadOnly={isReadOnly} isPast={isPast} />;
+  };
+
+  // Merge cascade slots with pinned cards, ordered by clock time. Pinned items
+  // slot in before the first cascade slot whose time is later than theirs;
+  // anything left over (later than every timed slot, or all slots untimed)
+  // appends after the cascade. Zero pinned supps → identical to the old order.
+  const pinnedDescs = pinnedSupps.map(s => ({ supp: s, t: parseHHMM(s.pinned_time) })).sort((a, b) => a.t - b.t);
+  const mergedCards = [];
+  let _pi = 0;
+  for (const slot of activeSlotList) {
+    if (getSuppsForSlot(slot.id).length === 0) continue;
+    const st = getSlotTime(slot.id);
+    while (_pi < pinnedDescs.length && st && pinnedDescs[_pi].t <= st) { mergedCards.push(renderPinnedCard(pinnedDescs[_pi].supp)); _pi++; }
+    mergedCards.push(renderSlotCard(slot));
+  }
+  while (_pi < pinnedDescs.length) { mergedCards.push(renderPinnedCard(pinnedDescs[_pi].supp)); _pi++; }
+
   const slotCardsContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
       {hasMultiSuppSlot && !isReadOnly && !isPast && !isFuture && (
@@ -1754,25 +1811,9 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
           Tap the icon at the left of a slot to log every item in it at once.
         </InlineTip>
       )}
-      {activeSlotList.map(slot => {
-        const slotSupps = getSuppsForSlot(slot.id);
-        if (!slotSupps.length) return null;
-        const hasOffset = scheduleMode === "fixed"
-          ? !!scheduleConfig.fixed_times?.[slot.id]
-          : scheduleMode === "fasting"
-            ? !!computeIFSlotTimes(scheduleConfig)[slot.id] || (slot.id === "evening" && !!scheduleConfig.evening_mode)
-            : slot.id === "rx"
-              ? !!pillTime
-              : slotOffsets?.[slot.id] !== null && slotOffsets?.[slot.id] !== undefined;
-        const noSched = scheduleMode === "none";
-        const timeLabel = noSched ? "" : (hasOffset ? slotTimeStr(slot.id) : "variable");
-        const status = noSched ? "future" : slotStatus(slot.id);
-        const overrideLabel = getSlotLabelForMode(slot.id, scheduleMode);
-        const displaySlot = overrideLabel ? { ...slot, label: overrideLabel } : slot;
-        return <SlotCard key={slot.id} slot={displaySlot} slotSupps={slotSupps} status={status} timeLabel={timeLabel} hasOffset={hasOffset} pillTime={noSched ? null : effectivePillTime} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={noSched} isReadOnly={isReadOnly} isPast={isPast} />;
-      })}
-      {anytimeSupps.length > 0 && (
-        <SlotCard slot={ANYTIME_SLOT} slotSupps={anytimeSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
+      {mergedCards}
+      {untimedSupps.length > 0 && (
+        <SlotCard slot={ANYTIME_SLOT} slotSupps={untimedSupps} status="future" timeLabel="" hasOffset={false} pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule isReadOnly={isReadOnly} isPast={isPast} />
       )}
     </div>
   );

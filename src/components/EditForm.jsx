@@ -27,7 +27,11 @@ export default function EditForm({ form, setForm, editingId, onDelete, scheduleM
   const today = dateKey(new Date());
   const touch = (field) => setTouched(t => ({ ...t, [field]: true }));
 
-  const toggleSlot = (sid) => setForm(f => ({ ...f, slots: f.slots.includes(sid) ? f.slots.filter(x => x !== sid) : [...f.slots, sid] }));
+  const toggleSlot = (sid) => setForm(f => {
+    const slots = f.slots.includes(sid) ? f.slots.filter(x => x !== sid) : [...f.slots, sid];
+    // A cascade slot supplies the time; a pinned time only belongs to an anytime supp.
+    return { ...f, slots, ...(slots.length ? { pinned_time: null } : {}) };
+  });
   const toggleDay  = (i)   => setForm(f => ({ ...f, days:  f.days.includes(i)   ? f.days.filter(x => x !== i)   : [...f.days, i]   }));
 
   const handleModeChange = (newMode) => {
@@ -299,6 +303,22 @@ export default function EditForm({ form, setForm, editingId, onDelete, scheduleM
             Anytime
           </Button>
         </div>
+
+        {/* Anytime supps can opt into a fixed clock time, independent of the
+            cascade — e.g. birth control at the same time every day. */}
+        {form.slots.length === 0 && (
+          <div style={{ marginTop: spacing.sm }}>
+            <Label style={{ marginBottom: spacing.xxs }}>Specific time (optional)</Label>
+            <Input
+              type="time"
+              value={form.pinned_time || ""}
+              onChange={e => setForm(f => ({ ...f, pinned_time: e.target.value || null }))}
+            />
+            <HelperText style={{ marginTop: spacing.xxxs }}>
+              Get a reminder at this exact time each day, independent of your schedule.
+            </HelperText>
+          </div>
+        )}
       </div>
 
       {mode !== "cycled" && (

@@ -69,7 +69,7 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
     // Selecting created_at + deleted_at so isSupplementActiveOn's date
     // bounds can be evaluated (defense in depth).
     admin.from("supplements")
-      .select("id, name, slots, days, treatment_mode, starts_at, ends_at, cycle_on_value, cycle_on_unit, cycle_off_value, cycle_off_unit, created_at, deleted_at")
+      .select("id, name, dose, slots, days, pinned_time, treatment_mode, starts_at, ends_at, cycle_on_value, cycle_on_unit, cycle_off_value, cycle_off_unit, created_at, deleted_at")
       .eq("user_id", userId)
       .eq("status", "active")
       .is("deleted_at", null),
@@ -97,7 +97,12 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
   // ── Early exits ───────────────────────────────────────────────────────────────
   const mode: string = sched?.schedule_type ?? "none";
 
-  if (!hasSub || !sched?.notifications_enabled || mode === "none") {
+  // Pinned-time anytime supps fire regardless of schedule mode, so a No-Schedule
+  // user with one still needs a recompute. Only "none" mode with no pinned supps
+  // can short-circuit. (A pinned supp is anytime — empty slots — with a time set.)
+  const hasPinned = supps.some((s) => Array.isArray(s.slots) && s.slots.length === 0 && s.pinned_time);
+
+  if (!hasSub || !sched?.notifications_enabled || (mode === "none" && !hasPinned)) {
     return { queued: 0, reason: "skip", hasSub, notifEnabled: sched?.notifications_enabled ?? false, mode };
   }
 
@@ -128,6 +133,29 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
     const dateStr   = getLocalDateStr(tz, dayOffset);
     const dayOfWeek = getLocalDayOfWeek(dateStr, tz);
     const isToday   = dayOffset === 0;
+
+    // ── Pinned-time anytime supps (mode-independent absolute reminders) ──────────
+    // An anytime supp (no cascade slot) with a pinned_time fires at that exact
+    // local clock time on every active day, in ANY mode (this is the only path
+    // that fires in "none" mode). Each gets its own row keyed by supp id; sw.js
+    // branches on data.type, never slot_id, so the synthetic id is safe.
+    for (const supp of supps) {
+      if (!Array.isArray(supp.slots) || supp.slots.length !== 0 || !supp.pinned_time) continue;
+      if (!Array.isArray(supp.days) || !supp.days.includes(dayOfWeek)) continue;
+      if (!isSupplementActiveOn(supp, dateStr)) continue;
+      const fireAt = parseLocalHHMM(dateStr, (supp.pinned_time as string).slice(0, 5), tz);
+      if (fireAt <= now) continue;
+      rows.push({
+        user_id:            userId,
+        fire_at:            fireAt.toISOString(),
+        scheduled_for_date: fireAt.toLocaleDateString("sv-SE", { timeZone: tz }),
+        title:              `Time for ${supp.name}`,
+        body:               supp.dose ?? "",
+        slot_id:            `pinned_${supp.id}`,
+        tag:                `${dateStr}_pinned_${supp.id}`,
+        fired:              false,
+      });
+    }
 
     // ── Fixed mode ──────────────────────────────────────────────────────────────
     if (mode === "fixed") {
