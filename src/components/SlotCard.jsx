@@ -14,7 +14,7 @@ function CategoryIcon({ category, color }) {
   return null;
 }
 
-export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, checkedAtTime, toggleCheck, takeAllInSlot, openEdit, openLogAt, noSchedule, isReadOnly, isPast }) {
+export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset, pillTime, isFuture, isChecked, checkedAtTime, toggleCheck, takeAllInSlot, openEdit, openLogAt, noSchedule, isReadOnly, isPast, single = false }) {
   const { theme } = useTheme();
   const allDone = slotSupps.every(s => isChecked(slot.id, s.id));
   // Auto-expand only the actionable slots on mount (now + late). Everything else
@@ -29,6 +29,60 @@ export default function SlotCard({ slot, slotSupps, status, timeLabel, hasOffset
     future: { border: theme.border.subtle,          bg: theme.surface.cardSubtle,        hbg: "transparent",                badge: null },
   };
   const sc = SC[status];
+
+  // Single mode — a standalone fixed-time item (a pinned anytime supp). No
+  // group/expand affordance: the supp renders flat in one row with its time +
+  // status badge on the right. Shares the cascade card's container + status
+  // styling (sc) so it sits as a visual peer, just without the disclosure.
+  if (single) {
+    const supp = slotSupps[0];
+    if (!supp) return null;
+    const done = isChecked(slot.id, supp.id);
+    const atTime = checkedAtTime ? checkedAtTime(slot.id, supp.id) : null;
+    const showLogAt = !done && !isReadOnly && !isFuture && status === "missed" && typeof openLogAt === "function";
+    const VISUAL_SIZE = 24;
+    const expand = (touch.min - VISUAL_SIZE) / 2;
+    return (
+      <div style={{ borderRadius: theme.radius.surface, border: `${theme.borderWidth.default}px solid ${sc.border}`, background: sc.bg, overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, padding: `${spacing.sm}px ${spacing.md}px`, minHeight: touch.row }}>
+          <button type="button" onClick={() => { if (!isFuture && !isReadOnly) toggleCheck(slot.id, supp.id); }} aria-label={done ? `Uncheck ${supp.name}` : `Check ${supp.name}`} aria-pressed={done} style={{ background: "none", border: "none", padding: expand, margin: -expand, cursor: (isFuture || isReadOnly) ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, WebkitTapHighlightColor: "transparent" }}>
+            <Checkbox checked={done} size={icon.md} shape="square" weight="accent" />
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+              <div style={{ fontSize: typography.body, color: done ? theme.text.secondary : theme.text.primary, textDecoration: done ? "line-through" : "none", fontWeight: done ? typography.regular : typography.medium, display: "flex", alignItems: "center", gap: spacing.xs2, minWidth: 0 }}>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{supp.name}</span>
+                <CategoryIcon category={supp.category} color={theme.text.secondary} />
+              </div>
+              {sc.badge && <Badge variant={sc.badge.label === "now" ? "now" : (isReadOnly ? "neutral" : "missed")}>{sc.badge.label}</Badge>}
+            </div>
+            <div style={{ fontSize: typography.label, color: theme.text.secondary, marginTop: spacing.xxxs, minHeight: 14, display: "flex", alignItems: "center", gap: spacing.xs }}>
+              <span>{supp.dose}{supp.notes ? " · " + supp.notes : ""}</span>
+              {done && atTime && (
+                <span style={{ color: theme.text.tertiary, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                  <Clock size={10} />
+                  at {atTime}
+                </span>
+              )}
+            </div>
+          </div>
+          {showLogAt && (
+            <button
+              type="button"
+              onClick={() => openLogAt(slot.id, supp, supp.name)}
+              aria-label={`Log ${supp.name} at a specific time`}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: `${spacing.xxs}px ${spacing.xs}px`, border: `${theme.borderWidth.default}px solid ${theme.status.warning}`, background: "transparent", color: theme.status.warning, fontSize: typography.label, fontFamily: "inherit", cursor: "pointer", flexShrink: 0, WebkitTapHighlightColor: "transparent" }}
+            >
+              <Clock size={10} />
+              log at…
+            </button>
+          )}
+          <span style={{ fontSize: typography.caption, color: theme.text.secondary, fontVariantNumeric: "tabular-nums", fontWeight: typography.semibold, flexShrink: 0 }}>{timeLabel}</span>
+          {!isReadOnly && !isPast && <Button variant="icon" aria-label={`Edit ${supp.name}`} onClick={() => openEdit(supp)} style={{ border: "none" }}><Pencil size={icon.xs} /></Button>}
+        </div>
+      </div>
+    );
+  }
 
   // Grey only when the slot's fire time is genuinely unknown — i.e. when the
   // timeLabel is the placeholder "--:--" (anchor-relative slot waiting on the

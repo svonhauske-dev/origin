@@ -416,8 +416,16 @@ export const componentRegistry = {
 
     SlotCard: {
       component: SlotCard,
-      description: 'Mobile slot container. Expand/collapse supplements per slot. Status drives border + badge.',
+      description: 'Mobile slot container. Expand/collapse supplements per slot; status drives border + badge. `single` mode renders one standalone fixed-time item flat (no group/expand) — used for pinned-time anytime supps that fire at an exact clock time independent of the cascade.',
       examples: [
+        {
+          name: 'Single — fixed-time item (now)',
+          props: { single: true, slot: { id: 'anytime', label: 'Vitamin D3' }, slotSupps: [SUPP_VITAMIN], status: 'now',    timeLabel: '19:00', isFuture: false, isChecked: () => false, checkedAtTime: () => null, toggleCheck: noop, openEdit: noop, noSchedule: false, isReadOnly: false, isPast: false },
+        },
+        {
+          name: 'Single — fixed-time item (done)',
+          props: { single: true, slot: { id: 'anytime', label: 'Magnesium Glycinate' }, slotSupps: [SUPP_MAG], status: 'done', timeLabel: '21:30', isFuture: false, isChecked: () => true, checkedAtTime: () => '21:34', toggleCheck: noop, openEdit: noop, noSchedule: false, isReadOnly: false, isPast: false },
+        },
         {
           name: 'Now — current slot',
           props: { slot: SLOT_BREAKFAST, slotSupps: [SUPP_VITAMIN, SUPP_RX], status: 'now',    timeLabel: '08:30', hasOffset: true,  pillTime: '08:00', isFuture: false, isChecked: () => false, toggleCheck: noop, openEdit: noop, noSchedule: false, isReadOnly: false, isPast: false },

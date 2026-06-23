@@ -1786,7 +1786,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
     else if (!isToday) status = "missed";
     else { const diff = (new Date() - t) / 60000; status = diff > 15 ? "missed" : diff > -5 ? "now" : "future"; }
     const pinnedSlot = { id: "anytime", label: supp.name, sublabel: "", icon: ANYTIME_SLOT.icon, color: ANYTIME_SLOT.color };
-    return <SlotCard key={`pinned_${supp.id}`} slot={pinnedSlot} slotSupps={[supp]} status={status} timeLabel={fmtTime(t)} hasOffset pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={false} isReadOnly={isReadOnly} isPast={isPast} />;
+    return <SlotCard key={`pinned_${supp.id}`} single slot={pinnedSlot} slotSupps={[supp]} status={status} timeLabel={fmtTime(t)} hasOffset pillTime={null} isFuture={isFuture} isChecked={isChecked} checkedAtTime={checkedAtTime} toggleCheck={toggleCheck} takeAllInSlot={takeAllInSlot} openEdit={openEdit} openLogAt={openLogAt} noSchedule={false} isReadOnly={isReadOnly} isPast={isPast} />;
   };
 
   // Merge cascade slots with pinned cards, ordered by clock time. Pinned items
