@@ -29,8 +29,7 @@ export default function EditForm({ form, setForm, editingId, onDelete, scheduleM
 
   const toggleSlot = (sid) => setForm(f => {
     const slots = f.slots.includes(sid) ? f.slots.filter(x => x !== sid) : [...f.slots, sid];
-    // A cascade slot supplies the time; a pinned time only belongs to an anytime supp.
-    return { ...f, slots, ...(slots.length ? { pinned_time: null } : {}) };
+    return { ...f, slots };
   });
   const toggleDay  = (i)   => setForm(f => ({ ...f, days:  f.days.includes(i)   ? f.days.filter(x => x !== i)   : [...f.days, i]   }));
 
@@ -304,21 +303,24 @@ export default function EditForm({ form, setForm, editingId, onDelete, scheduleM
           </Button>
         </div>
 
-        {/* Anytime supps can opt into a fixed clock time, independent of the
-            cascade — e.g. birth control at the same time every day. */}
-        {form.slots.length === 0 && (
-          <div style={{ marginTop: spacing.sm }}>
-            <Label style={{ marginBottom: spacing.xxs }}>Specific time (optional)</Label>
-            <Input
-              type="time"
-              value={form.pinned_time || ""}
-              onChange={e => setForm(f => ({ ...f, pinned_time: e.target.value || null }))}
-            />
-            <HelperText style={{ marginTop: spacing.xxxs }}>
-              Get a reminder at this exact time each day, independent of your schedule.
-            </HelperText>
-          </div>
-        )}
+        {/* Any supp can have a fixed clock time — for anytime supps it is the
+            only reminder; for slotted supps it fires a second independent
+            reminder (e.g. birth control both at anchor and again at 19:00). */}
+        <div style={{ marginTop: spacing.sm }}>
+          <Label style={{ marginBottom: spacing.xxs }}>
+            {form.slots.length === 0 ? "Specific time (optional)" : "Also remind me at (optional)"}
+          </Label>
+          <Input
+            type="time"
+            value={form.pinned_time || ""}
+            onChange={e => setForm(f => ({ ...f, pinned_time: e.target.value || null }))}
+          />
+          <HelperText style={{ marginTop: spacing.xxxs }}>
+            {form.slots.length === 0
+              ? "Get a reminder at this exact time each day, independent of your schedule."
+              : "Get an additional reminder at this exact time, separate from your cascade slot."}
+          </HelperText>
+        </div>
       </div>
 
       {mode !== "cycled" && (

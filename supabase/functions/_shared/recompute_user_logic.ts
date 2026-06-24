@@ -97,10 +97,10 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
   // ── Early exits ───────────────────────────────────────────────────────────────
   const mode: string = sched?.schedule_type ?? "none";
 
-  // Pinned-time anytime supps fire regardless of schedule mode, so a No-Schedule
-  // user with one still needs a recompute. Only "none" mode with no pinned supps
-  // can short-circuit. (A pinned supp is anytime — empty slots — with a time set.)
-  const hasPinned = supps.some((s) => Array.isArray(s.slots) && s.slots.length === 0 && s.pinned_time);
+  // Any supp with a pinned_time fires regardless of schedule mode (anytime supps
+  // as their only reminder; slotted supps as a second fixed-clock dose). A
+  // No-Schedule user with a pinned supp still needs a recompute.
+  const hasPinned = supps.some((s) => !!s.pinned_time);
 
   if (!hasSub || !sched?.notifications_enabled || (mode === "none" && !hasPinned)) {
     return { queued: 0, reason: "skip", hasSub, notifEnabled: sched?.notifications_enabled ?? false, mode };
@@ -134,13 +134,14 @@ export async function recomputeForUser(admin: any, userId: string, tz: string): 
     const dayOfWeek = getLocalDayOfWeek(dateStr, tz);
     const isToday   = dayOffset === 0;
 
-    // ── Pinned-time anytime supps (mode-independent absolute reminders) ──────────
-    // An anytime supp (no cascade slot) with a pinned_time fires at that exact
-    // local clock time on every active day, in ANY mode (this is the only path
-    // that fires in "none" mode). Each gets its own row keyed by supp id; sw.js
-    // branches on data.type, never slot_id, so the synthetic id is safe.
+    // ── Pinned-time reminders (mode-independent absolute reminders) ──────────────
+    // Any supp with a pinned_time fires at that exact local clock time on every
+    // active day, in ANY mode. For anytime supps this is the only reminder; for
+    // slotted supps it is a second independent reminder (a second dose). Each
+    // gets its own row keyed by supp id; sw.js branches on data.type, never
+    // slot_id, so the synthetic id is safe.
     for (const supp of supps) {
-      if (!Array.isArray(supp.slots) || supp.slots.length !== 0 || !supp.pinned_time) continue;
+      if (!supp.pinned_time) continue;
       if (!Array.isArray(supp.days) || !supp.days.includes(dayOfWeek)) continue;
       if (!isSupplementActiveOn(supp, dateStr)) continue;
       const fireAt = parseLocalHHMM(dateStr, (supp.pinned_time as string).slice(0, 5), tz);

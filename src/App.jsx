@@ -1161,10 +1161,14 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // (interleaved into the day by clock time); the rest stay in the untimed
   // "Anytime" card. Both still count toward the daily total via the "anytime"
   // check namespace, so coreTotal/coreDone keep using the full anytimeSupps list.
-  const pinnedSupps  = anytimeSupps.filter(s => s.pinned_time);
-  const untimedSupps = anytimeSupps.filter(s => !s.pinned_time);
-  let coreTotal = anytimeSupps.length, coreDone = 0;
+  // Slotted supps with a pinned_time appear in their cascade slot AND get their
+  // own additional flat pinned card (a second dose at a fixed clock time).
+  const pinnedSupps      = anytimeSupps.filter(s => s.pinned_time);
+  const untimedSupps     = anytimeSupps.filter(s => !s.pinned_time);
+  const slottedPinnedSupps = homeSupps.filter(s => s.slots.length > 0 && s.pinned_time && s.days.includes(viewDay));
+  let coreTotal = anytimeSupps.length + slottedPinnedSupps.length, coreDone = 0;
   anytimeSupps.forEach(s => { if (isChecked("anytime", s.id)) coreDone++; });
+  slottedPinnedSupps.forEach(s => { if (isChecked("anytime", s.id)) coreDone++; });
   coreSlotIds.forEach(sid => {
     const sl = getSuppsForSlot(sid);
     coreTotal += sl.length;
@@ -1269,9 +1273,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
       cycle_off_value: txMode === "cycled" ? (form.cycle_off_value || null) : null,
       cycle_off_unit:  txMode === "cycled" ? (form.cycle_off_unit  || (form.cycle_off_value ? "days" : null)) : null,
     };
-    // Pinned time only applies to anytime supps (no cascade slot). A slotted supp
-    // gets its time from the slot, so null any stale pinned_time on save.
-    const pinnedField = { pinned_time: form.slots.length === 0 ? (form.pinned_time || null) : null };
+    const pinnedField = { pinned_time: form.pinned_time || null };
     try {
       if (editingId) {
         await dbUpdateSupp({ ...form, days: finalDays, category: cat, id: editingId, ...txFields, ...pinnedField }, token);
@@ -1793,7 +1795,7 @@ function ProtocolApp({ user, token, onSignOut, onProtocolLoadEnd }) {
   // slot in before the first cascade slot whose time is later than theirs;
   // anything left over (later than every timed slot, or all slots untimed)
   // appends after the cascade. Zero pinned supps → identical to the old order.
-  const pinnedDescs = pinnedSupps.map(s => ({ supp: s, t: parseHHMM(s.pinned_time) })).sort((a, b) => a.t - b.t);
+  const pinnedDescs = [...pinnedSupps, ...slottedPinnedSupps].map(s => ({ supp: s, t: parseHHMM(s.pinned_time) })).sort((a, b) => a.t - b.t);
   const mergedCards = [];
   let _pi = 0;
   for (const slot of activeSlotList) {
