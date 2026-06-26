@@ -119,7 +119,16 @@ export default function SlotCard({
           </Pressable>
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs2 }}>
-              <Text weight={done ? 'regular' : 'medium'} style={[{ flexShrink: 1 }, done ? { textDecorationLine: 'line-through', color: theme.text.secondary } : null]}>
+              {/* Title follows the same state rules as the grouped cards: it only
+                  reaches full-white when it's actionable (now/missed). A future
+                  pinned item recedes to secondary instead of popping. */}
+              <Text
+                weight={done ? 'regular' : 'medium'}
+                style={[
+                  { flexShrink: 1, color: done || status === 'future' ? theme.text.secondary : theme.text.primary },
+                  done ? { textDecorationLine: 'line-through' } : null,
+                ]}
+              >
                 {supp.name}
               </Text>
               <CategoryIcon category={supp.category} color={theme.text.secondary} />

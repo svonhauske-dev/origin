@@ -37,6 +37,7 @@ import {
 import { DEFAULT_CONFIG, deriveOffsets, getSlotLabelForMode, makeCheckKey, computeAdaptiveDelta } from 'shared/config';
 import { SLOTS, IF_SLOTS } from 'shared/lib/notifications';
 import { getSlotTime, slotStatus } from '../lib/schedule';
+import { readCache, writeCache } from '../lib/cache';
 import { requestNotificationPermission, rescheduleSlotReminders, cancelAllReminders } from '../lib/notifications';
 import { tapHaptic } from '../lib/haptics';
 import { theme, spacing, typography, icon as iconSize, touch, fonts } from '../theme';
@@ -178,8 +179,40 @@ export default function Today({ user, onSignOut }) {
     return rows || [];
   }
 
+  // Push a fetched-or-cached dataset into state. Shared by the offline-cache
+  // hydration and the live network load so both paths populate identically.
+  function applyStatic({ protos, supps: s, sched, prof, rows }) {
+    setProtocols(protos || []);
+    setProfile(prof ?? null);
+    setSupps((s || []).map((x) => ({ ...x, paused: x.paused ?? false })));
+
+    if (sched?.schedule_type) setScheduleMode(sched.schedule_type);
+    setAdaptiveEnabled(sched?.adaptive_timing === true);
+    let behavior = 'flexible';
+    let cTime = '07:00';
+    if (sched?.offsets) {
+      const { _anchor_behavior, _consistent_time, ...savedConfig } = sched.offsets;
+      if (_anchor_behavior) { behavior = _anchor_behavior; setAnchorBehavior(_anchor_behavior); }
+      if (_consistent_time) { cTime = _consistent_time; setConsistentTime(_consistent_time); }
+      setScheduleConfig({
+        ...DEFAULT_CONFIG,
+        ...savedConfig,
+        fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(savedConfig.fixed_times || {}) },
+      });
+    }
+
+    setWeekLogs(rows || []);
+    const todayKey = dateKey(TODAY);
+    const todayRow = (rows || []).find((l) => l.log_date === todayKey) || null;
+    if (behavior === 'consistent' && !todayRow?.pill_time) setPillTimes((p) => ({ ...p, [todayKey]: cTime }));
+    mergeDayLog(todayRow, todayKey);
+  }
+
   async function loadStatic() {
-    setLoading(true);
+    // Hydrate instantly from the last offline snapshot so a cold/offline launch
+    // shows real content. If there's no cache yet, fall back to the loader.
+    const cached = readCache(user.id);
+    if (cached) { applyStatic(cached); setLoading(false); } else setLoading(true);
     try {
       const t = token();
       const [protos, s, sched, prof] = await Promise.all([
@@ -188,32 +221,13 @@ export default function Today({ user, onSignOut }) {
         dbGetSchedule(user.id, t),
         dbGetProfile(user.id, t).catch(() => null),
       ]);
-      setProtocols(protos || []);
-      setProfile(prof);
-      setSupps((s || []).map((x) => ({ ...x, paused: x.paused ?? false })));
-
-      if (sched?.schedule_type) setScheduleMode(sched.schedule_type);
-      setAdaptiveEnabled(sched?.adaptive_timing === true);
-      let behavior = 'flexible';
-      let cTime = '07:00';
-      if (sched?.offsets) {
-        const { _anchor_behavior, _consistent_time, ...savedConfig } = sched.offsets;
-        if (_anchor_behavior) { behavior = _anchor_behavior; setAnchorBehavior(_anchor_behavior); }
-        if (_consistent_time) { cTime = _consistent_time; setConsistentTime(_consistent_time); }
-        setScheduleConfig({
-          ...DEFAULT_CONFIG,
-          ...savedConfig,
-          fixed_times: { ...DEFAULT_CONFIG.fixed_times, ...(savedConfig.fixed_times || {}) },
-        });
-      }
-
-      const rows = await fetchWeek(viewedWeekEnd);
-      const todayKey = dateKey(TODAY);
-      const todayRow = rows.find((l) => l.log_date === todayKey) || null;
-      if (behavior === 'consistent' && !todayRow?.pill_time) setPillTimes((p) => ({ ...p, [todayKey]: cTime }));
-      mergeDayLog(todayRow, todayKey);
+      const dates = getWeekDatesEndingAt(viewedWeekEnd);
+      const rows = await dbGetDailyLogsRange(user.id, dateKey(dates[0]), dateKey(dates[6]), t).catch(() => []);
+      const snapshot = { protos, supps: s, sched, prof, rows };
+      applyStatic(snapshot);
+      writeCache(user.id, snapshot);
     } catch (e) {
-      // leave defaults
+      // Offline / fetch failed — keep whatever the cache hydrated (or defaults).
     } finally {
       setLoading(false);
     }
@@ -901,7 +915,7 @@ export default function Today({ user, onSignOut }) {
     {/* Sub-screens slide in/out over the home (iOS push feel). Mounted always; the
         SlideScreen owns the exit animation. Guard children so closing (state→null)
         doesn't render with stale props — SlideScreen keeps the last content during slide-out. */}
-    <SlideScreen visible={!!detailProtocol}>
+    <SlideScreen visible={!!detailProtocol} zIndex={600}>
       {detailProtocol ? (
         <ProtocolDetailScreen
           protocol={detailProtocol}

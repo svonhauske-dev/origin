@@ -7,6 +7,7 @@ import { Heading, Label, Text, Button, Row, Input, Checkbox } from '../component
 import InlineLoader from '../components/InlineLoader';
 import Modal from '../components/Modal';
 import ScheduleTab from './ScheduleTab';
+import SlideScreen from '../components/SlideScreen';
 import { theme, spacing, typography, touch, icon } from '../theme';
 
 // RN port of src/components/SettingsScreen.jsx (batch 1): Main + Account views +
@@ -48,8 +49,6 @@ export default function SettingsScreen({
   const [confirmPw, setConfirmPw] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-
-  const handleBack = () => { if (view !== 'main') setView('main'); else onBack(); };
 
   const handleDisplayNameChange = (val) => {
     setDisplayName(val);
@@ -101,52 +100,64 @@ export default function SettingsScreen({
 
   const Divider = () => <View style={{ borderTopWidth: theme.borderWidth.default, borderTopColor: theme.border.subtle, marginVertical: spacing.md }} />;
 
+  // Layer header — back chevron + title. Rendered via a plain call (not a nested
+  // component) so it doesn't remount on every keystroke in the Account inputs.
+  const header = (title, onBackPress) => (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: Math.max(insets.top, 20),
+        paddingHorizontal: spacing.md,
+        paddingBottom: spacing.sm,
+        borderBottomWidth: theme.borderWidth.default,
+        borderBottomColor: theme.border.subtle,
+      }}
+    >
+      <Pressable
+        onPress={onBackPress}
+        accessibilityLabel="Back"
+        style={{ width: touch.min, height: touch.min, borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <ChevronLeft size={icon.sm} color={theme.text.secondary} />
+      </Pressable>
+      <Heading level={1} visual="body" font="body">{title}</Heading>
+      <View style={{ width: touch.min }} />
+    </View>
+  );
+
+  const scrollProps = {
+    contentContainerStyle: { paddingTop: spacing.lg, paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
+    keyboardShouldPersistTaps: 'handled',
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.surface.canvas }}>
-      {/* Layer header — back chevron + title */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: Math.max(insets.top, 20),
-          paddingHorizontal: spacing.md,
-          paddingBottom: spacing.sm,
-          borderBottomWidth: theme.borderWidth.default,
-          borderBottomColor: theme.border.subtle,
-        }}
-      >
-        <Pressable
-          onPress={handleBack}
-          accessibilityLabel="Back"
-          style={{ width: touch.min, height: touch.min, borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ChevronLeft size={icon.sm} color={theme.text.secondary} />
-        </Pressable>
-        <Heading level={1} visual="body" font="body">{TITLES[view] || ''}</Heading>
-        <View style={{ width: touch.min }} />
-      </View>
+      {/* Main layer — always mounted; sub-pages slide in over it (iOS push feel) */}
+      {header(TITLES.main, onBack)}
+      <ScrollView {...scrollProps}>
+        <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Schedule</Heading>
+        <Row onPress={() => setView('schedule')} leftContent={<Text tone="secondary">Edit schedule</Text>} />
+        <Divider />
+        <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Account</Heading>
+        <Row onPress={() => setView('account')} leftContent={<Text tone="secondary">Edit account</Text>} />
+        <Divider />
+        <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Notifications</Heading>
+        <Row
+          onPress={() => onToggleReminders?.(!remindersEnabled)}
+          leftContent={<Text tone="secondary">Daily reminders</Text>}
+          rightContent={<Text weight="semibold" style={{ color: remindersEnabled ? theme.accent.default : theme.text.tertiary }}>{remindersEnabled ? 'On' : 'Off'}</Text>}
+        />
+        <Divider />
+        <Button variant="secondary" fullWidth onPress={() => setShowSignOutConfirm(true)}>Sign out</Button>
+      </ScrollView>
 
-      <ScrollView contentContainerStyle={{ paddingTop: spacing.lg, paddingHorizontal: spacing.md, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
-        {view === 'main' ? (
-          <>
-            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Schedule</Heading>
-            <Row onPress={() => setView('schedule')} leftContent={<Text tone="secondary">Edit schedule</Text>} />
-            <Divider />
-            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Account</Heading>
-            <Row onPress={() => setView('account')} leftContent={<Text tone="secondary">Edit account</Text>} />
-            <Divider />
-            <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Notifications</Heading>
-            <Row
-              onPress={() => onToggleReminders?.(!remindersEnabled)}
-              leftContent={<Text tone="secondary">Daily reminders</Text>}
-              rightContent={<Text weight="semibold" style={{ color: remindersEnabled ? theme.accent.default : theme.text.tertiary }}>{remindersEnabled ? 'On' : 'Off'}</Text>}
-            />
-            <Divider />
-            <Button variant="secondary" fullWidth onPress={() => setShowSignOutConfirm(true)}>Sign out</Button>
-          </>
-        ) : view === 'account' ? (
-          <>
+      {/* Account — slides in from the right */}
+      <SlideScreen visible={view === 'account'}>
+        <View style={{ flex: 1, backgroundColor: theme.surface.canvas }}>
+          {header(TITLES.account, () => setView('main'))}
+          <ScrollView {...scrollProps}>
             <View style={{ marginBottom: spacing.xl }}>
               <Label>Full name</Label>
               <View>
@@ -189,19 +200,27 @@ export default function SettingsScreen({
                 {pwSaving ? <InlineLoader size="sm" /> : 'Update password'}
               </Button>
             </View>
-          </>
-        ) : view === 'schedule' ? (
-          <ScheduleTab
-            scheduleMode={scheduleMode}
-            scheduleConfig={scheduleConfig}
-            anchorBehavior={anchorBehavior}
-            consistentTime={consistentTime}
-            adaptive={adaptiveEnabled}
-            onSave={onSaveSchedule}
-            supplements={supplements}
-          />
-        ) : null}
-      </ScrollView>
+          </ScrollView>
+        </View>
+      </SlideScreen>
+
+      {/* Schedule — slides in from the right */}
+      <SlideScreen visible={view === 'schedule'}>
+        <View style={{ flex: 1, backgroundColor: theme.surface.canvas }}>
+          {header(TITLES.schedule, () => setView('main'))}
+          <ScrollView {...scrollProps}>
+            <ScheduleTab
+              scheduleMode={scheduleMode}
+              scheduleConfig={scheduleConfig}
+              anchorBehavior={anchorBehavior}
+              consistentTime={consistentTime}
+              adaptive={adaptiveEnabled}
+              onSave={onSaveSchedule}
+              supplements={supplements}
+            />
+          </ScrollView>
+        </View>
+      </SlideScreen>
 
       <Modal
         open={showSignOutConfirm}

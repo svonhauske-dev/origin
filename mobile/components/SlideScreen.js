@@ -10,7 +10,7 @@ import { theme } from '../theme';
 // `children` are captured while visible so the screen keeps rendering its last
 // content during the slide-out even after the host clears the backing state
 // (e.g. detailProtocol → null).
-export default function SlideScreen({ visible, children }) {
+export default function SlideScreen({ visible, children, zIndex = 500 }) {
   const { width } = useWindowDimensions();
   const x = useRef(new Animated.Value(width)).current;
   const [rendered, setRendered] = useState(visible);
@@ -38,7 +38,7 @@ export default function SlideScreen({ visible, children }) {
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: theme.surface.canvas,
         transform: [{ translateX: x }],
-        zIndex: 500,
+        zIndex,
       }}
     >
       {kept}
