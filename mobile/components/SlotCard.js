@@ -59,7 +59,7 @@ function SuppRow({ slotId, supp, done, atTime, onToggle, onEdit, isReadOnly, isP
               <Text tone="tertiary" size="label">at {atTime}</Text>
             </View>
           ) : !done && status === 'missed' && !isReadOnly && openLogAt ? (
-            <Pressable onPress={() => openLogAt(slotId, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
+            <Pressable onPress={() => openLogAt(slotId, supp.id)} hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
               <Clock size={10} color={theme.status.warning} />
               <Text size="label" style={{ color: theme.status.warning }}>log at…</Text>
             </Pressable>
@@ -142,7 +142,7 @@ export default function SlotCard({
                   <Text tone="tertiary" size="label">at {atTime}</Text>
                 </View>
               ) : !done && status === 'missed' && !isReadOnly && openLogAt ? (
-                <Pressable onPress={() => openLogAt(slot.id, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
+                <Pressable onPress={() => openLogAt(slot.id, supp.id)} hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
                   <Clock size={10} color={theme.status.warning} />
                   <Text size="label" style={{ color: theme.status.warning }}>log at…</Text>
                 </Pressable>

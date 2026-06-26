@@ -13,8 +13,13 @@ export default function AnimatedSplash() {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
   }, []);
   return (
-    <View style={{ flex: 1, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={{ opacity: fade }}>
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Loading Origin"
+      style={{ flex: 1, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Animated.View style={{ opacity: fade }} importantForAccessibility="no-hide-descendants">
         <InlineLoader size="full" />
       </Animated.View>
     </View>

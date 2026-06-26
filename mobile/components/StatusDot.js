@@ -10,6 +10,8 @@ export default function StatusDot({ status, size = 6, style }) {
     theme.text.tertiary;
   return (
     <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]}
     />
   );

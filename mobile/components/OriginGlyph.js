@@ -14,7 +14,7 @@ const RINGS = [
 
 export default function OriginGlyph({ size = 56 }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 1024 1024">
+    <Svg width={size} height={size} viewBox="0 0 1024 1024" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {RINGS.map(({ r, strokeWidth, opacity }) => (
         <Circle key={r} cx={512} cy={512} r={r} fill="none" stroke={theme.text.primary} strokeWidth={strokeWidth} opacity={opacity} />
       ))}

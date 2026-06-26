@@ -119,7 +119,7 @@ export default function Hero(props) {
                 {state.status}
               </Heading>
               {state.canEditAnchor && !isReadOnly && onEditAnchor ? (
-                <Pressable onPress={onEditAnchor} hitSlop={8} accessibilityLabel="Edit anchor time">
+                <Pressable onPress={onEditAnchor} hitSlop={{ top: 15, bottom: 15, left: 14, right: 14 }} accessibilityRole="button" accessibilityLabel="Edit anchor time">
                   <Text tone="tertiary" size="label">edit</Text>
                 </Pressable>
               ) : null}

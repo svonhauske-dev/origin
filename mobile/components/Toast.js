@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react-native';
 import Text from './Text';
 import { successHaptic, errorHaptic } from '../lib/haptics';
+import { useReduceMotion } from '../lib/useReduceMotion';
 import { theme, spacing, typography, icon as iconScale, shadow } from '../theme';
 
 // RN port of src/components/Toast.jsx + ToastContext.jsx. Bottom-anchored,
@@ -17,6 +18,7 @@ const TONE_ICON = { success: CheckCircle2, error: AlertCircle, warning: AlertTri
 const toneColor = (tone) => ({ success: theme.status.success, error: theme.status.danger, warning: theme.status.warning, info: theme.text.secondary }[tone] ?? theme.text.secondary);
 
 function ToastItem({ toast }) {
+  const reduceMotion = useReduceMotion();
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(anim, {
@@ -42,7 +44,8 @@ function ToastItem({ toast }) {
         paddingHorizontal: spacing.md,
         ...shadow.elevated,
         opacity: anim,
-        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-80, 0] }) }],
+        // Reduce Motion: fade only, no downward slide.
+        transform: [{ translateY: reduceMotion ? 0 : anim.interpolate({ inputRange: [0, 1], outputRange: [-80, 0] }) }],
       }}
     >
       {Icon ? <Icon size={iconScale.xs} strokeWidth={2.25} color={toneColor(toast.tone)} /> : null}

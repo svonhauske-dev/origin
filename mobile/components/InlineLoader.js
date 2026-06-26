@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { theme } from '../theme';
+import { useReduceMotion } from '../lib/useReduceMotion';
 
 // RN port of src/components/InlineLoader.jsx + Loader.jsx — the Origin wave
 // loader: N expanding/fading rings (staggered) around a softly-pulsing dot.
@@ -18,6 +19,7 @@ export const LOADER_CONFIGS = {
 
 export default function InlineLoader({ size = 'md', color = theme.text.primary }) {
   const cfg = LOADER_CONFIGS[size] ?? LOADER_CONFIGS.md;
+  const reduceMotion = useReduceMotion();
   const waveAnims = useRef(Array.from({ length: cfg.waves }, () => new Animated.Value(0))).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
   // Each ring stays INVISIBLE until its staggered start (matches the web, where
@@ -26,6 +28,7 @@ export default function InlineLoader({ size = 'md', color = theme.text.primary }
   const [started, setStarted] = useState(() => Array(cfg.waves).fill(false));
 
   useEffect(() => {
+    if (reduceMotion) return; // honor Reduce Motion — no looping animation
     const loops = waveAnims.map((v) =>
       Animated.loop(Animated.timing(v, { toValue: 1, duration: cfg.cycle, easing: Easing.out(Easing.ease), useNativeDriver: true }))
     );
@@ -45,10 +48,36 @@ export default function InlineLoader({ size = 'md', color = theme.text.primary }
       loops.forEach((l) => l.stop());
       dotLoop.stop();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scaleEnd = cfg.waveEnd / cfg.waveR;
   const ring = cfg.waveR * 2;
+
+  // Reduce Motion — static concentric rings + solid dot, no animation.
+  if (reduceMotion) {
+    return (
+      <View style={{ width: cfg.size, height: cfg.size, alignItems: 'center', justifyContent: 'center' }}>
+        {Array.from({ length: cfg.waves }).map((_, i) => {
+          const r = cfg.waveR + (i / Math.max(1, cfg.waves - 1)) * (cfg.waveEnd - cfg.waveR);
+          return (
+            <View
+              key={i}
+              style={{
+                position: 'absolute',
+                width: r * 2,
+                height: r * 2,
+                borderRadius: r,
+                borderWidth: cfg.sw,
+                borderColor: color,
+                opacity: 0.35,
+              }}
+            />
+          );
+        })}
+        <View style={{ position: 'absolute', width: cfg.dotR * 2, height: cfg.dotR * 2, borderRadius: cfg.dotR, backgroundColor: color }} />
+      </View>
+    );
+  }
 
   return (
     <View style={{ width: cfg.size, height: cfg.size, alignItems: 'center', justifyContent: 'center' }}>

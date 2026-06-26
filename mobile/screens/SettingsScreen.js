@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { View, ScrollView, Pressable, Linking } from 'react-native';
+import { View, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { dbUpdateProfile, updateEmail, updatePassword } from 'shared/lib/api';
@@ -182,6 +182,7 @@ export default function SettingsScreen({
       <SlideScreen visible={view === 'account'}>
         <View style={{ flex: 1, backgroundColor: theme.surface.canvas }}>
           {header(TITLES.account, () => setView('main'))}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView {...scrollProps}>
             <View style={{ marginBottom: spacing.xl }}>
               <Label>Full name</Label>
@@ -231,6 +232,7 @@ export default function SettingsScreen({
             <Button variant="destructive" fullWidth onPress={() => { setDeleteErr(''); setShowDeleteConfirm(true); }}>Delete account</Button>
             <Text tone="tertiary" size="label" style={{ marginTop: spacing.xs }}>Permanently deletes your account and all your data. This can't be undone.</Text>
           </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </SlideScreen>
 
@@ -238,6 +240,7 @@ export default function SettingsScreen({
       <SlideScreen visible={view === 'schedule'}>
         <View style={{ flex: 1, backgroundColor: theme.surface.canvas }}>
           {header(TITLES.schedule, () => setView('main'))}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView {...scrollProps}>
             <ScheduleTab
               scheduleMode={scheduleMode}
@@ -249,6 +252,7 @@ export default function SettingsScreen({
               supplements={supplements}
             />
           </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </SlideScreen>
 

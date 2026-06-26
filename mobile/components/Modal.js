@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import { PickerGroupContext } from './pickerGroup';
 import Text from './Text';
+import { useReduceMotion } from '../lib/useReduceMotion';
 import { theme, spacing, typography, radius, icon, touch, fonts } from '../theme';
 
 // Bottom-sheet modal — rendered as an in-app ABSOLUTE OVERLAY rather than RN's
@@ -13,6 +14,7 @@ import { theme, spacing, typography, radius, icon, touch, fonts } from '../theme
 // and a translateY animation gives the slide-up. Returns null when closed, so
 // nothing is mounted (and nothing can intercept touches) while hidden.
 export default function Modal({ open, onClose, title, children, footer }) {
+  const reduceMotion = useReduceMotion();
   const slide = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef(null);
   const prevContentH = useRef(0);
@@ -60,7 +62,9 @@ export default function Modal({ open, onClose, title, children, footer }) {
             borderTopLeftRadius: radius.modal,
             borderTopRightRadius: radius.modal,
             overflow: 'hidden',
-            transform: [{ translateY: slide.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }],
+            // Reduce Motion: fade the sheet in place instead of sliding it up.
+            opacity: reduceMotion ? slide : 1,
+            transform: [{ translateY: reduceMotion ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [600, 0] }) }],
           }}
         >
           {/* Drag handle */}
