@@ -12,8 +12,8 @@ import SlideScreen from '../components/SlideScreen';
 import { theme, spacing, typography, touch, icon } from '../theme';
 
 // Public privacy-policy URL — required in-app and in App Store Connect by
-// Guideline 5.1.1(i). TODO(Sofia): confirm this resolves before shipping.
-const PRIVACY_URL = 'https://origin-protocol.vercel.app/privacy';
+// Guideline 5.1.1(i).
+const PRIVACY_URL = 'https://origin-protocol.vercel.app/privacy.html';
 
 // RN port of src/components/SettingsScreen.jsx (batch 1): Main + Account views +
 // sign-out confirm. Schedule sub-view (ScheduleTab) and Notifications (push =
