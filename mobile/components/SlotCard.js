@@ -50,16 +50,16 @@ function SuppRow({ slotId, supp, done, atTime, onToggle, onEdit, isReadOnly, isP
           <CategoryIcon category={supp.category} color={theme.text.secondary} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xxxs, minHeight: 14 }}>
-          <Text tone="secondary" size="label">
+          <Text tone="secondary" size="label" numberOfLines={1} style={{ flexShrink: 1 }}>
             {supp.dose}{supp.notes ? ` · ${supp.notes}` : ''}
           </Text>
           {done && atTime ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <View style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Clock size={10} color={theme.text.tertiary} />
               <Text tone="tertiary" size="label">at {atTime}</Text>
             </View>
           ) : !done && status === 'missed' && !isReadOnly && openLogAt ? (
-            <Pressable onPress={() => openLogAt(slotId, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
+            <Pressable onPress={() => openLogAt(slotId, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
               <Clock size={10} color={theme.status.warning} />
               <Text size="label" style={{ color: theme.status.warning }}>log at…</Text>
             </Pressable>
@@ -135,14 +135,14 @@ export default function SlotCard({
               <StatusBadge kind={sc.badge} isReadOnly={isReadOnly} />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xxxs, minHeight: 14 }}>
-              <Text tone="secondary" size="label">{supp.dose}{supp.notes ? ` · ${supp.notes}` : ''}</Text>
+              <Text tone="secondary" size="label" numberOfLines={1} style={{ flexShrink: 1 }}>{supp.dose}{supp.notes ? ` · ${supp.notes}` : ''}</Text>
               {done && atTime ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <View style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                   <Clock size={10} color={theme.text.tertiary} />
                   <Text tone="tertiary" size="label">at {atTime}</Text>
                 </View>
               ) : !done && status === 'missed' && !isReadOnly && openLogAt ? (
-                <Pressable onPress={() => openLogAt(slot.id, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
+                <Pressable onPress={() => openLogAt(slot.id, supp.id)} hitSlop={12} accessibilityRole="button" accessibilityLabel={`Log ${supp.name} at a time`} style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: theme.borderWidth.default, borderColor: theme.status.warning, borderRadius: theme.radius.badge, paddingVertical: 2, paddingHorizontal: spacing.xs }}>
                   <Clock size={10} color={theme.status.warning} />
                   <Text size="label" style={{ color: theme.status.warning }}>log at…</Text>
                 </Pressable>
