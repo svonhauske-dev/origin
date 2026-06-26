@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Animated, Easing } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react-native';
 import Text from './Text';
 import { successHaptic, errorHaptic } from '../lib/haptics';
@@ -41,7 +42,7 @@ function ToastItem({ toast }) {
         paddingHorizontal: spacing.md,
         ...shadow.elevated,
         opacity: anim,
-        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) }],
+        transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-80, 0] }) }],
       }}
     >
       {Icon ? <Icon size={iconScale.xs} strokeWidth={2.25} color={toneColor(toast.tone)} /> : null}
@@ -54,6 +55,7 @@ let nextId = 0;
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const timersRef = useRef({});
+  const insets = useSafeAreaInsets();
 
   const show = useCallback((message, options = {}) => {
     if (options.tone === 'success') successHaptic();
@@ -71,7 +73,7 @@ export function ToastProvider({ children }) {
       <View style={{ flex: 1 }}>
         {children}
         {toasts.length ? (
-          <View pointerEvents="none" style={{ position: 'absolute', left: spacing.md, right: spacing.md, bottom: 50, zIndex: 2000, gap: spacing.xs }}>
+          <View pointerEvents="none" style={{ position: 'absolute', left: spacing.md, right: spacing.md, top: insets.top + spacing.sm, zIndex: 2000, gap: spacing.xs }}>
             {toasts.map((t) => <ToastItem key={t.id} toast={t} />)}
           </View>
         ) : null}

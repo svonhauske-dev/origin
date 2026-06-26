@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -23,6 +23,7 @@ import { ToastProvider } from './components/Toast';
 import Auth from './screens/Auth';
 import Onboarding from './screens/Onboarding';
 import Today from './screens/Today';
+import AnimatedSplash from './components/AnimatedSplash';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -71,17 +72,21 @@ export default function App() {
 
   const ready = (fontsLoaded || fontError) && !booting;
 
+  // Hand off from the native static splash to the animated JS splash as soon as
+  // the root lays out (once) — the AnimatedSplash (graphics-only, no fonts) then
+  // plays through the rest of boot + data-load.
+  const splashHidden = useRef(false);
   const onLayoutRootView = useCallback(async () => {
-    if (ready) await SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
+    if (!splashHidden.current) { splashHidden.current = true; await SplashScreen.hideAsync(); }
+  }, []);
 
   return (
     <SafeAreaProvider>
       <ToastProvider>
         <View style={{ flex: 1, backgroundColor: theme.surface.canvas }} onLayout={onLayoutRootView}>
-          {user && needsOnboarding ? (
+          {!ready ? (
+            <AnimatedSplash />
+          ) : user && needsOnboarding ? (
             <Onboarding user={user} onDone={() => setNeedsOnboarding(false)} />
           ) : user ? (
             <Today

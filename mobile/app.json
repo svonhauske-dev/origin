@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.origin-protocol",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
           {

@@ -36,12 +36,12 @@ function SuppRow({ supp, onPress, isLast, right, multiline }) {
     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, minHeight: multiline ? touch.row : touch.min, borderBottomWidth: isLast ? 0 : theme.borderWidth.default, borderBottomColor: theme.border.subtle }}>
       <Pressable onPress={onPress} disabled={!onPress} style={{ flex: 1, minWidth: 0, paddingRight: spacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs2 }}>
-          <Text weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>{supp.name}</Text>
+          <Text allowFontScaling={false} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>{supp.name}</Text>
           <CategoryIcon category={supp.category} color={theme.text.secondary} />
           {isPausedSupp(supp) ? <Badge variant="neutral">paused</Badge> : null}
         </View>
         {multiline && (supp.dose || supp.notes) ? (
-          <Text tone="secondary" size="label" style={{ marginTop: spacing.xxxs, minHeight: 14 }}>
+          <Text allowFontScaling={false} tone="secondary" size="label" style={{ marginTop: spacing.xxxs, minHeight: 14 }}>
             {supp.dose}{supp.notes ? ` · ${supp.notes}` : ''}
           </Text>
         ) : null}
@@ -55,7 +55,7 @@ function EmptyState({ title, body, onAdd }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: spacing.xl, paddingHorizontal: spacing.md, paddingBottom: spacing.xxl }}>
       <Heading level={2} visual="display" font="heading" style={{ color: theme.text.secondary, marginBottom: spacing.md }}>◯</Heading>
-      <Text weight="semibold" style={{ marginBottom: spacing.xs, textAlign: 'center' }}>{title}</Text>
+      <Text allowFontScaling={false} weight="semibold" style={{ marginBottom: spacing.xs, textAlign: 'center' }}>{title}</Text>
       <Heading level={2} visual="caption" font="heading" weight="medium" style={{ color: theme.text.secondary, textAlign: 'center', lineHeight: 21, marginBottom: onAdd ? spacing.lg : 0 }}>{body}</Heading>
       {onAdd ? <Button variant="primary" fullWidth onPress={onAdd}>Add supplement</Button> : null}
     </View>
@@ -111,7 +111,7 @@ export default function ProtocolDetailScreen({
         <BorderedIconBtn label="Back" onPress={onBack}><ChevronLeft size={icon.sm} color={theme.text.secondary} /></BorderedIconBtn>
 
         {editingName ? (
-          <TextInput
+          <TextInput allowFontScaling={false}
             autoFocus
             value={nameVal}
             onChangeText={setNameVal}
@@ -226,7 +226,7 @@ export default function ProtocolDetailScreen({
           </View>
         }
       >
-        <Text tone="secondary" style={{ lineHeight: 22 }}>
+        <Text allowFontScaling={false} tone="secondary" style={{ lineHeight: 22 }}>
           {confirmAction === 'delete'
             ? `This permanently deletes "${protocol.name}" and its supplements.`
             : `Moves "${protocol.name}" to your Saved tab and stops tracking its supplements on the home screen.`}
@@ -245,7 +245,7 @@ export default function ProtocolDetailScreen({
           </View>
         }
       >
-        <Text tone="secondary" style={{ lineHeight: 22 }}>
+        <Text allowFontScaling={false} tone="secondary" style={{ lineHeight: 22 }}>
           {deletingSupp ? `Remove "${deletingSupp.name}" from this protocol.` : ''}
         </Text>
       </Modal>
@@ -257,12 +257,12 @@ export default function ProtocolDetailScreen({
             onPress={() => { setActivateIntentOpen(false); onActivateProtocol(protocol, 'replace'); }}
             style={{ borderBottomWidth: theme.borderWidth.default, borderBottomColor: theme.border.subtle, paddingBottom: spacing.sm }}
           >
-            <Text weight="medium" style={{ marginBottom: spacing.xxxs }}>Replace current</Text>
-            <Text tone="secondary" size="caption" style={{ lineHeight: 20 }}>{activeProtocolNames.join(', ')} will be saved. {protocol.name} becomes your active protocol.</Text>
+            <Text allowFontScaling={false} weight="medium" style={{ marginBottom: spacing.xxxs }}>Replace current</Text>
+            <Text allowFontScaling={false} tone="secondary" size="caption" style={{ lineHeight: 20 }}>{activeProtocolNames.join(', ')} will be saved. {protocol.name} becomes your active protocol.</Text>
           </Pressable>
           <Pressable onPress={() => { setActivateIntentOpen(false); onActivateProtocol(protocol, 'stack'); }} style={{ paddingBottom: spacing.xs }}>
-            <Text weight="medium" style={{ marginBottom: spacing.xxxs }}>Stack on top</Text>
-            <Text tone="secondary" size="caption" style={{ lineHeight: 20 }}>Run it alongside your active protocols — supplements from all appear on your home screen.</Text>
+            <Text allowFontScaling={false} weight="medium" style={{ marginBottom: spacing.xxxs }}>Stack on top</Text>
+            <Text allowFontScaling={false} tone="secondary" size="caption" style={{ lineHeight: 20 }}>Run it alongside your active protocols — supplements from all appear on your home screen.</Text>
           </Pressable>
         </View>
       </Modal>

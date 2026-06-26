@@ -21,6 +21,7 @@ export default function Text({ tone = 'primary', weight = 'regular', size = 'bod
 
   return (
     <RNText
+      allowFontScaling={false}
       style={[
         {
           color,

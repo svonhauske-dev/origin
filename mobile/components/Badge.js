@@ -24,7 +24,7 @@ export default function Badge({ variant = 'neutral', style, children }) {
         style,
       ]}
     >
-      <Text
+      <Text allowFontScaling={false}
         style={{
           color: v.color,
           fontFamily: fonts.mono.semibold,

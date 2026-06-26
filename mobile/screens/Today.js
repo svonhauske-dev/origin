@@ -52,6 +52,7 @@ import { useToast } from '../components/Toast';
 import SettingsScreen from './SettingsScreen';
 import ProtocolLibrary from './ProtocolLibrary';
 import ProtocolDetailScreen from './ProtocolDetailScreen';
+import SlideScreen from '../components/SlideScreen';
 
 const ANYTIME_SLOT = { id: 'anytime', label: 'Anytime', sublabel: 'No specific time', icon: '◦' };
 
@@ -378,7 +379,7 @@ export default function Today({ user, onSignOut }) {
   const reminderSlots = remindersEnabled && isToday
     ? slotDefs
         .filter((sd) => getSuppsForSlot(sd.id).length > 0)
-        .map((sd) => { const t = getSlotTime(sd.id, ctx); return t ? { label: sd.label, time: `${t.getHours()}:${t.getMinutes()}` } : null; })
+        .map((sd) => { const t = getSlotTime(sd.id, ctx); if (!t) return null; const names = getSuppsForSlot(sd.id).map((s) => s.name).filter(Boolean); return { label: sd.label, time: `${t.getHours()}:${t.getMinutes()}`, names }; })
         .filter(Boolean)
     : [];
   const reminderSig = JSON.stringify(reminderSlots);
@@ -700,58 +701,8 @@ export default function Today({ user, onSignOut }) {
     </Modal>
   );
 
-  if (detailProtocol)
-    return (
-      <>
-        <ProtocolDetailScreen
-          protocol={detailProtocol}
-          supplements={supps}
-          activeProtocolNames={protocols.filter((p) => p.status === 'active' && p.id !== detailProtocol.id).map((p) => p.name)}
-          onBack={() => setDetailProtocol(null)}
-          onUpdateProtocol={updateProtocol}
-          onArchiveProtocol={archiveProtocol}
-          onActivateProtocol={activateProtocol}
-          onDeleteProtocol={deleteProtocol}
-          onAddSupp={() => openAddForProtocol(detailProtocol.id)}
-          onEditSupp={openEdit}
-          onTogglePauseSupp={togglePauseSupp}
-          onResumeSupp={resumeSuppById}
-          onDeleteSupp={deleteSuppById}
-        />
-        {formModal}
-      </>
-    );
-
-  if (showLibrary)
-    return (
-      <ProtocolLibrary
-        protocols={protocols}
-        supplements={supps}
-        onAddProtocol={addProtocol}
-        onOpenDetail={setDetailProtocol}
-        onBack={() => setShowLibrary(false)}
-      />
-    );
-  if (showSettings)
-    return (
-      <SettingsScreen
-        user={user}
-        token={token()}
-        profile={profile}
-        onProfileUpdate={setProfile}
-        onSignOut={onSignOut}
-        onBack={() => setShowSettings(false)}
-        scheduleMode={scheduleMode}
-        scheduleConfig={scheduleConfig}
-        anchorBehavior={anchorBehavior}
-        consistentTime={consistentTime}
-        adaptiveEnabled={adaptiveEnabled}
-        onSaveSchedule={saveSchedule}
-        supplements={supps}
-        remindersEnabled={remindersEnabled}
-        onToggleReminders={toggleReminders}
-      />
-    );
+  // Sub-screens (Detail / Library / Settings) render as SlideScreen overlays at
+  // the END of the main return so they slide in/out over the home (see below).
 
   if (loading) return <Loader />;
 
@@ -946,6 +897,63 @@ export default function Today({ user, onSignOut }) {
         <DateTimePicker value={anchorEditDate} mode="time" display="spinner" themeVariant="dark" accentColor={theme.accent.default} onChange={(_e, d) => { if (d) setAnchorEditDate(d); }} />
       </View>
     </Modal>
+
+    {/* Sub-screens slide in/out over the home (iOS push feel). Mounted always; the
+        SlideScreen owns the exit animation. Guard children so closing (state→null)
+        doesn't render with stale props — SlideScreen keeps the last content during slide-out. */}
+    <SlideScreen visible={!!detailProtocol}>
+      {detailProtocol ? (
+        <ProtocolDetailScreen
+          protocol={detailProtocol}
+          supplements={supps}
+          activeProtocolNames={protocols.filter((p) => p.status === 'active' && p.id !== detailProtocol.id).map((p) => p.name)}
+          onBack={() => setDetailProtocol(null)}
+          onUpdateProtocol={updateProtocol}
+          onArchiveProtocol={archiveProtocol}
+          onActivateProtocol={activateProtocol}
+          onDeleteProtocol={deleteProtocol}
+          onAddSupp={() => openAddForProtocol(detailProtocol.id)}
+          onEditSupp={openEdit}
+          onTogglePauseSupp={togglePauseSupp}
+          onResumeSupp={resumeSuppById}
+          onDeleteSupp={deleteSuppById}
+        />
+      ) : null}
+    </SlideScreen>
+
+    <SlideScreen visible={showLibrary}>
+      {showLibrary ? (
+        <ProtocolLibrary
+          protocols={protocols}
+          supplements={supps}
+          onAddProtocol={addProtocol}
+          onOpenDetail={setDetailProtocol}
+          onBack={() => setShowLibrary(false)}
+        />
+      ) : null}
+    </SlideScreen>
+
+    <SlideScreen visible={showSettings}>
+      {showSettings ? (
+        <SettingsScreen
+          user={user}
+          token={token()}
+          profile={profile}
+          onProfileUpdate={setProfile}
+          onSignOut={onSignOut}
+          onBack={() => setShowSettings(false)}
+          scheduleMode={scheduleMode}
+          scheduleConfig={scheduleConfig}
+          anchorBehavior={anchorBehavior}
+          consistentTime={consistentTime}
+          adaptiveEnabled={adaptiveEnabled}
+          onSaveSchedule={saveSchedule}
+          supplements={supps}
+          remindersEnabled={remindersEnabled}
+          onToggleReminders={toggleReminders}
+        />
+      ) : null}
+    </SlideScreen>
     </>
   );
 }

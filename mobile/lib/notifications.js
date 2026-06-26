@@ -39,8 +39,10 @@ export async function rescheduleSlotReminders(slots) {
     const key = `${hour}:${minute}`;
     if (seen.has(key)) continue; // collapse same-time slots into one reminder
     seen.add(key);
+    const names = Array.isArray(slot.names) ? slot.names.filter(Boolean) : [];
+    const body = names.length ? names.join(', ') : 'Time to take your supplements';
     await Notifications.scheduleNotificationAsync({
-      content: { title: 'Origin', body: `Time for ${slot.label}`, sound: true },
+      content: { title: slot.label || 'Origin', body, sound: true },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute },
     });
   }

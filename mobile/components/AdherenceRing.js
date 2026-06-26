@@ -34,7 +34,7 @@ export default function AdherenceRing({ percentage, size = 56, showText = true }
         />
       </Svg>
       {showText ? (
-        <Text style={{ position: 'absolute', color: theme.text.primary, fontSize: textSize, fontFamily: fonts.mono.bold }}>
+        <Text allowFontScaling={false} style={{ position: 'absolute', color: theme.text.primary, fontSize: textSize, fontFamily: fonts.mono.bold }}>
           {percentage}%
         </Text>
       ) : null}

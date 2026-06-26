@@ -4,7 +4,7 @@ import { theme, typography, spacing, fonts, letterSpacing as LS } from '../theme
 // Uppercase, letter-spaced section label (RN port of src/components/Label.jsx).
 export default function Label({ style, children, ...rest }) {
   return (
-    <Text
+    <Text allowFontScaling={false}
       style={[
         {
           fontFamily: fonts.mono.semibold,

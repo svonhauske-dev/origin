@@ -4,7 +4,7 @@ import { theme, typography, spacing, fonts } from '../theme';
 // Section explanation text below a Label (RN port of src/components/HelperText.jsx).
 export default function HelperText({ children, style, ...rest }) {
   return (
-    <Text
+    <Text allowFontScaling={false}
       style={[
         {
           fontSize: typography.caption,

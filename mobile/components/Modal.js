@@ -29,15 +29,22 @@ export default function Modal({ open, onClose, title, children, footer }) {
   // Bottom clearance for the home indicator + breathing room.
   const SAFE_BOTTOM = insets.bottom + spacing.sm;
 
+  // Keep the sheet mounted through its slide-OUT so close animates too (not an
+  // instant unmount). `rendered` lags `open` by the exit animation.
+  const [rendered, setRendered] = useState(open);
   useEffect(() => {
     if (open) {
+      setRendered(true);
       prevContentH.current = 0; // reset so the first measure on open doesn't auto-scroll
       slide.setValue(0);
       Animated.timing(slide, { toValue: 1, duration: 240, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+    } else if (rendered) {
+      Animated.timing(slide, { toValue: 0, duration: 200, easing: Easing.in(Easing.ease), useNativeDriver: true })
+        .start(({ finished }) => { if (finished) setRendered(false); });
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!open) return null;
+  if (!rendered) return null;
 
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, justifyContent: 'flex-end' }}>

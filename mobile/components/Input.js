@@ -27,7 +27,7 @@ export default function Input({ variant = 'text', width, style, onFocus, onBlur,
       : { width: width ?? '100%', paddingVertical: spacing.sm, paddingHorizontal: spacing.md };
 
   return (
-    <TextInput
+    <TextInput allowFontScaling={false}
       placeholderTextColor={theme.text.tertiary}
       keyboardType={variant === 'number' ? 'numeric' : 'default'}
       style={[base, v, style]}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import { theme } from '../theme';
 
@@ -20,12 +20,19 @@ export default function InlineLoader({ size = 'md', color = theme.text.primary }
   const cfg = LOADER_CONFIGS[size] ?? LOADER_CONFIGS.md;
   const waveAnims = useRef(Array.from({ length: cfg.waves }, () => new Animated.Value(0))).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
+  // Each ring stays INVISIBLE until its staggered start (matches the web, where
+  // rings are opacity:0 during their animation-delay). Without this the rings sit
+  // small + visible at center during the delay → reads as "pulse, then expand".
+  const [started, setStarted] = useState(() => Array(cfg.waves).fill(false));
 
   useEffect(() => {
     const loops = waveAnims.map((v) =>
       Animated.loop(Animated.timing(v, { toValue: 1, duration: cfg.cycle, easing: Easing.out(Easing.ease), useNativeDriver: true }))
     );
-    const timers = waveAnims.map((_, i) => setTimeout(() => loops[i].start(), i * cfg.stagger));
+    const timers = waveAnims.map((_, i) => setTimeout(() => {
+      setStarted((s) => { const n = [...s]; n[i] = true; return n; });
+      loops[i].start();
+    }, i * cfg.stagger));
     const dotLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(dotAnim, { toValue: 1, duration: cfg.cycle / 2, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
@@ -55,7 +62,7 @@ export default function InlineLoader({ size = 'md', color = theme.text.primary }
             borderRadius: cfg.waveR,
             borderWidth: cfg.sw,
             borderColor: color,
-            opacity: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+            opacity: started[i] ? v.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) : 0,
             transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, scaleEnd] }) }],
           }}
         />
