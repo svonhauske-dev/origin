@@ -35,7 +35,8 @@ export default function Heading({ level = 2, visual, weight = 'semibold', font, 
   return (
     <Text
       accessibilityRole="header"
-      allowFontScaling={false}
+      allowFontScaling
+      maxFontSizeMultiplier={1.4}
       style={[
         {
           fontFamily,

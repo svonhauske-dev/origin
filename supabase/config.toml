@@ -9,3 +9,9 @@ project_id = "origin"
 # process_notifications_queue uses for its every-minute pg_cron drain.
 [functions.recompute_notifications]
 verify_jwt = false
+
+# delete_account validates the user JWT internally (admin.auth.getUser) and
+# deletes only the caller's own account. verify_jwt=false keeps the CORS
+# preflight from requiring an apikey header (same reason as recompute above).
+[functions.delete_account]
+verify_jwt = false

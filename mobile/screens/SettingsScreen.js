@@ -1,14 +1,19 @@
 import { useState, useRef } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { dbUpdateProfile, updateEmail, updatePassword } from 'shared/lib/api';
+import { deleteAccount } from '../lib/account';
 import { Heading, Label, Text, Button, Row, Input, Checkbox } from '../components';
 import InlineLoader from '../components/InlineLoader';
 import Modal from '../components/Modal';
 import ScheduleTab from './ScheduleTab';
 import SlideScreen from '../components/SlideScreen';
 import { theme, spacing, typography, touch, icon } from '../theme';
+
+// Public privacy-policy URL — required in-app and in App Store Connect by
+// Guideline 5.1.1(i). TODO(Sofia): confirm this resolves before shipping.
+const PRIVACY_URL = 'https://origin-protocol.vercel.app/privacy';
 
 // RN port of src/components/SettingsScreen.jsx (batch 1): Main + Account views +
 // sign-out confirm. Schedule sub-view (ScheduleTab) and Notifications (push =
@@ -49,6 +54,23 @@ export default function SettingsScreen({
   const [confirmPw, setConfirmPw] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState('');
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteErr('');
+    try {
+      await deleteAccount();
+      setShowDeleteConfirm(false);
+      onSignOut?.(); // clears the session locally; the account is already gone server-side
+    } catch {
+      setDeleteErr("Couldn't delete your account. Try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleDisplayNameChange = (val) => {
     setDisplayName(val);
@@ -150,6 +172,9 @@ export default function SettingsScreen({
           rightContent={<Text weight="semibold" style={{ color: remindersEnabled ? theme.accent.default : theme.text.tertiary }}>{remindersEnabled ? 'On' : 'Off'}</Text>}
         />
         <Divider />
+        <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>About</Heading>
+        <Row onPress={() => Linking.openURL(PRIVACY_URL)} leftContent={<Text tone="secondary">Privacy policy</Text>} />
+        <Divider />
         <Button variant="secondary" fullWidth onPress={() => setShowSignOutConfirm(true)}>Sign out</Button>
       </ScrollView>
 
@@ -200,6 +225,11 @@ export default function SettingsScreen({
                 {pwSaving ? <InlineLoader size="sm" /> : 'Update password'}
               </Button>
             </View>
+
+            <Divider />
+            <Label>Danger zone</Label>
+            <Button variant="destructive" fullWidth onPress={() => { setDeleteErr(''); setShowDeleteConfirm(true); }}>Delete account</Button>
+            <Text tone="tertiary" size="label" style={{ marginTop: spacing.xs }}>Permanently deletes your account and all your data. This can't be undone.</Text>
           </ScrollView>
         </View>
       </SlideScreen>
@@ -234,6 +264,25 @@ export default function SettingsScreen({
         }
       >
         <Text tone="secondary">You'll need to sign in again to access your protocol. Your data stays safe.</Text>
+      </Modal>
+
+      <Modal
+        open={showDeleteConfirm}
+        onClose={() => (deleting ? null : setShowDeleteConfirm(false))}
+        title="Delete your account?"
+        footer={
+          <View style={{ gap: spacing.xs }}>
+            {deleteErr ? <Text size="label" tone="danger" style={{ textAlign: 'center' }}>{deleteErr}</Text> : null}
+            <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+              <Button variant="secondary" fullWidth disabled={deleting} onPress={() => setShowDeleteConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" fullWidth disabled={deleting} onPress={handleDeleteAccount}>
+                {deleting ? <InlineLoader size="sm" /> : 'Delete'}
+              </Button>
+            </View>
+          </View>
+        }
+      >
+        <Text tone="secondary">This permanently deletes your account, protocols, schedule, and history. It can't be undone.</Text>
       </Modal>
     </View>
   );

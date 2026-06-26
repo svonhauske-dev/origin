@@ -89,7 +89,7 @@ export default function Button({
       style={({ pressed }) => [container, pressed && !disabled && { opacity: 0.85 }, style]}
       {...rest}
     >
-      {typeof children === 'string' ? <Text allowFontScaling={false} numberOfLines={1} style={[t, textStyle]}>{children}</Text> : children}
+      {typeof children === 'string' ? <Text allowFontScaling maxFontSizeMultiplier={1.4} numberOfLines={1} style={[t, textStyle]}>{children}</Text> : children}
     </Pressable>
   );
 }

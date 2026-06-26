@@ -67,7 +67,7 @@ function SuppRow({ slotId, supp, done, atTime, onToggle, onEdit, isReadOnly, isP
         </View>
       </View>
       {!isReadOnly && !isPast && onEdit ? (
-        <Pressable onPress={() => onEdit(supp)} hitSlop={8} accessibilitylabel={`Edit ${supp.name}`}>
+        <Pressable onPress={() => onEdit(supp)} hitSlop={14} accessibilityRole="button" accessibilityLabel={`Edit ${supp.name}`}>
           <Pencil size={icon.xs} color={theme.text.tertiary} />
         </Pressable>
       ) : null}
@@ -151,7 +151,7 @@ export default function SlotCard({
           </View>
           {timeLabel ? <Text tone="secondary" size="caption" weight="semibold">{timeLabel}</Text> : null}
           {!isReadOnly && !isPast && openEdit ? (
-            <Pressable onPress={() => openEdit(supp)} hitSlop={8}><Pencil size={icon.xs} color={theme.text.tertiary} /></Pressable>
+            <Pressable onPress={() => openEdit(supp)} hitSlop={14} accessibilityRole="button" accessibilityLabel={`Edit ${supp.name}`}><Pencil size={icon.xs} color={theme.text.tertiary} /></Pressable>
           ) : null}
         </View>
       </View>
