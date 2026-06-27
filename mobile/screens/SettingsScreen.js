@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
 import { View, ScrollView, Pressable, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Check } from 'lucide-react-native';
 import { dbUpdateProfile, updateEmail, updatePassword } from 'shared/lib/api';
 import { deleteAccount } from '../lib/account';
+import { useThemeChoice } from '../lib/theme-context';
 import { Heading, Label, Text, Button, Row, Input, Checkbox } from '../components';
 import InlineLoader from '../components/InlineLoader';
 import Modal from '../components/Modal';
@@ -43,6 +44,7 @@ export default function SettingsScreen({
   remindersEnabled = false, onToggleReminders,
 }) {
   const insets = useSafeAreaInsets();
+  const themeChoice = useThemeChoice();
   const [view, setView] = useState('main');
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [nameSaving, setNameSaving] = useState(false);
@@ -171,6 +173,35 @@ export default function SettingsScreen({
           leftContent={<Text tone="secondary">Daily reminders</Text>}
           rightContent={<Text weight="semibold" style={{ color: remindersEnabled ? theme.accent.default : theme.text.tertiary }}>{remindersEnabled ? 'On' : 'Off'}</Text>}
         />
+        <Divider />
+        <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>Appearance</Heading>
+        <Row
+          onPress={() => themeChoice?.setTheme({ name: 'retro' })}
+          leftContent={<Text tone="secondary">Retro</Text>}
+          rightContent={themeChoice?.name === 'retro' ? <Check size={icon.sm} color={theme.accent.default} /> : null}
+        />
+        <Row
+          onPress={() => themeChoice?.setTheme({ name: 'futuristic' })}
+          leftContent={<Text tone="secondary">Futuristic</Text>}
+          rightContent={themeChoice?.name === 'futuristic' ? <Check size={icon.sm} color={theme.accent.default} /> : null}
+        />
+        {themeChoice?.name === 'futuristic' ? (
+          <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm }}>
+            {[['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']].map(([val, label]) => (
+              <Button
+                key={val}
+                variant="selector"
+                active={themeChoice?.appearance === val}
+                solidActive
+                onPress={() => themeChoice?.setTheme({ appearance: val })}
+                style={{ flex: 1 }}
+              >
+                {label}
+              </Button>
+            ))}
+          </View>
+        ) : null}
+
         <Divider />
         <Heading level={2} visual="label" style={{ marginBottom: spacing.xs }}>About</Heading>
         <Row onPress={() => Linking.openURL(PRIVACY_URL)} leftContent={<Text tone="secondary">Privacy policy</Text>} />

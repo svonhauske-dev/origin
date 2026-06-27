@@ -25,8 +25,6 @@ const TREATMENT_MODES = [
 ];
 const UNITS = ['days', 'weeks', 'months'];
 
-const errStyle = { fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs };
-
 // Input-styled field that opens a picker on tap (native date/time).
 function FieldButton({ value, placeholder, onPress }) {
   return (
@@ -61,6 +59,8 @@ export default function EditForm({
 }) {
   const [nameTouched, setNameTouched] = useState(false);
   const [touched, setTouched] = useState({});
+  // In render so it tracks the active theme.
+  const errStyle = { fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs };
   const [pinnedOpen, setPinnedOpen] = useState(!!form.pinned_time);
   const [activePicker, setActivePicker] = useState(null); // { field, mode } — inline date/time picker
   const { width: screenW } = useWindowDimensions();

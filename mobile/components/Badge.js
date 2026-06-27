@@ -2,14 +2,14 @@ import { View, Text } from 'react-native';
 import { theme, typography, spacing, fonts, letterSpacing as LS } from '../theme';
 
 // Small status/category badge (RN port of src/components/Badge.jsx).
-const VARIANTS = {
-  now: { bg: theme.status.nowBadgeBg, color: theme.accent.default },
-  missed: { bg: theme.status.warningSubtle, color: theme.status.warning },
-  category: { bg: theme.accent.subtle, color: theme.accent.onSubtle },
-  neutral: { bg: theme.surface.cardHover, color: theme.text.secondary },
-};
-
 export default function Badge({ variant = 'neutral', style, children }) {
+  // Computed in render (not module scope) so it tracks the active theme.
+  const VARIANTS = {
+    now: { bg: theme.status.nowBadgeBg, color: theme.accent.default },
+    missed: { bg: theme.status.warningSubtle, color: theme.status.warning },
+    category: { bg: theme.accent.subtle, color: theme.accent.onSubtle },
+    neutral: { bg: theme.surface.cardHover, color: theme.text.secondary },
+  };
   const v = VARIANTS[variant] ?? VARIANTS.neutral;
   return (
     <View

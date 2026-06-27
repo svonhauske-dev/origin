@@ -92,6 +92,7 @@ export default function Hero(props) {
 
   return (
     <Card
+      accent
       style={{
         minHeight: 132,
         marginBottom: spacing.md,

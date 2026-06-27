@@ -25,7 +25,6 @@ function addDuration(startStr, value, unit) {
   return d.toISOString().split('T')[0];
 }
 const DURATION_UNITS = ['days', 'weeks', 'months'];
-const errStyle = { fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs };
 
 function IconBtn({ children, onPress, label }) {
   return (
@@ -89,6 +88,7 @@ function EmptyState({ title, body, onNew }) {
 
 export default function ProtocolLibrary({ protocols = [], supplements = [], onAddProtocol, onOpenDetail, onBack }) {
   const insets = useSafeAreaInsets();
+  const errStyle = { fontSize: typography.label, color: theme.status.danger, marginTop: spacing.xxxs };
   const today = new Date().toISOString().split('T')[0];
   const [tab, setTab] = useState('active');
   const [showNew, setShowNew] = useState(false);

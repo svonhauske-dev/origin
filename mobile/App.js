@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { View, useColorScheme } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 // Per-weight file imports (NOT the package root) so Metro bundles ONLY the six
@@ -18,7 +18,8 @@ import SpaceGrotesk_700Bold from '@expo-google-fonts/space-grotesk/700Bold/Space
 // the import.meta Babel transform (babel.config.js).
 import { getSession, signOut, dbGetSchedule } from 'shared/lib/api';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { theme } from './theme';
+import { theme, applyThemeKey, resolveThemeKey, loadThemeChoice, saveThemeChoice } from './theme';
+import { ThemeChoiceContext } from './lib/theme-context';
 import { ToastProvider } from './components/Toast';
 import Auth from './screens/Auth';
 import Onboarding from './screens/Onboarding';
@@ -28,6 +29,18 @@ import AnimatedSplash from './components/AnimatedSplash';
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  // ── Theme (runtime picker) ──────────────────────────────────────────────
+  // Apply the resolved token set to the live `theme` binding at the TOP of
+  // render, before anything below reads theme.*. Re-runs on choice / system change.
+  const systemScheme = useColorScheme();
+  const [themeChoice, setThemeChoice] = useState(loadThemeChoice);
+  const themeKey = resolveThemeKey(themeChoice.name, themeChoice.appearance, systemScheme);
+  applyThemeKey(themeKey);
+  const isLightTheme = themeKey === 'futuristic-light';
+  const setTheme = useCallback((patch) => {
+    setThemeChoice((prev) => { const next = { ...prev, ...patch }; saveThemeChoice(next); return next; });
+  }, []);
+
   const [fontsLoaded, fontError] = useFonts({
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
@@ -82,6 +95,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <ThemeChoiceContext.Provider value={{ name: themeChoice.name, appearance: themeChoice.appearance, themeKey, setTheme }}>
       <ToastProvider>
         <View style={{ flex: 1, backgroundColor: theme.surface.canvas }} onLayout={onLayoutRootView}>
           {!ready ? (
@@ -100,9 +114,10 @@ export default function App() {
           ) : (
             <Auth onSignedIn={async (u, isNew) => { setUser(u); if (isNew || (await needsSchedule(u))) setNeedsOnboarding(true); }} />
           )}
-          <StatusBar style="light" />
+          <StatusBar style={isLightTheme ? 'dark' : 'light'} />
         </View>
       </ToastProvider>
+      </ThemeChoiceContext.Provider>
     </SafeAreaProvider>
   );
 }

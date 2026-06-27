@@ -6,6 +6,7 @@ import Heading from './Heading';
 import Badge from './Badge';
 import Checkbox from './Checkbox';
 import CategoryIcon from './CategoryIcon';
+import Surface from './Surface';
 import { theme, spacing, typography, touch, icon, fonts } from '../theme';
 
 // Faithful RN port of src/components/SlotCard.jsx — status-colored container,
@@ -112,7 +113,7 @@ export default function SlotCard({
     const done = isChecked(slot.id, supp.id);
     const atTime = checkedAtTime ? checkedAtTime(slot.id, supp.id) : null;
     return (
-      <View style={container}>
+      <Surface accent={status === 'now'} style={container}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: touch.row }}>
           <Pressable onPress={isFuture || isReadOnly ? undefined : () => toggleCheck(slot.id, supp.id)} hitSlop={10} accessibilityRole="checkbox" accessibilityState={{ checked: done }} accessibilityLabel={supp.name}>
             <Checkbox checked={done} size={icon.md} shape="square" weight="accent" />
@@ -154,7 +155,7 @@ export default function SlotCard({
             <Pressable onPress={() => openEdit(supp)} hitSlop={14} accessibilityRole="button" accessibilityLabel={`Edit ${supp.name}`}><Pencil size={icon.xs} color={theme.text.tertiary} /></Pressable>
           ) : null}
         </View>
-      </View>
+      </Surface>
     );
   }
 
@@ -163,7 +164,7 @@ export default function SlotCard({
   const sublabelText = allDone && !expanded ? `${slotSupps.length} item${slotSupps.length !== 1 ? 's' : ''} done` : slot.sublabel;
 
   return (
-    <View style={container}>
+    <Surface accent={status === 'now'} style={container}>
       <View style={{ flexDirection: 'row', alignItems: 'stretch', backgroundColor: sc.hbg }}>
         {/* Take-all icon button */}
         <Pressable
@@ -224,6 +225,6 @@ export default function SlotCard({
           })}
         </View>
       ) : null}
-    </View>
+    </Surface>
   );
 }

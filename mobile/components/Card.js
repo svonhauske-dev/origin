@@ -1,18 +1,21 @@
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { theme, spacing } from '../theme';
+import Surface from './Surface';
 
-// Surface card (RN port of src/components/Card.jsx).
+// Surface card (RN port of src/components/Card.jsx). Renders through Surface, so
+// it's a plain opaque card in Retro and frosted glass in Futuristic.
 // variant: default | selected | accent | subtle. Pass onPress to make it
 // button-semantic (accessibilityRole + pressed feedback).
-const VARIANTS = {
-  default: { bg: theme.surface.card, border: theme.border.subtle },
-  selected: { bg: theme.accent.subtle, border: theme.accent.default },
-  accent: { bg: theme.accent.subtle, border: theme.accent.border },
-  subtle: { bg: theme.surface.cardSubtle, border: theme.border.subtle },
-};
-
-export default function Card({ variant = 'default', onPress, style, children, accessibilityLabel }) {
+export default function Card({ variant = 'default', onPress, accent, style, children, accessibilityLabel }) {
+  // Computed in render (not module scope) so it tracks the active theme.
+  const VARIANTS = {
+    default: { bg: theme.surface.card, border: theme.border.subtle },
+    selected: { bg: theme.accent.subtle, border: theme.accent.default },
+    accent: { bg: theme.accent.subtle, border: theme.accent.border },
+    subtle: { bg: theme.surface.cardSubtle, border: theme.border.subtle },
+  };
   const v = VARIANTS[variant] ?? VARIANTS.default;
+  const isAccent = accent || variant === 'accent' || variant === 'selected';
   const base = {
     backgroundColor: v.bg,
     borderWidth: theme.borderWidth.default,
@@ -29,11 +32,11 @@ export default function Card({ variant = 'default', onPress, style, children, ac
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
-        style={({ pressed }) => [base, pressed && { opacity: 0.85 }, style]}
+        style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
       >
-        {children}
+        <Surface accent={isAccent} style={[base, style]}>{children}</Surface>
       </Pressable>
     );
   }
-  return <View style={[base, style]}>{children}</View>;
+  return <Surface accent={isAccent} style={[base, style]}>{children}</Surface>;
 }

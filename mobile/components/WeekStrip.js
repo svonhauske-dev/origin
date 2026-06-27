@@ -4,6 +4,7 @@ import { dateKey } from 'shared/lib/time';
 import { calculateAdherenceForDate } from 'shared/lib/adherence';
 import Text from './Text';
 import AdherenceRing from './AdherenceRing';
+import Surface from './Surface';
 import { theme, spacing, fonts, typography, icon, shadow, letterSpacing as LS } from '../theme';
 
 // 7-day navigator (RN port of src/components/WeekStrip.jsx, compact/mobile mode).
@@ -42,18 +43,22 @@ export default function WeekStrip({
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               accessibilityLabel={`${DAYS_SHORT[date.getDay()]} ${date.getDate()}${isToday ? ', today' : ''}${pct !== null ? `, ${pct}% done` : ''}`}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                paddingVertical: spacing.xs,
-                paddingHorizontal: spacing.xxs,
-                borderWidth: isSelected ? theme.borderWidth.accent : theme.borderWidth.default,
-                borderColor: isSelected ? theme.status.nowBorder : theme.border.subtle,
-                backgroundColor: isSelected ? theme.status.nowHover : theme.surface.card,
-                borderRadius: theme.radius.surface,
-                ...(isSelected ? { zIndex: 1, transform: [{ scale: 1.02 }], ...shadow.elevated } : null),
-              }}
+              style={{ flex: 1 }}
             >
+              <Surface
+                accent={isSelected}
+                style={{
+                  alignSelf: 'stretch',
+                  alignItems: 'center',
+                  paddingVertical: spacing.xs,
+                  paddingHorizontal: spacing.xxs,
+                  borderWidth: isSelected ? theme.borderWidth.accent : theme.borderWidth.default,
+                  borderColor: isSelected ? theme.status.nowBorder : theme.border.subtle,
+                  backgroundColor: isSelected ? theme.status.nowHover : theme.surface.card,
+                  borderRadius: theme.radius.surface,
+                  ...(isSelected ? { zIndex: 1, transform: [{ scale: 1.02 }], ...shadow.elevated } : null),
+                }}
+              >
               {/* TODAY pill slot — web compact: height 14; pill caption2(10), padding 1px 4px */}
               <View style={{ height: 14, marginBottom: spacing.xxs, justifyContent: 'center', alignItems: 'center' }}>
                 {isToday ? (
@@ -77,6 +82,7 @@ export default function WeekStrip({
               ) : (
                 <View style={{ width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2, borderColor: theme.border.subtle, opacity: 0.35 }} />
               )}
+              </Surface>
             </Pressable>
           );
         })}

@@ -54,6 +54,7 @@ import SettingsScreen from './SettingsScreen';
 import ProtocolLibrary from './ProtocolLibrary';
 import ProtocolDetailScreen from './ProtocolDetailScreen';
 import SlideScreen from '../components/SlideScreen';
+import Surface from '../components/Surface';
 
 const ANYTIME_SLOT = { id: 'anytime', label: 'Anytime', sublabel: 'No specific time', icon: '◦' };
 
@@ -77,16 +78,16 @@ const sliceForDay = (checked, dk) => {
 // JetBrains Mono medium initial at body size.
 function Avatar({ initial, onPress }) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel="Settings"
-      style={{
-        width: touch.min, height: touch.min, borderRadius: theme.radius.pill,
-        borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle,
-        alignItems: 'center', justifyContent: 'center', backgroundColor: theme.surface.cardSubtle,
-      }}
-    >
-      <Text weight="medium" size="body">{initial}</Text>
+    <Pressable onPress={onPress} accessibilityLabel="Settings">
+      <Surface
+        style={{
+          width: touch.min, height: touch.min, borderRadius: theme.radius.pill,
+          borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle,
+          alignItems: 'center', justifyContent: 'center', backgroundColor: theme.surface.cardSubtle,
+        }}
+      >
+        <Text weight="medium" size="body">{initial}</Text>
+      </Surface>
     </Pressable>
   );
 }
@@ -94,16 +95,16 @@ function Avatar({ initial, onPress }) {
 // Matches Button variant="icon": touch.min square (radius.button = 0), subtle border.
 function IconButton({ children, onPress, label }) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={label}
-      style={{
-        width: touch.min, height: touch.min, borderRadius: theme.radius.button,
-        borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle,
-        alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-      {children}
+    <Pressable onPress={onPress} accessibilityLabel={label}>
+      <Surface
+        style={{
+          width: touch.min, height: touch.min, borderRadius: theme.radius.button,
+          borderWidth: theme.borderWidth.default, borderColor: theme.border.subtle,
+          alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        {children}
+      </Surface>
     </Pressable>
   );
 }
